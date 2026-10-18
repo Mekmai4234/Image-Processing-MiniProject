@@ -1,0 +1,54 @@
+งาน 04_webcam_backend_logging: Webcam, API และบันทึกลงเครื่อง
+เจ้าของงาน: คนที่ 4 (รอกรอกชื่อจริงใน docs/team.md)
+ความยาก: ยาก (4/5)
+Branch เริ่มต้น: feature/04-webcam-backend
+สถานะ: แผนพัฒนา; ดู implementation-status ก่อนรันคำสั่งแอป
+
+PROCESS — หลักการ Input/Output และเกณฑ์รับงาน
+
+Input
+multipart image, expected_product, source_mode, client_request_id, angle_deg (ถ้ามี)
+optional supporting_images ซ้ำตามลำดับ และ evidence JSON ตาม API contract v0.2
+evidence = kind/search_status/supporting_angles_deg/reported_coverage_deg; ไม่ใช้ client flag ยืนยัน coverage
+JSON ผลจากตัวตรวจของคนที่ 3; API contract อยู่ใน docs ไม่ใช้ field คนละชื่อ
+
+Processing
+Validate → Assign/lookup request id → Decode → Call inspection → Annotate
+→ Persist original/annotated/result → Update SQLite → Respond
+รอบค้นหาหมดมุม/หมดเวลายังต้องรับ image หลักและบันทึกผล REVIEW ที่ตัวตรวจตัดสิน
+ตรวจจำนวน/ขนาดรวมของ supporting images และส่งให้คนที่ 3 ประเมินหลักฐานจริง
+ใช้ async/worker เท่าที่จำเป็น ไม่ block event loop ด้วยงานภาพหนักโดยไม่จัดการ
+เริ่มทีละขวดก่อน queue หลายงาน
+
+Output
+inspection_id, result/reason, match_score, bbox, image dimensions, timing,
+storage_status และ image URLs ของ original/annotated ตาม contract
+evidence รวม verified_coverage, required_view_profile และ supporting_images เป็น API URLs ตาม index
+URL เป็น API lookup ไม่เผย absolute local path ให้หน้าเว็บใช้เป็น file URL
+
+Storage semantics
+STORAGE_ROOT/<วันที่ไทย>/<pass|fail|review>/<inspection_id>/
+SQLite เป็น index และสถานะ storage/review ล่าสุด; result.json เป็น immutable decision snapshot
+GET รวมคำตัดสินเดิมกับข้อมูลล่าสุดจาก DB; CSV สร้างเมื่อ export จาก DB
+human review แก้ reviewed_* ไม่แก้ prediction เดิม; retry-save ไม่ตรวจซ้ำ/ไม่แก้ snapshot
+เขียนไฟล์ชั่วคราวและ rename; DB pending ต้องกู้/แจ้งได้หากไฟล์เขียนไม่ครบ
+เก็บ supporting images ที่ใช้ตัดสินทุกภาพ จึงเปลี่ยน saved เมื่อหลักฐานครบ
+SAVE_ROTATION_FRAMES ควบคุมเฉพาะเฟรมกลางทางที่ไม่ใช้ตัดสิน ไม่ปิดการเก็บหลักฐาน
+ห้ามนับคำขอ retry เป็นขวดใหม่ และห้าม overwrite original ด้วย annotated
+client_request_id unique; payload ต่างแต่ id เดิมตอบ 409 และ retry ผูก config เดิม
+
+Webcam lifecycle
+idle → requesting → streaming → ready → captured → inspecting → result
+permission denied/device lost ให้ error ที่ผู้ใช้แก้ได้และปุ่มลองใหม่
+Preview อาจ mirror ได้เพื่อความสะดวก แต่ frame ส่งตรวจและ bbox ต้องใช้แกนเดียวกัน
+ตัว browser ไม่หมุนขวดจริง; manual guidance และ multi-angle evidence เป็นคนละส่วน
+
+การแบ่งงาน
+คนที่ 1 จัดหน้าและ overlay; คนที่ 4 ส่ง video/canvas frame และรับผิดชอบ stream cleanup
+คนที่ 3 รับ numpy image ไม่ต้องรู้ HTTP; คนที่ 4 เป็น adapter
+คนที่ 5 ใช้ API test client กับ temporary storage เพื่อไม่แตะ capture ของผู้ใช้
+
+เกณฑ์รับงาน
+capture จริงได้, log กับไฟล์ตรงกัน, restart แล้วยังอ่านประวัติที่ saved ได้,
+retry ไม่ซ้ำ, permission/disk error ไม่กลายเป็นผลสินค้า,
+เก็บข้อมูลในเครื่องที่รัน backend ตาม path ที่ระบุได้จริง
