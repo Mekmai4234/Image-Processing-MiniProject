@@ -63,9 +63,15 @@ def init_db() -> None:
                 reviewed_result TEXT,
                 reviewed_reason TEXT,
                 reviewer TEXT,
-                reviewed_at TEXT
+                reviewed_at TEXT,
+                payload_fingerprint TEXT
             );
             """)
+
+            # Migration: databases created before the fingerprint column existed
+            existing_cols = {row["name"] for row in conn.execute("PRAGMA table_info(inspections);")}
+            if "payload_fingerprint" not in existing_cols:
+                conn.execute("ALTER TABLE inspections ADD COLUMN payload_fingerprint TEXT;")
 
             conn.execute("CREATE INDEX IF NOT EXISTS idx_inspections_client_req ON inspections (client_request_id);")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_inspections_created_at ON inspections (created_at);")

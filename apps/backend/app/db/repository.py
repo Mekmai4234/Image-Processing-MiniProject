@@ -12,6 +12,8 @@ class InspectionRepository:
         Returns (created: bool, record: dict).
         If client_request_id already exists, returns (False, existing_record).
         """
+        data = {**data}
+        data.setdefault("payload_fingerprint", None)
         conn = get_connection()
         try:
             with conn:
@@ -25,7 +27,8 @@ class InspectionRepository:
                         expected_bbox_x, expected_bbox_y, expected_bbox_width, expected_bbox_height,
                         image_width, image_height, orientation_deg, config_version,
                         storage_status, folder_date, relative_folder_path, evidence_json,
-                        timing_orientation_ms, timing_inspection_ms, timing_storage_ms, timing_total_ms
+                        timing_orientation_ms, timing_inspection_ms, timing_storage_ms, timing_total_ms,
+                        payload_fingerprint
                     ) VALUES (
                         :inspection_id, :client_request_id, :created_at, :source_mode,
                         :expected_product, :detected_product, :result, :reason,
@@ -34,7 +37,8 @@ class InspectionRepository:
                         :expected_bbox_x, :expected_bbox_y, :expected_bbox_width, :expected_bbox_height,
                         :image_width, :image_height, :orientation_deg, :config_version,
                         'pending', :folder_date, :relative_folder_path, :evidence_json,
-                        :timing_orientation_ms, :timing_inspection_ms, :timing_storage_ms, :timing_total_ms
+                        :timing_orientation_ms, :timing_inspection_ms, :timing_storage_ms, :timing_total_ms,
+                        :payload_fingerprint
                     );
                     """,
                     data,
@@ -226,3 +230,47 @@ class InspectionRepository:
             return items, total
         finally:
             conn.close()
+
+    @staticmethod
+    def export_inspections(
+        source_mode: Optional[str] = None,
+        result: Optional[str] = None,
+        product_id: Optional[str] = None,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """Query all inspections matching filters without pagination for CSV export."""
+        conn = get_connection()
+        try:
+            conditions = []
+            params = []
+            if source_mode:
+                conditions.append("source_mode = ?")
+                params.append(source_mode)
+            if result:
+                conditions.append("result = ?")
+                params.append(result)
+            if product_id:
+                conditions.append("expected_product = ?")
+                params.append(product_id)
+            if date_from:
+                conditions.append("folder_date >= ?")
+                params.append(date_from)
+            if date_to:
+                conditions.append("folder_date <= ?")
+                params.append(date_to)
+
+            where_clause = ""
+            if conditions:
+                where_clause = "WHERE " + " AND ".join(conditions)
+
+            data_query = f"""
+                SELECT * FROM inspections
+                {where_clause}
+                ORDER BY created_at DESC, inspection_id DESC;
+            """
+            cur = conn.execute(data_query, params)
+            return [dict(r) for r in cur.fetchall()]
+        finally:
+            conn.close()
+

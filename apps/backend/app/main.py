@@ -48,9 +48,10 @@ origins = [
     for origin in settings.WEB_ORIGIN.split(",")
     if origin.strip()
 ]
-# Fallback to default vite origin if not empty
-if not origins:
-    origins = ["http://localhost:5173"]
+# Support both localhost and 127.0.0.1 on dev ports for seamless development
+for default_origin in ("http://localhost:5173", "http://127.0.0.1:5173"):
+    if default_origin not in origins:
+        origins.append(default_origin)
 
 app.add_middleware(
     CORSMiddleware,

@@ -232,9 +232,15 @@ class StorageManager:
                 InspectionRepository.update_storage_success(insp_id, rel_path, timing_storage_ms=0.0)
                 reconciled += 1
             else:
-                # Check if pending files exist
+                # Check if pending files exist and retry save if possible
                 pending_dir = cls.get_pending_dir(insp_id)
-                if not pending_dir.exists() or not (pending_dir / "original.jpg").is_file():
+                if pending_dir.is_dir() and (pending_dir / "original.jpg").is_file():
+                    ok, _, _ = cls.retry_save_from_pending(insp_id)
+                    if ok:
+                        reconciled += 1
+                    else:
+                        marked_failed += 1
+                else:
                     # Source lost
                     InspectionRepository.update_storage_failure(
                         inspection_id=insp_id,
