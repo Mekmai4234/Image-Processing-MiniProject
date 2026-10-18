@@ -1,6 +1,6 @@
 # GitHub และการเชิญเพื่อน
 
-Repository เป้าหมาย: https://github.com/Mekmai4234/MiniProject (Public)
+Repository เป้าหมาย: https://github.com/Mekmai4234/Image-Processing-MiniProject (Public)
 Public = อ่านได้ทั่วไป; สิทธิ์ push ต้องรับคำเชิญ Collaborator
 
 ## เจ้าของเชิญสมาชิก
