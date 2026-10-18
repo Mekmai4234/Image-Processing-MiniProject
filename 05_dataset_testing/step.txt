@@ -23,16 +23,22 @@ STEP — ลำดับลงมือทำและจุดส่งงา�
 
 5. ทำ CSV manifest ตาม examples/labels.csv
    ให้คนที่สองตรวจทาน label และ expected product; ไม่ทราบให้ REVIEW/ว่างตาม field
-   แยก wrong_label (ขวดติดฉลากผิด) กับ wrong_product (หยิบคนละยี่ห้อ) ตาม evidence จริง
+   แยก product_id (ตัวขวด), label_product (ฉลากที่ติดอยู่) และ expected_product
+   ติดฉลากผิด/หยิบสินค้าผิดเมื่อฉลากไม่ตรง expected ใช้ reason=wrong_label ตาม contract
+   เก็บสาเหตุที่เกิดจริงใน metadata ไม่สร้าง reason=wrong_product ขึ้นเอง
 
-6. แบ่ง development/validation/test เป็นกลุ่มขวดและ session
-   ตรวจ duplicate hash และภาพดัดแปลงก่อนแบ่ง; เก็บ test ไว้ไม่ปรับ threshold
+6. รวมขวดใบเดียวกันทุก session และ session เดียวกันทุกขวดเป็น split_group_id
+   ภาพซ้ำ/augmentation/ภาพเดียวต่าง expected อยู่กลุ่มเดิม; แบ่งทั้งกลุ่มตาม dataset guide
+   ตรวจ physical_bottle_id และ capture_session แยกกัน ไม่เช็คเพียงคู่ขวด+session
+   ตรวจ duplicate hash และต้นทางภาพดัดแปลงก่อนแบ่ง; เก็บ test ไว้ไม่ปรับ threshold
 
 7. ส่ง development และ references ให้คนที่ 3 ทำ baseline
    ส่งภาพ/expected output ที่เหมือนกันให้คนที่ 1/2/4 ทดลองเชื่อม
 
 8. ทำ tests ของ contract: PASS/FAIL/REVIEW, null score/bbox, unknown product
    API invalid upload, retry, storage failure และ History ต้องตรงกับไฟล์จริง
+   ทดสอบภาพเดียวหันหลังเป็น REVIEW และ supporting images ต้องถูกเก็บเมื่อใช้ตัดสิน
+   missing_label ใช้ FAIL ได้เมื่อ required-view profile ผ่านการ validate และมีหลักฐานพอ
 
 9. ทดสอบ simulation: หมุนครบเวลา, pause/resume/reset, response ช้า,
    ส่งผลถูกขวด และ count/log ไม่ซ้ำเมื่อ replay หรือกดซ้ำ

@@ -6,40 +6,45 @@ Branch เริ่มต้น: feature/03-image-processing
 
 STEP — ลำดับลงมือทำและจุดส่งงาน
 
-1. อ่าน docs/dataset-guide.md และ docs/api-contract.md; สร้าง feature/03-image-processing
+1. อ่าน docs/dataset-guide.md และ docs/api-contract.md
+   เริ่ม branch งานย่อยใหม่จาก develop ล่าสุด เช่น feature/03-issue-3-label-locator
    ทำตัวตรวจเป็น pure functions ก่อนเชื่อม HTTP เพื่อทดสอบและใช้ซ้ำได้
 
 2. รับภาพ BGR/RGB พร้อม image_width/image_height และ expected_product
    ตรวจไฟล์เปิดได้ ขนาดไม่เกินเกณฑ์ และ orientation ของภาพถูกก่อนประมวลผล
 
 3. วัดคุณภาพภาพ เช่น blur ด้วย Laplacian variance และพื้นที่วัตถุที่เห็น
-   ถ้าไม่พอให้ REVIEW พร้อม reason; อย่าฝืนรายงาน no_label จากภาพเบลอ
+   ถ้าไม่พอให้ REVIEW พร้อม reason; อย่าฝืนรายงาน missing_label จากภาพเบลอ
 
 4. หา bottle ROI บนพื้นหลังเรียบก่อนเริ่ม
    ประเมิน threshold/ขอบ/contour ตามภาพจริง ขวดใสอาจต้องใช้ฉากหลังและแสงคงที่
 
 5. หา label candidate ด้วยสี HSV/threshold/ขอบ แล้ว morphology ลด noise
-   คืน bbox และคะแนนคุณภาพการมองเห็น เพื่อใช้เลือกมุมใน ORIENT
+   คืน bbox, usable_view, quality และ reason ตาม locator contract เพื่อใช้เลือกมุมใน ORIENT
    ขอบขวดกับฉลากเป็นคนละกรอบ ห้ามใช้กรอบขวดแทน label bbox
+   ฉลากผิดยี่ห้อที่เห็นชัดยัง usable ได้; ภาพเห็นแค่ฉลากจนประเมินตำแหน่งบนขวดไม่ได้ยังไม่ usable
 
 6. Normalize candidate: crop, resize และแก้มุมเท่าที่ baseline รองรับ
    ทำแบบเดียวกันทั้ง template และภาพที่ตรวจ เพื่อให้เปรียบเทียบได้
 
 7. ทำ baseline template matching หลาย template ของแต่ละสินค้า
    เลือก similarity method ที่คะแนนมากดีกว่า เช่น TM_CCOEFF_NORMED
-   ระวัง template สีเรียบ/ไม่มี variance; ตรวจ input และเก็บ raw score
-   ค่าที่แสดงใช้ clamp 0..1 ตาม contract และบอกชื่อวิธีคำนวณ
+   ระวัง template สีเรียบ/ไม่มี variance; ตรวจ input และเก็บ raw score สำหรับวิเคราะห์
+   ใช้ template_ccoeff_normed_clamped_v1: raw finite [-1,1] → match_score=max(0,raw)
+   ภาพ/template ไม่มี variance หรือ raw ไม่ finite ให้ score=null และ REVIEW/ambiguous_match
 
 8. เทียบทุก product เพื่อแยก “ไม่รู้จัก” ออกจาก “ผิดชนิด”
    ถ้าพบอีกยี่ห้ออย่างชัดเจนและ expected ไม่ตรง → FAIL wrong_label
-   ถ้าทุกคะแนนต่ำหรือผลสูสีกัน → REVIEW unknown_label/ambiguous_match
+   ถ้าทุกคะแนนต่ำหรือผลสูสีกัน → REVIEW unknown_product/ambiguous_match
 
 9. ตรวจตำแหน่งสัมพันธ์กับขวด: center/size/mุม normalize ด้วย bottle ROI
    ฉลากที่กึ่งกลางภาพแต่ผิดตำแหน่งบนขวดต้องไม่ผ่านโดยอัตโนมัติ
 
 10. รวมผล: ภาพมีหลักฐานเพียงพอและผ่านทุกข้อ → PASS
     ผิดเงื่อนไขชัดเจน → FAIL; ไม่พอให้ตัดสิน → REVIEW
-    no_label ใช้เมื่อมีหลักฐานพอ เช่น ชุดหลายมุมตรวจครบแล้ว
+    missing_label ใช้เมื่อหลักฐานภาพผ่าน required-view profile ที่ validate ของสินค้านั้น
+    ไม่ยืนยัน missing_label จากจำนวนภาพ/มุมที่ client รายงาน; หลักฐานไม่พอให้ REVIEW
+    รับ supporting images/evidence ผ่าน adapter ของคนที่ 4 และบอกว่าภาพใดใช้ตัดสิน
 
 11. สร้าง annotated image โดยคง original แยกไว้
     PASS เขียว / FAIL แดง / REVIEW เหลือง; label missing ใช้ expected bbox เส้นประ

@@ -36,3 +36,12 @@ py -3.11 -m venv .venv
 ใช้ 3.12 ได้หากทีมตกลงตรงกัน ไม่ต้องเปลี่ยน PowerShell execution policy
 ตั้ง `.env` จาก `.env.example` เฉพาะเครื่องตน หลัง Backend มีตัวอ่าน config แล้ว
 ถ้า clone โฟลเดอร์ชื่ออื่น ให้ทำงานจาก repository root ไม่ยึด D: ของเจ้าของ
+
+## กำหนด config ก่อนสร้างแอป
+
+ใช้ [configuration](configuration.md) เป็นข้อตกลงร่วม: .env อยู่ root, Vite ตั้ง envDir,
+Backend โหลดไฟล์และ resolve storage/dataset path เทียบ root แบบ explicit
+หากมี .env อยู่แล้วอ่านและแก้เฉพาะค่าที่ต้องการ ไม่ copy ทับการตั้งค่าของเพื่อน
+
+เริ่มตามลำดับใน [team](team.md): 01 ตั้ง app shell, 04 ตั้ง API/config,
+03 ทำ pure functions, 05 เตรียมข้อมูล, 02 ทำ scene ด้วย synthetic contract ที่ติด DEMO
