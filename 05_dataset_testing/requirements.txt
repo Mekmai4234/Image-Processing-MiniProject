@@ -1,0 +1,2 @@
+# Dataset decoding and near-duplicate review; independent of backend dependencies.
+Pillow==12.3.0
