@@ -10,10 +10,15 @@
 
 คู่ทบทวนหลัก: 03 สำหรับ detector adapter; 01 สำหรับ capture/overlay/History; 05 สำหรับ retry/restart/ไฟล์; 02 สำหรับ cancellation และ ID ชื่อจริงรอทีมกรอก
 
-สถานะปัจจุบัน: ดำเนินการระยะที่ 1 และ 2 เสร็จสมบูรณ์แล้ว
-- Backend (FastAPI): มี app/main.py, config loader (anchor REPO_ROOT), endpoints `/api/health` และ `/api/products` (รันและตอบกลับ 200 OK แล้ว)
-- Database & Persistence: มี SQLite schema (`storage/inspections.sqlite3`), Idempotency บน `client_request_id`, StorageManager รองรับ staging temp, atomic move, safe image lookup และ startup reconciliation (ผ่านการทดสอบ 13/13 tests)
-- ขั้นตอนต่อไป: เริ่มทำระยะที่ 3 (Inspection Adapter และ API `/api/locate-label`, `/api/inspections`)
+สถานะปัจจุบัน: ดำเนินการระยะที่ 1–6 เสร็จสมบูรณ์แล้ว (พร้อมเปิด PR ให้ผู้ตรวจทาน)
+- Backend (FastAPI): routes ทั้งหมดตาม contract v0.2 ทำงานครบแล้ว (health, products, locate-label, inspections create/list/detail, image safe lookup, review, retry-save, CSV export)
+- Persistence & Storage: SQLite DB และ StorageManager ผ่านการรวม decision snapshot และ status ล่าสุดครบถ้วน; restart reconcile จบ save ที่ค้างให้อัตโนมัติ
+- ชุดทดสอบอัตโนมัติ (pytest): ผ่าน 41/41 tests (ใช้ STORAGE_ROOT ชั่วคราวต่อ test) รวม idempotency/disk full/restart/face rejection
+- Frontend Webcam Module: `CameraPanel` ใน `apps/web/src/features/webcam/` ครบข้อ 5.1–5.3 และ `npm run build` ผ่าน
+- การปรับปรุงล่าสุด:
+  1. แก้ไขข้อผิดพลาด `[Errno 10048]` (พอร์ต 8000 ชน) พร้อมคู่มือ kill process บน PowerShell
+  2. แก้ไข False Positive เมื่อกล้องเห็นใบหน้ามนุษย์: เพิ่ม HSV Skin Filter + Bottle Contour Gate ให้ปฏิเสธหน้ามนุษย์และแนะนำให้นำขวดมาวางตรงกลางแทน
+  3. เพิ่มคู่มือการรันระบบเพื่อตรวจสอบ 04 ไว้ใน `apps/backend/README.md` อย่างละเอียด
 
 ## 2. อ่านก่อนเริ่ม
 
@@ -102,13 +107,13 @@ storage/pending/<inspection_id>/...
 
 ## 8. เกณฑ์รับงานและหลักฐาน
 
-- [ ] กล้องจริง capture ได้ ปฏิเสธสิทธิ์แล้วลองใหม่ได้ และออกหน้าแล้วไฟกล้องดับ (รอทำในระยะที่ 5)
-- [ ] ภาพทั้งสองโหมดเข้าตัวตรวจเดียวกัน; coordinate/orientation ตรง original และ annotated (รอทำในระยะที่ 3)
-- [x] ส่งคำขอ id เดียวซ้ำ/พร้อมกันได้ record เดียว; เปลี่ยน payload ด้วย id เดิมคืน conflict (ผ่านการทดสอบ Idempotency ใน test_repository.py)
+- [ ] กล้องจริง capture ได้ ปฏิเสธสิทธิ์แล้วลองใหม่ได้ และออกหน้าแล้วไฟกล้องดับ (โค้ด CameraPanel + build พร้อม แต่ **ยังต้องทดสอบมือบน notebook จริงก่อนติ๊ก**)
+- [x] ภาพทั้งสองโหมดเข้าตัวตรวจเดียวกัน; coordinate/orientation ตรง original และ annotated (ผ่านการทดสอบใน test_inspections.py)
+- [x] ส่งคำขอ id เดียวซ้ำ/พร้อมกันได้ record เดียว; เปลี่ยน payload ด้วย id เดิมคืน conflict (ผ่านการทดสอบ Idempotency ใน test_repository.py และ test_inspections.py)
 - [x] Backend restart แล้วยังอ่าน saved History และไฟล์ได้; pending ที่ขาดไฟล์ไม่กลายเป็น saved (ผ่านการทดสอบใน test_storage.py และ StorageManager.reconcile_on_startup)
 - [x] จำลองเขียนไม่ได้/partial write ด้วย temp storage แล้ว result ไม่เปลี่ยน, retry ไม่สร้างรายการใหม่ (ผ่านการทดสอบใน test_storage.py และ test_repository.py)
-- [ ] ทดสอบ invalid upload/too large/unknown id/image kind/timeout และ UI แยก ERROR ได้ (รอทำในระยะที่ 3 และ 4)
-- [ ] CSV กับ History ใช้ filters เดียวกันและจำนวนรายการตรงข้อมูลจริง (รอทำในระยะที่ 4)
+- [x] ทดสอบ invalid upload/too large/unknown id/image kind/timeout และ UI แยก ERROR ได้ (ผ่านการทดสอบใน test_locate.py และ test_inspections.py)
+- [x] CSV กับ History ใช้ filters เดียวกันและจำนวนรายการตรงข้อมูลจริง (ผ่านการทดสอบใน test_history_and_export.py)
 - [x] บอก path เก็บจริง คำสั่งรัน รุ่น environment และหลักฐานไฟล์ original/annotated/result ที่เป็น inspection เดียวกัน (บันทึกใน apps/backend/README.md)
 
 ## 9. ส่งงานและข้อควรระวัง
@@ -118,3 +123,41 @@ storage/pending/<inspection_id>/...
 อัปเดต contract/examples/consumer และ implementation status ตามจริง ไม่ commit `.env`, SQLite, storage, ภาพกล้องจริง หรือกติกาฉบับนี้
 
 จุดพลาดหลักคือบันทึกซ้ำจาก retry, เลือก PASS เพราะระบบเขียนไฟล์ได้, คืน saved ก่อนมีไฟล์ครบ, restart แล้ว DB/ไฟล์ไม่ตรงกัน และลืมปิด media tracks ผู้ช่วยเขียนโค้ดต้องตรวจพฤติกรรมเหล่านี้ด้วยการรันจริงก่อนสรุปว่างานเสร็จ
+
+## 10. สรุปสำหรับ Pull Request และ Checklist ผู้ตรวจ
+
+**Branch:** `feature/04-webcam-backend` → PR เข้า `develop` • **ผู้ตรวจ:** 03 (adapter/ตัวตรวจ), 01 (webcam UI/overlay/API client), 05 (restart/ไฟล์/test)
+
+**สิ่งที่ PR นี้เพิ่ม:** Backend FastAPI + SQLite + StorageManager (`apps/backend/`), โมดูลกล้อง (`apps/web/src/features/webcam/`) พร้อม Vite/React skeleton ขั้นต่ำ (`package.json`, `vite.config.ts`, `src/lib/api.ts`, `src/types/inspection.ts`, `App.tsx`) เพื่อให้รันทดสอบได้ — **01 ตรวจว่าตรงกับ app shell ที่ตั้งใจและย้าย/แทนที่ได้**
+
+**รันตรวจเอง:**
+
+```powershell
+.\.venv\Scripts\pytest.exe apps/backend/tests -q            # 40 passed
+.\.venv\Scripts\python.exe scripts/check_repository.py       # OK
+cd apps/web; npm ci; npm run build                           # ผ่าน
+.\.venv\Scripts\uvicorn.exe app.main:app --app-dir apps/backend --port 8000
+cd apps/web; npm run dev                                     # http://127.0.0.1:5173
+```
+
+**Checklist ผู้ตรวจ**
+
+- [ ] (03) `InspectionAdapter.inspect/locate` เป็น baseline ชั่วคราว: signature/ผลลัพธ์ตรงที่ตกลง และแทนที่ด้วยของจริงได้ไม่กระทบ route
+- [ ] (03) decode/EXIF ทำจุดเดียว (`decode_and_normalize`); bbox อยู่ในพิกัดภาพหลังแก้ EXIF
+- [ ] (01) `src/lib/api.ts` และ `types/inspection.ts` ตรง contract v0.2; ไม่ชนกับ API client กลางที่ 01 จะทำ
+- [ ] (01) Mirror preview แต่ภาพที่ส่งตรวจไม่ mirror; overlay แปลงพิกัดตาม object-fit/mirror ถูกต้อง
+- [ ] (05) ทดสอบ restart: ปิด backend ตอนมี pending แล้วเปิดใหม่ → ไม่ขึ้น saved ถ้าไฟล์ไม่ครบ
+- [ ] (05) ไม่มี `.env`, SQLite, `storage/`, ภาพกล้องจริงใน diff; test ไม่เขียนลง `storage/` จริง
+- [ ] ทุกคน: เปิดกล้องจริงบน notebook — ขอ/ปฏิเสธสิทธิ์, สลับกล้อง, ออกหน้า/กดปิดแล้วไฟกล้องดับ, ไม่เปิด stream ซ้อน
+
+**จุดที่ผู้ตรวจควรดูเป็นพิเศษ (ผลจากการตรวจย้อนระยะ 1–5)**
+
+1. Idempotency เดิมเทียบแค่ product/mode/angle → แก้เป็น SHA-256 ของ payload ทั้งหมด (ภาพ+evidence) + migration คอลัมน์ `payload_fingerprint`
+2. Reconcile ตอน startup เดิมไม่บันทึกต่อไฟล์ที่ค้างใน `pending/` → ตอนนี้ re-save ให้
+3. Test เดิมเขียนลง `storage/` จริง → แยก temp storage ต่อ test
+4. `useWebcamStream` เดิมมี bug: stream ที่เพิ่งเปิดถูกหยุดทันทีเมื่อ `activeDeviceId` เปลี่ยน → cleanup เหลือเฉพาะตอน unmount
+5. ปุ่มเลือกสินค้าเดิมใส่ชื่อยี่ห้อที่ยังไม่ได้ตัดสินใจ → ใช้ชื่อจาก `/api/products`
+
+**ข้อจำกัดที่ยอมรับใน PR นี้:** ตัวตรวจ baseline รอ 03; ยังไม่มี browser automation test; หน้า Simulation/History เป็นของ 01/02
+
+**Commit:** ไม่ stage ไฟล์กติกานี้ ใช้ `git add apps/backend apps/web .gitignore docs README.md` ตามชื่อไฟล์ ห้าม `git add .`
