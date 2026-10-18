@@ -8,9 +8,9 @@
 | HTML conveyor prototype | ทดลองได้ เกณฑ์สีพื้นฐานสำหรับภาพที่ควบคุม |
 | React app แยก 3 หน้า | ยังต้องพัฒนา |
 | Three.js conveyor / rotation | ยังต้องพัฒนา |
-| Webcam capture/guidance | ยังต้องพัฒนา |
-| OpenCV inspection ที่ validate กับขวดไทย | ยังต้องพัฒนา/เก็บข้อมูล |
-| Local persistence / SQLite / History API | ยังต้องพัฒนา |
+| Webcam capture/guidance | มี CameraPanel + locator guidance (build ผ่าน) — ยังต้องทดสอบกับกล้อง notebook จริง |
+| OpenCV inspection ที่ validate กับขวดไทย | ยังต้องพัฒนา/เก็บข้อมูล (ฝั่ง backend มี baseline adapter ชั่วคราว) |
+| Local persistence / SQLite / History API | มี FastAPI + SQLite + StorageManager + pytest 40 รายการ (ดู apps/backend/README.md) |
 | Accuracy / timing ที่วัดจริง | ยังไม่มี |
 
 ทุก PR อัปเดตตามหลักฐานรันจริง พร้อม test/ภาพ/รายงาน ไม่ใช้ภาพ mockup ยืนยันว่าเสร็จ

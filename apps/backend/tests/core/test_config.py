@@ -9,9 +9,10 @@ def test_repo_root_resolution():
 
 
 def test_storage_root_absolute():
-    assert settings.STORAGE_ROOT.is_absolute()
-    assert settings.STORAGE_ROOT.name == "storage"
-    assert settings.STORAGE_ROOT.parent == REPO_ROOT
+    default_settings = type(settings)()
+    assert default_settings.STORAGE_ROOT.is_absolute()
+    assert default_settings.STORAGE_ROOT.name == "storage"
+    assert default_settings.STORAGE_ROOT.parent == REPO_ROOT
 
 
 def test_dataset_root_absolute():

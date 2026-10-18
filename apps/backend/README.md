@@ -41,25 +41,25 @@
 
 - [x] **ระยะที่ 1: เตรียมโครงสร้าง Backend และระบบ Configuration** *(เสร็จสิ้น)*
   - [x] **ข้อ 1.1:** สร้างโครงสร้างโปรเจกต์ Backend ใน `apps/backend/app/` และเขียน Config Loader โหลด `.env` จาก REPO_ROOT คำนวณ Path แน่นอน
-  - [x] **ข้อ 1.2:** สร้าง `apps/backend/app/main.py` ตั้งค่า CORS Middleware และพัฒนา `GET /api/health`, `GET /api/products`
+  - [x] **ข้อ 1.2:** สร้าง `apps/backend/app/main.py` ตั้งค่า CORS Middleware (รองรับทั้ง localhost และ 127.0.0.1) และพัฒนา `GET /api/health`, `GET /api/products`
 - [x] **ระยะที่ 2: ระบบฐานข้อมูล SQLite และการจัดเก็บไฟล์ภาพ (Persistence)** *(เสร็จสิ้น)*
   - [x] **ข้อ 2.1:** ออกแบบและสร้างระบบ SQLite (`storage/inspections.sqlite3`, Table `inspections`, Indexes, Idempotency, Human Review)
   - [x] **ข้อ 2.2:** พัฒนาระบบ `StorageManager` จัดการโฟลเดอร์ตามวันที่ไทย (`YYYY-MM-DD/<result>/<id>/`), กลไก Pending Staging, Atomic Move, Safe Image Lookup และ Startup Reconciliation
-- [ ] **ระยะที่ 3: ระบบเชื่อมต่อตัวตรวจและ Inspection API** *(ขั้นตอนถัดไป)*
-  - [ ] **ข้อ 3.1:** สร้าง Adapter เชื่อมต่อโมดูล Image Processing (คนที่ 03) พร้อม Mock/Fallback Interface
-  - [ ] **ข้อ 3.2:** พัฒนา `POST /api/locate-label` (ตรวจคุณภาพภาพและตำแหน่ง bbox แบบ throttled ไม่ลง History)
-  - [ ] **ข้อ 3.3:** พัฒนา `POST /api/inspections` (รับภาพหลัก + supporting images + evidence, Idempotency, บันทึก DB & Storage)
-- [ ] **ระยะที่ 4: Endpoints สำหรับ History, รูปภาพ, และ Export**
-  - [ ] **ข้อ 4.1:** พัฒนา `GET /api/inspections` (Filter, Pagination) และ `GET /api/inspections/{id}`
-  - [ ] **ข้อ 4.2:** พัฒนา Endpoint ดึงรูปภาพปลอดภัย `GET /api/inspections/{id}/images/{kind}` และ `/supporting/{index}`
-  - [ ] **ข้อ 4.3:** พัฒนา `GET /api/exports/inspections.csv`, `PATCH /api/inspections/{id}/review` และ `POST /api/inspections/{id}/retry-save`
-- [ ] **ระยะที่ 5: พัฒนาโมดูลกล้อง Webcam บน Frontend (`apps/web/`)**
-  - [ ] **ข้อ 5.1:** สร้างคอมโพเนนต์ `CameraPanel` (`getUserMedia`, Live Preview, Memory/Track Cleanup)
-  - [ ] **ข้อ 5.2:** เชื่อมระบบ Locator Guidance ("หมุนช้าๆ", "หยุดนิ่ง", "ภาพเบลอ")
-  - [ ] **ข้อ 5.3:** เชื่อมระบบ Capture ภาพจริงส่งไปตรวจที่ Backend
-- [ ] **ระยะที่ 6: การทดสอบและการเขียนคู่มือ**
-  - [ ] **ข้อ 6.1:** เขียน Automated Tests ครอบคลุม API, Storage Recovery, Idempotency conflict
-  - [ ] **ข้อ 6.2:** สรุปคู่มือวิธีรันและเกณฑ์การส่งมอบงาน
+- [x] **ระยะที่ 3: ระบบเชื่อมต่อตัวตรวจและ Inspection API** *(เสร็จสิ้น)*
+  - [x] **ข้อ 3.1:** สร้าง `InspectionAdapter` เชื่อมต่อโมดูล Image Processing พร้อม Skin Tone / Contour Filter และ Mock/Fallback Interface
+  - [x] **ข้อ 3.2:** พัฒนา `POST /api/locate-label` (ตรวจคุณภาพภาพ, คัดกรองใบหน้ามนุษย์, และตำแหน่ง bbox แบบ throttled ไม่ลง History)
+  - [x] **ข้อ 3.3:** พัฒนา `POST /api/inspections` (รับภาพหลัก + supporting images + evidence, Idempotency, บันทึก DB & Storage)
+- [x] **ระยะที่ 4: Endpoints สำหรับ History, รูปภาพ, และ Export** *(เสร็จสิ้น)*
+  - [x] **ข้อ 4.1:** พัฒนา `GET /api/inspections` (Filter, Pagination) และ `GET /api/inspections/{id}`
+  - [x] **ข้อ 4.2:** พัฒนา Endpoint ดึงรูปภาพปลอดภัย `GET /api/inspections/{id}/images/{kind}` และ `/supporting/{index}`
+  - [x] **ข้อ 4.3:** พัฒนา `GET /api/exports/inspections.csv`, `PATCH /api/inspections/{id}/review` และ `POST /api/inspections/{id}/retry-save`
+- [x] **ระยะที่ 5: พัฒนาโมดูลกล้อง Webcam บน Frontend (`apps/web/`)** *(เสร็จสิ้น)*
+  - [x] **ข้อ 5.1:** สร้างคอมโพเนนต์ `CameraPanel` (`getUserMedia`, Live Preview, Memory/Track Cleanup ปิดกล้องสนิทเมื่อเปลี่ยนหน้า)
+  - [x] **ข้อ 5.2:** เชื่อมระบบ Locator Guidance ("กรุณานำขวดน้ำมาไว้ตรงกลางกรอบ", "กรุณาหมุนขวด...", "พบฉลากชัดเจนพร้อมถ่าย", "ภาพเบลอ")
+  - [x] **ข้อ 5.3:** เชื่อมระบบ Capture ภาพจริงส่งไปตรวจที่ Backend พร้อมสลับสินค้าและแสดงผลการตรวจทันที
+- [x] **ระยะที่ 6: การทดสอบและการเขียนคู่มือ** *(เสร็จสิ้น)*
+  - [x] **ข้อ 6.1:** เขียน Automated Tests (41 tests ครอบคลุม Config, SQLite, Storage Resilience, API, Reconcile, Face Rejection)
+  - [x] **ข้อ 6.2:** สรุปคู่มือวิธีรัน, การแก้ปัญหา Port 10048, และระบบแยกแยะใบหน้ามนุษย์
 
 ---
 
@@ -71,7 +71,7 @@ apps/backend/
 │   ├── main.py              # FastAPI app หลัก, CORS, lifespan startup validation & reconciliation
 │   ├── api/
 │   │   ├── router.py        # API router รวม (/api)
-│   │   └── routes/          # route handlers (/api/health, /api/products)
+│   │   └── routes/          # health, products, locate, inspections, exports
 │   ├── core/
 │   │   ├── config.py        # โหลด .env จาก REPO_ROOT, path resolution และ limits
 │   │   ├── timezone.py      # จัดการ Asia/Bangkok และ ISO-8601 UTC
@@ -80,11 +80,13 @@ apps/backend/
 │   │   ├── connection.py    # SQLite connection, WAL mode และ table schema
 │   │   └── repository.py    # InspectionRepository (CRUD, Idempotency, Status updates)
 │   ├── models/
-│   │   └── schemas.py       # Pydantic schemas (Health, Products, SimulationDefaults)
+│   │   └── schemas.py       # Pydantic schemas (Health, Products, Locator, Inspections)
 │   └── services/
-│       └── storage.py       # StorageManager (Pending staging, Atomic move, Safe lookup)
+│       ├── inspection_adapter.py # Image Processing Adapter, Skin Filter, Face Rejection, Label Locator
+│       ├── inspection_service.py # Orchestrator ตรวจสอบและบันทึกลง SQLite/Storage
+│       └── storage.py       # StorageManager (Pending staging, Atomic move, Safe lookup, Reconciliation)
 ├── tests/
-│   ├── api/                 # ทดสอบ HTTP endpoints
+│   ├── api/                 # ทดสอบ HTTP endpoints, Locate, Inspections, History, Resilience
 │   ├── core/                # ทดสอบ config loader และ path resolution
 │   ├── db/                  # ทดสอบ SQLite และ Idempotency
 │   └── storage/             # ทดสอบการบันทึกไฟล์ภาพและกู้คืน
@@ -93,49 +95,96 @@ apps/backend/
 
 ---
 
-## 5. การติดตั้งและการเริ่มใช้งาน (PowerShell)
+## 5. วิธีการรันระบบเพื่อตรวจสอบงาน 04 (Webcam, Backend & Logging)
 
-### เตรียม Environment และ Dependencies
+เพื่อให้ระบบทำงานครบวงจรและสามารถทดสอบกล้อง Webcam หน้าเว็บคู่กับ Backend ได้ ให้เปิด **PowerShell 2 หน้าต่าง** ดังนี้:
 
+### ขั้นตอนที่ 1: เตรียม Environment (ทำครั้งแรก)
 ```powershell
-# ที่ Repository Root
+# รันที่ Repository Root
 py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r apps/backend/requirements.txt
 if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+
+# ติดตั้ง Frontend Dependencies
+cd apps/web
+npm install
+cd ../..
 ```
 
-### รัน Backend Dev Server
-
+### ขั้นตอนที่ 2: รัน Backend Server (หน้าต่าง Terminal 1)
 ```powershell
-.\.venv\Scripts\uvicorn.exe app.main:app --host 127.0.0.1 --port 8000 --app-dir apps/backend --reload
+# รันจาก Repository Root เสมอ
+.\.venv\Scripts\uvicorn.exe app.main:app --app-dir apps/backend --host 127.0.0.1 --port 8000 --reload
 ```
-
-- Swagger UI: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+เมื่อรันสำเร็จจะแสดงข้อความ:
+- `Uvicorn running on http://127.0.0.1:8000`
+- Swagger Documentation: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 - Health Check: [http://127.0.0.1:8000/api/health](http://127.0.0.1:8000/api/health)
-- Products Catalog: [http://127.0.0.1:8000/api/products](http://127.0.0.1:8000/api/products)
 
-### รันชุดทดสอบ (Automated Tests)
-
+### ขั้นตอนที่ 3: รัน Frontend Web (หน้าต่าง Terminal 2)
 ```powershell
-.\.venv\Scripts\pytest.exe apps/backend/tests -v
+# เปิดหน้าต่าง PowerShell ใหม่ แล้วรัน:
+cd apps/web
+npm run dev
+```
+เปิดเว็บเบราว์เซอร์ไปที่: **`http://127.0.0.1:5173/`**
+
+---
+
+## 6. การแก้ปัญหา [Errno 10048] Address already in use
+
+### สาเหตุที่เกิดขึ้น
+เกิดจากมีกระบวนการ (Process) เดิมของ Python / Uvicorn เปิดค้างอยู่และกำลังผูกจอง Port 8000 อยู่แล้ว ทำให้เมื่อสั่งรันคำสั่ง `uvicorn` ซ้ำอีกครั้งในหน้าต่างใหม่ ระบบปฏิบัติการ Windows จะปฏิเสธพร้อมข้อผิดพลาด:
+`ERROR: [Errno 10048] error while attempting to bind on address ('127.0.0.1', 8000): only one usage of each socket address is normally permitted`
+
+### วิธีแก้ไข (PowerShell)
+1. ตรวจสอบว่า Process ID (PID) ใดกำลังใช้งาน Port 8000:
+```powershell
+Get-NetTCPConnection -LocalPort 8000 | Select-Object LocalAddress, LocalPort, State, OwningProcess
+```
+2. สั่งปิด Process นั้นทันที (แทนที่ `<PID>` ด้วยตัวเลขที่ได้จากคอลัมน์ OwningProcess เช่น 31832):
+```powershell
+Stop-Process -Id <PID> -Force
+```
+3. สั่งรันคำสั่งเปิด Backend ใหม่อีกครั้ง:
+```powershell
+.\.venv\Scripts\uvicorn.exe app.main:app --app-dir apps/backend --port 8000 --reload
 ```
 
 ---
 
-## 6. โครงสร้างการจัดเก็บข้อมูลจริง (Persistence & Storage)
+## 7. คำถาม: หากกล้องเห็นหน้าแล้วระบบบอกว่า "พบฉลากชัดเจนพร้อมถ่าย" ปกติหรือไม่?
 
-ระบบจะจัดเก็บไฟล์ลงใน `STORAGE_ROOT` (ค่าเริ่มต้นคือ `./storage` ที่ Repository Root):
+### คำตอบ: **"ไม่ปกติครับ"**
+ระบบนี้คือระบบตรวจจับฉลากขวดน้ำดื่ม (Bottle Label Inspection) การที่กล้องส่องเห็นใบหน้าหรือร่างกายมนุษย์ แล้วระบบแจ้งว่าพบฉลากขวดน้ำ ถือเป็น **ข้อผิดพลาด (False Positive)**
 
-```text
-storage/
-├── inspections.sqlite3       # ฐานข้อมูลประวัติและสถานะล่าสุด (WAL mode)
-├── pending/
-│   └── <inspection_id>/      # พักไฟล์ชั่วคราวระหว่างบันทึก
-└── <YYYY-MM-DD (เวลาไทย)>/
-    └── <pass|fail|review>/
-        └── <inspection_id>/
-            ├── original.jpg  # ภาพจริงที่ใช้ตรวจ (แก้มุม EXIF แล้ว)
-            ├── annotated.jpg # ภาพพร้อมวาดกรอบผลตรวจ
-            ├── result.json   # Decision snapshot (บันทึกคงเดิม ไม่แก้หลังสร้าง)
-            └── supporting/   # ภาพหลักฐานหลายมุม (index: 0.jpg, 1.jpg, ...)
+### สาเหตุที่เกิดในเวอร์ชันก่อนหน้า
+ในโค้ดตัวอย่างขั้นต้น (Mock Baseline) ฟังก์ชัน `locate_label()` ตรวจเพียงแค่ค่าความคมชัดของภาพ (`Laplacian blur variance >= 40.0`) โดยไม่ได้ตรวจจับวัตถุจริง เมื่อกล้องหันไปเห็นใบหน้าคนที่มีความคมชัด (มีเส้นตา, ปาก, จมูก, ผม) ค่าความคมชัดจึงผ่านเกณฑ์ ทำให้ Mock ตีความไปเองว่า `usable_view = True`
+
+### สิ่งที่ได้แก้ไขแล้วใน `apps/backend/app/services/inspection_adapter.py`:
+1. **Skin/Face Rejection Gate (HSV Skin Range Filter)**:
+   - แปลง ROI กึ่งกลางภาพเป็นปริภูมิสี HSV และตรวจสัดส่วนเฉดสีผิวคน (Hue: 0–25, Saturation: 30–200, Value: 60–255)
+   - หากพบสัดส่วนสีผิวเกิน 35% ระบบจะปฏิเสธทันที (`usable_view: false`, `bottle_visible: false`, `label_visible: false`)
+   - ระบบจะแนะนำผู้ใช้ว่า: **"กรุณานำขวดน้ำมาไว้ตรงกลางกรอบ"** แทนที่จะรายงานว่าพบฉลาก
+2. **Bottle Contour & Aspect Ratio Gate**:
+   - ค้นหาเส้นขอบวัตถุทรงกระบอกแนวตั้ง (Vertical Cylindrical Contour) ภายในกรอบไกด์ หากไม่มีขวดน้ำอยู่จริง จะไม่ผ่าน
+3. **Label Contrast & Texture Gate**:
+   - วัดความแตกต่างของเส้นขอบฉลาก (Label Edge Density) และค่าความเปรียบต่าง (Standard Deviation)
+   - หากหันหลังขวดที่เป็นพลาสติกใสไร้ฉลาก ระบบจะตรวจพบขวดแต่แจ้งเตือนว่า: **"กรุณาหมุนขวดให้เห็นฉลากด้านหน้า"**
+   - จะขึ้น **"พบฉลากชัดเจน พร้อมถ่ายภาพ"** (กรอบสีเขียว) ก็ต่อเมื่อนำขวดน้ำที่มีฉลากด้านหน้าเข้ามาในระยะและองศาที่ถูกต้องเท่านั้น
+
+---
+
+## 8. การรัน Automated Tests ทั้งหมด
+
+```powershell
+# รันชุดทดสอบ Backend ทั้งหมด (41 tests)
+.\.venv\Scripts\pytest.exe apps/backend/tests -v
+
+# ตรวจสอบโค้ด Frontend Web และ Typescript Build
+npm --prefix apps/web run build
+
+# ตรวจสอบความถูกต้องของโครงสร้างทั้ง Repository
+.\.venv\Scripts\python.exe scripts/check_repository.py
 ```
