@@ -1,0 +1,49 @@
+งาน 01_web_ui: หน้าเว็บและประสบการณ์ใช้งาน
+เจ้าของงาน: คนที่ 1 (รอกรอกชื่อจริงใน docs/team.md)
+ความยาก: ปานกลาง (3/5)
+Branch เริ่มต้น: feature/01-web-ui
+สถานะ: แผนพัฒนา; ดู implementation-status ก่อนรันคำสั่งแอป
+
+PROCESS — หลักการ Input/Output และเกณฑ์รับงาน
+
+บทบาท
+รับคำสั่งผู้ใช้และนำเสนอผลตรวจให้เข้าใจได้ โดยไม่ตัดสินคุณภาพสินค้าซ้ำใน UI
+
+Input
+- product_id จาก product catalog ของคนที่ 3/5
+- File / ชุดภาพหลายมุม / ภาพจับจาก Webcam ของคนที่ 4
+- InspectionResult และ History จาก API ของคนที่ 4
+
+Output
+- คำสั่งเริ่ม/หยุดฉากจำลองให้คนที่ 2
+- คำขอตรวจภาพพร้อม expected_product และ source_mode
+- กรอบ ผล คะแนน เหตุผล สถิติ และสถานะการบันทึกบนหน้าเว็บ
+
+การวาดกรอบ
+bbox = {x,y,width,height} มีหน่วย pixel ตาม image_width/image_height ในผล API
+ถ้ากล่องแสดงภาพกว้าง W สูง H และภาพจริงกว้าง Iw สูง Ih:
+scale = min(W/Iw, H/Ih)
+offsetX = (W - Iw*scale)/2; offsetY = (H - Ih*scale)/2
+ตำแหน่งบนจอ = bbox*scale + offset ในแต่ละแกน
+กรณี mirror preview ต้องแปลงกรอบให้ตรงหรือแสดงภาพตรวจแบบไม่ mirror ทั้งคู่
+
+เกณฑ์สี
+PASS = ฉลากที่พบตรงสินค้าและผ่านตำแหน่ง จึงใช้เขียว
+FAIL = หลักฐานภาพเพียงพอและผิดข้อกำหนด ใช้แดง
+REVIEW = เบลอ บัง มุมไม่ชัด หรือหลักฐานไม่พอ ใช้เหลือง
+ERROR = กล้อง/API/บันทึกมีปัญหา แสดงเป็นสถานะระบบ ไม่ใช่คำตอบสินค้า
+
+State ของหน้า
+idle → image_ready → checking → result → saving/saved หรือ save_failed
+ผลตรวจถูกส่งจาก Backend; เมื่อยังไม่มีผลอย่าแสดง PASS ล่วงหน้า
+History ใช้ข้อมูลจากแหล่งเก็บจริง ไม่ใช้สถิติ hardcode ในหน้าผลิตจริง
+
+การเชื่อมกับคนอื่น
+คนที่ 2 ส่ง Scene component กับ callbacks เพื่อฝังใน SimulationPage
+คนที่ 4 ส่ง CameraPanel / capture API และ endpoints; คนที่ 1 จัด layout รอบ component
+คนที่ 3 กำหนด meaning ของ score และ reason; คนที่ 5 ตรวจ wording และเกณฑ์ผลจริง
+
+เกณฑ์ส่งมอบ
+เลือกโหมดไม่ปนกัน, ปิดกล้องเมื่อออกหน้า, bbox ตรงทั้งจอเล็ก/ใหญ่,
+คะแนนไม่ถูกเรียกว่าโอกาสคำตอบถูก, ภาพ review/error ไม่ปนสินค้าที่ fail,
+มี screenshots และวิธีรัน build ใน PR

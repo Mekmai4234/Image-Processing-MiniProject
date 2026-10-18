@@ -1,0 +1,44 @@
+งาน 03_image_processing: ตรวจภาพและฉลาก
+เจ้าของงาน: คนที่ 3 (รอกรอกชื่อจริงใน docs/team.md)
+ความยาก: ยากที่สุด (5/5)
+Branch เริ่มต้น: feature/03-image-processing
+สถานะ: แผนพัฒนา; ดู implementation-status ก่อนรันคำสั่งแอป
+
+PROCESS — หลักการ Input/Output และเกณฑ์รับงาน
+
+Input
+image, expected_product, source_mode, orientation evidence และ config_version
+ผลประมวลผลภาพเป็นความจริงจาก pixels ไม่ใช้ filename/โฟลเดอร์คำตอบเป็น feature
+
+Pipeline
+Decode → Quality gate → Bottle ROI → Label candidates → Normalize
+→ Compare templates → Check product/position → Decision → Annotate
+median/average ใช้ลด noise เมื่อจำเป็น, HSV ใช้แยกสี, morphology เชื่อม/ลบจุด,
+edge/contour ช่วยหาฉลาก; เลือกจากปัญหา ไม่บังคับใส่ทุกเทคนิคในทุกภาพ
+
+Output
+InspectionResult ตาม docs/api-contract.md: result, reason, detected_product,
+match_score, score_method, bbox/expected_bbox, image size, timing และ config_version
+หากไม่พบ candidate ให้ bbox=null; ไม่สร้างกรอบวัตถุสมมุติ
+
+Score
+match_score = คะแนนความคล้ายตาม method ที่เลือก (0..1), ไม่ใช่ probability
+wrong_label อาจมี match_score สูงต่อสินค้าที่ตรวจพบได้ แต่ยังเป็น FAIL
+no label / ภาพเบลอ / ไม่สามารถจับคู่ ให้ score=null แทนตัวเลขสุ่ม
+ตรวจ tolerance และกฎ product แยกจาก score; คะแนนสูงไม่ได้ข้ามกฎตำแหน่ง
+
+Orientation
+locator บอก seen_label/usable_view; งาน 02/04 เป็นผู้ควบคุมการวนภาพ/การจับภาพ
+ครบมุมแต่ไม่มีหลักฐานพอ → REVIEW orientation_failed
+เห็นขวดครบด้านและยืนยันไม่มีฉลาก → FAIL missing_label
+Webcam ให้ผู้ใช้หมุนเองจนภาพ usable; กล้องหน้าเดียวไม่สามารถยืนยันมุมที่ไม่เห็น
+
+Error handling
+ไฟล์เปิดไม่ได้/API error เป็น operational error ไม่ใช่ผลผิดปกติของขวด
+ภาพเบลอ, แสงสะท้อนบัง, ฉลากหันหนี อาจเป็น REVIEW ตาม evidence
+ยี่ห้อที่อยู่นอก catalog ให้ REVIEW unknown_product ไม่เดาเป็นชนิดที่รู้จัก
+
+เกณฑ์ส่งมอบ
+pure functions ทดสอบได้, deterministic สำหรับ config เดียวกัน,
+มีผลเทียบ ground truth หลายขวด/หลาย session, ไม่ฝึก/ปรับเกณฑ์จาก test set,
+กรอบกับ annotation ตรงภาพ และเปิดเผยข้อจำกัดกับสภาพแสงจริง

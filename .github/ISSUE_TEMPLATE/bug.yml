@@ -1,0 +1,26 @@
+name: แจ้งปัญหา
+description: ปัญหาจากเว็บ กล้อง การตรวจ หรือบันทึก
+title: "[BUG] "
+labels: [bug]
+body:
+  - type: textarea
+    id: steps
+    attributes:
+      label: วิธีทำให้เกิดปัญหา
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: ผลที่คาดหวัง / ผลที่เกิดจริง
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: โหมด Browser รุ่นกล้อง และ config_version
+  - type: textarea
+    id: evidence
+    attributes:
+      label: หลักฐานที่เผยแพร่ได้
+      description: อย่าแนบภาพกล้องที่ติดบุคคลหรือข้อมูลส่วนตัว

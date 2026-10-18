@@ -1,0 +1,48 @@
+งาน 02_simulation_3d: สายพานและแท่นหมุนจำลอง 3D
+เจ้าของงาน: คนที่ 2 (รอกรอกชื่อจริงใน docs/team.md)
+ความยาก: ยาก (4/5)
+Branch เริ่มต้น: feature/02-simulation-3d
+สถานะ: แผนพัฒนา; ดู implementation-status ก่อนรันคำสั่งแอป
+
+STEP — ลำดับลงมือทำและจุดส่งงาน
+
+1. อ่าน docs/architecture.md แล้วทำ feature/02-simulation-3d จาก develop
+   เริ่มจากขวดทีละใบเพื่อป้องกันผลตรวจสลับขวด
+
+2. สร้าง Scene component ที่ไม่ผูกติดกับทั้งหน้าเว็บ
+   มี conveyor, turntable, camera station, reject pusher, pass output และ reject tray
+
+3. เพิ่มกล้องมุม perspective, ไฟ และวัสดุอ่านง่าย
+   ใช้สีหรือป้ายบอกสถานีและลูกศรทิศทาง หลีกเลี่ยงบังขวดที่กำลังตรวจ
+
+4. สร้าง bottle instance พร้อม job_id/inspection_id
+   ภาพที่อัปโหลดนำไปใช้เป็น texture/sprite หรือ representation ตามขอบเขตที่ทดสอบได้
+   ระบุว่าไม่ใช่สร้าง 3D ที่มองได้ทุกด้านจากภาพเดี่ยว
+
+5. ทำ state machine: IDLE → FEED → ORIENT → SETTLE → INSPECT
+   → WAIT_RESULT → SORT → OUTPUT → COMPLETE
+   เพิ่ม PAUSED, REVIEW และ ERROR ตาม docs/architecture.md
+
+6. ตอน ORIENT ให้เลือกภาพจาก angle_deg จริงในชุดเดียวกัน
+   ส่งภาพมุมนั้นไปค้นหาฉลากผ่าน Backend; แสดงมุมที่กำลังใช้
+   ถ้าไม่พบครบหนึ่งรอบ/ถึง timeout ให้ REVIEW และคัดออก
+
+7. หยุดภาพ/แท่นหมุนให้ชัดก่อนจับภาพตรวจ
+   ถ้าพบฉลาก ให้ตัวตรวจคุณภาพตัดสินต่อ; พบฉลากไม่ได้แปลว่า PASS
+
+8. ตอน WAIT_RESULT หยุดขวดที่สถานีกล้อง จน API ส่งผลกลับ
+   PASS ไป output เขียว; FAIL ไป reject แดง; REVIEW ไปคัดออก/รอถ่ายใหม่
+   ERROR หยุดสายงาน ไม่บันทึกเป็นความเสียหายของสินค้า
+
+9. ทำ reject animation เฉพาะตอนขวดถูกต้องถึงจุดดัน
+   timer/ผลตอบกลับต้องจับคู่ job_id; ผลเก่าหลัง reset ต้องถูกทิ้ง
+
+10. เพิ่ม pause/resume/reset และปรับความเร็ว
+    pause หยุด simulation clock; ไม่สร้างคำขอตรวจใหม่ซ้ำ
+    reset ยกเลิก/ละทิ้งงานค้างและคืนตำแหน่ง ไม่ลบ History ที่บันทึกแล้ว
+
+11. ทดสอบ PASS/FAIL/REVIEW/API error และเปลี่ยนหน้า mid-run
+    count เพิ่มครั้งเดียวต่อ completed inspection_id; การ replay แสดงผลไม่สร้าง log ใหม่
+
+12. ส่ง PR เข้า develop พร้อมวิดีโอ/ภาพสาธิตและ checklist
+    คนที่ 1 ฝัง component ได้ และคนที่ 5 ตรวจการคัดแยกกับผลที่ API ตอบตรงกัน

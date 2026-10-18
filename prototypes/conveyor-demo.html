@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vending Vision | Conveyor Simulator</title>
+<style>
+:root{font-family:system-ui,"Segoe UI",sans-serif;background:#eef3f9;color:#15243a;line-height:1.5}*{box-sizing:border-box}body{margin:0}button,input{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible{outline:3px solid #2563eb;outline-offset:3px}
+.wrap{max-width:1440px;margin:auto;padding:23px 22px 40px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{font-size:13px;font-weight:900;letter-spacing:.16em;color:#1d4ed8}.version{background:#fff;border:1px solid #ccdaeb;color:#4b607b;border-radius:99px;padding:6px 11px;font-size:12px}h1{font-size:clamp(27px,3vw,40px);line-height:1.18;margin:9px 0 5px}.sub{margin:0 0 22px;color:#56677e;max-width:900px}.grid{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(320px,.9fr);gap:18px}.panel{background:#fff;border:1px solid #d9e3f0;border-radius:20px;box-shadow:0 14px 35px #12335c0b;padding:18px}.panelhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:11px}.panel h2{font-size:18px;margin:0}.live{font-size:12px;font-weight:800;border-radius:99px;padding:6px 10px;background:#e6eefb;color:#1d4ed8}.live.running{background:#e9f8ef;color:#15803d}.scene{background:radial-gradient(circle at 55% 25%,#e1edff,#d4e2f3 68%,#c7d8eb);border:1px solid #bfd0e5;border-radius:15px;overflow:hidden}.scene svg{display:block;width:100%;height:auto;min-height:400px}.diagram-label{font:700 14px system-ui,sans-serif;fill:#203550}.diagram-small{font:600 11px system-ui,sans-serif;fill:#566b87}.belt-dashes{stroke-dasharray:16 13;animation:belt .48s linear infinite;animation-play-state:paused}.scene.running .belt-dashes{animation-play-state:running}@keyframes belt{to{stroke-dashoffset:-29}}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:13px}.stat{background:#f6f9fd;border:1px solid #dce6f2;border-radius:11px;padding:10px}.stat b{display:block;font-size:22px;line-height:1.1}.stat span{font-size:12px;color:#607189}.stat.good b{color:#15803d}.stat.bad b{color:#dc2626}.flow{margin:14px 0 0;display:flex;gap:7px;flex-wrap:wrap}.flow span{font-size:12px;font-weight:700;padding:7px 9px;border:1px solid #d2deeb;border-radius:8px;color:#63738b;background:#f9fbfe}.flow span.on{background:#dbeafe;border-color:#93c5fd;color:#1d4ed8}.flow span.done{background:#dcfce7;border-color:#86efac;color:#166534}.right{display:grid;gap:18px;align-content:start}.fieldtitle{font-size:12px;letter-spacing:.07em;color:#315b9c;font-weight:900;margin:0 0 8px}.product{display:flex;gap:8px}.product button{flex:1;min-height:44px;border:2px solid #c5d3e5;border-radius:10px;background:#fff;font-weight:800;color:#28415f}.product button.active{border-color:#2563eb;background:#eaf2ff}.samples{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:11px 0}.samples button{border:1px solid #bdcde2;border-radius:9px;background:#fff;min-height:40px;color:#304a69}.samples button:hover{background:#f1f6ff}.upload{display:block;border:2px dashed #a9bfdb;border-radius:11px;background:#f8fbff;padding:11px 13px;font-size:13px;color:#516780}.upload input{display:block;max-width:100%;margin-top:7px;font-size:12px}.previewrow{display:flex;gap:11px;align-items:center;margin-top:11px}.previewrow canvas{width:74px;height:93px;object-fit:contain;background:#eaf1fa;border:1px solid #cfdbeb;border-radius:7px}.previewrow div{font-size:13px;color:#536982}.previewrow strong{display:block;color:#213b5d}.controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:15px}.controls button{min-height:45px;border-radius:10px;border:1px solid #b7cbe3;background:#fff;font-weight:800;color:#28415f}.controls #start{background:#2563eb;color:#fff;border-color:#2563eb}.controls #start:hover{background:#1d4ed8}.controls button:disabled{opacity:.5;cursor:not-allowed}.result{border:1px solid #d7e2ef;border-radius:12px;background:#f5f8fd;padding:13px;margin-top:14px;min-height:95px}.result h3{font-size:19px;margin:0 0 4px}.result p{font-size:13px;color:#53677f;margin:0}.result.pass{background:#ecf9f0;border-color:#8ed5a7}.result.reject{background:#fff0ef;border-color:#eeb0a9}.log{max-height:165px;overflow:auto;margin-top:14px;border-top:1px solid #e0e8f3;padding-top:7px}.log h3{font-size:13px;margin:0 0 5px}.log p{font-size:12px;color:#5b6e86;margin:5px 0}.note{font-size:12px;color:#5b6e86;margin-top:12px}.tag{font-weight:800;color:#294b77}.foot{font-size:12px;color:#697b92;margin:16px 0 0}@media(max-width:980px){.grid{grid-template-columns:1fr}.right{grid-template-columns:1fr 1fr}.scene svg{min-height:0}}@media(max-width:650px){.wrap{padding:15px 11px 28px}.right{grid-template-columns:1fr}.panel{padding:13px}.scene{overflow:auto}.scene svg{min-width:720px}.stats{gap:5px}.stat{padding:7px}.stat b{font-size:18px}}@media(prefers-reduced-motion:reduce){.belt-dashes{animation:none}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<div class="top"><div class="brand">VENDING VISION / SYSTEM SIMULATOR</div><div class="version">Prototype 02</div></div>
+<h1>ตู้ขายสินค้า + สายพานตรวจฉลาก</h1>
+<p class="sub">จำลองระบบตั้งแต่ปล่อยขวด ตรวจภาพที่สถานีกล้อง จนถึงตัวดันคัดออกและช่องรับสินค้า</p>
+<div class="grid">
+<section class="panel" aria-label="แผนผังระบบจำลอง">
+ <div class="panelhead"><h2>สายการทำงานแบบ 3D Perspective</h2><span id="live" class="live">พร้อมเริ่ม</span></div>
+ <div class="scene" id="scene">
+ <svg viewBox="0 0 1000 570" role="img" aria-labelledby="diagTitle diagDesc">
+ <title id="diagTitle">ระบบสายพานตรวจสินค้าและจุดคัดออก</title><desc id="diagDesc">ขวดออกจากช่องปล่อยสินค้า ผ่านกล้องตรวจฉลาก และถูกส่งไปช่องรับหรือจุดคัดออก</desc>
+ <defs>
+  <linearGradient id="belt" x2="0" y2="1"><stop stop-color="#253b5c"/><stop offset=".55" stop-color="#344f75"/><stop offset="1" stop-color="#1b2f4c"/></linearGradient>
+  <linearGradient id="metal" x2="0" y2="1"><stop stop-color="#90aac8"/><stop offset="1" stop-color="#53729a"/></linearGradient>
+  <linearGradient id="orangeDrink" x2="0" y2="1"><stop stop-color="#f9b63e"/><stop offset="1" stop-color="#df7811"/></linearGradient>
+  <linearGradient id="lemonDrink" x2="0" y2="1"><stop stop-color="#fff08b"/><stop offset="1" stop-color="#d5ba1b"/></linearGradient>
+  <pattern id="gridlines" width="35" height="35" patternUnits="userSpaceOnUse"><path d="M35 0H0V35" fill="none" stroke="#aac0dc" stroke-width=".6" opacity=".35"/></pattern>
+ </defs>
+ <rect width="1000" height="570" fill="url(#gridlines)"/>
+ <ellipse cx="506" cy="394" rx="420" ry="38" fill="#6782a644"/>
+ <!-- feed cabinet -->
+ <path d="M60 135 L82 116 H234 L212 135 Z" fill="#829ec1" stroke="#3f5d83" stroke-width="3"/>
+ <path d="M212 135 L234 116 V266 L212 288 Z" fill="#355174" stroke="#294364" stroke-width="3"/>
+ <rect x="60" y="135" width="152" height="153" rx="9" fill="url(#metal)" stroke="#3f5d83" stroke-width="4"/>
+ <rect x="74" y="153" width="124" height="93" rx="6" fill="#dceafa" stroke="#3f5d83" stroke-width="3"/>
+ <rect x="95" y="180" width="28" height="54" rx="9" fill="url(#orangeDrink)"/><rect x="99" y="197" width="20" height="17" rx="2" fill="#fff"/>
+ <rect x="145" y="180" width="28" height="54" rx="9" fill="url(#lemonDrink)"/><rect x="149" y="197" width="20" height="17" rx="2" fill="#fff"/>
+ <rect x="108" y="260" width="55" height="15" rx="3" fill="#213b5d"/>
+ <text x="137" y="105" text-anchor="middle" class="diagram-label">1. ปล่อยขวด</text>
+ <!-- main conveyor -->
+ <path d="M167 284 L830 284 L863 314 L200 314 Z" fill="#6e8fb3" stroke="#314e73" stroke-width="4"/>
+ <path d="M200 314 L863 314 V391 L200 391 Z" fill="#253f62" stroke="#314e73" stroke-width="4"/>
+ <rect x="166" y="285" width="664" height="74" rx="18" fill="url(#belt)" stroke="#213b5e" stroke-width="5"/>
+ <path d="M194 321 H801" fill="none" stroke="#9bb2cf" stroke-width="4" class="belt-dashes"/>
+ <path d="M175 285 H825 M175 359 H825" stroke="#b2c6de" stroke-width="7" stroke-linecap="round"/>
+ <g fill="#6f8aaa" stroke="#2f4c70" stroke-width="3"><circle cx="199" cy="322" r="31"/><circle cx="800" cy="322" r="31"/></g>
+ <g fill="#c6d6e9"><circle cx="199" cy="322" r="14"/><circle cx="800" cy="322" r="14"/></g>
+ <!-- reject branch behind front -->
+ <path d="M695 353 L751 353 L889 467 L840 484 Z" fill="#243e60" stroke="#52759b" stroke-width="5"/>
+ <path d="M716 377 L860 468" stroke="#a7bdd6" stroke-width="4" stroke-dasharray="13 12" class="belt-dashes"/>
+ <path d="M755 370 L892 461 M708 378 L841 493" stroke="#aac2dc" stroke-width="5"/>
+ <!-- inspection station -->
+ <path d="M395 165 L421 145 H552 L527 165 Z" fill="#6686aa" stroke="#345578" stroke-width="4"/>
+ <path d="M527 165 L552 145 V355 L527 373 Z" fill="#2e4c70" stroke="#345578" stroke-width="4"/>
+ <path d="M397 165 H527 V373 H397 Z" fill="#e9f3ff55" stroke="#41658d" stroke-width="6"/>
+ <rect x="431" y="178" width="66" height="53" rx="8" fill="#213954" stroke="#8aa6c9" stroke-width="4"/>
+ <circle cx="464" cy="204" r="16" fill="#091d35" stroke="#89a5c5" stroke-width="5"/><circle cx="464" cy="204" r="6" fill="#69c4fc"/>
+ <path d="M463 229 V314" stroke="#4bb6ff" stroke-width="3" stroke-dasharray="7 6" opacity=".8"/>
+ <rect x="406" y="252" width="8" height="48" rx="3" fill="#fef3c7"/><rect x="511" y="252" width="8" height="48" rx="3" fill="#fef3c7"/>
+ <text x="468" y="113" text-anchor="middle" class="diagram-label">2. กล้องตรวจฉลาก</text>
+ <text x="468" y="129" text-anchor="middle" class="diagram-small">CAMERA + LED</text>
+ <!-- diverter -->
+ <rect x="674" y="216" width="77" height="52" rx="7" fill="#45678d" stroke="#294363" stroke-width="4"/>
+ <path id="pusher" d="M713 265 V293" stroke="#f59e0b" stroke-width="13" stroke-linecap="round"/>
+ <text x="714" y="186" text-anchor="middle" class="diagram-label">3. ตัวดันคัดออก</text>
+ <text x="714" y="203" text-anchor="middle" class="diagram-small">REJECT PUSHER</text>
+ <!-- destinations -->
+ <path d="M843 288 H956 V365 H843 Z" fill="#e9f8ee" stroke="#2d9c59" stroke-width="5"/>
+ <path d="M843 288 L861 273 H974 L956 288 Z" fill="#a8d8b7" stroke="#2d9c59" stroke-width="4"/>
+ <path d="M956 288 L974 273 V351 L956 365 Z" fill="#78b78d" stroke="#2d9c59" stroke-width="4"/>
+ <text x="898" y="322" text-anchor="middle" class="diagram-label" fill="#166534">PASS</text>
+ <text x="898" y="341" text-anchor="middle" class="diagram-small">ช่องรับสินค้า</text>
+ <path d="M820 462 H960 V531 H820 Z" fill="#fff0ef" stroke="#d64f4f" stroke-width="5"/>
+ <path d="M820 462 L840 444 H979 L960 462 Z" fill="#f2b5b2" stroke="#d64f4f" stroke-width="4"/>
+ <path d="M960 462 L979 444 V513 L960 531 Z" fill="#d88985" stroke="#d64f4f" stroke-width="4"/>
+ <text x="889" y="497" text-anchor="middle" class="diagram-label" fill="#b91c1c">REJECT</text>
+ <text x="889" y="516" text-anchor="middle" class="diagram-small">ถาดคัดออก</text>
+ <!-- moving bottle -->
+ <g id="bottle" transform="translate(142 322)">
+  <g id="cartoonBottle">
+  <ellipse cx="2" cy="21" rx="41" ry="10" fill="#0a223e66"/>
+  <rect x="-34" y="-17" width="68" height="34" rx="13" fill="url(#orangeDrink)" stroke="#b45c13" stroke-width="2"/>
+  <rect x="31" y="-11" width="14" height="22" rx="3" fill="#e5e9ed" stroke="#aab4c0" stroke-width="2"/>
+  <rect id="bottleLabel" x="-12" y="-15" width="27" height="30" rx="3" fill="#fffdf5" stroke="#c5cad0" stroke-width="2"/>
+  <circle id="bottleIcon" cx="1" cy="0" r="8" fill="#ef8420"/>
+  </g>
+  <image id="photoBottle" x="-45" y="-95" width="90" height="120" preserveAspectRatio="xMidYMax meet" style="display:none;filter:drop-shadow(3px 7px 3px #0a223e77)"/>
+ </g>
+ <g id="sensorLamp"><circle cx="539" cy="183" r="9" fill="#94a3b8" stroke="#fff" stroke-width="3"/></g>
+ </svg>
+ </div>
+ <div class="flow" aria-label="ขั้นตอนระบบ"><span id="f0">1 ปล่อยขวด</span><span id="f1">2 ลำเลียง</span><span id="f2">3 ตรวจฉลาก</span><span id="f3">4 คัดแยก</span><span id="f4">5 ส่งออก</span></div>
+ <div class="stats"><div class="stat"><b id="total">0</b><span>ตรวจทั้งหมด</span></div><div class="stat good"><b id="passed">0</b><span>PASS</span></div><div class="stat bad"><b id="rejected">0</b><span>REJECT</span></div></div>
+</section>
+<div class="right">
+<section class="panel" aria-label="ตั้งค่าการทดสอบ">
+ <div class="fieldtitle">ตั้งค่ารอบทดสอบ</div><h2>สินค้าและภาพฉลาก</h2>
+ <div class="product" role="group" aria-label="เลือกสินค้า"><button id="orange" class="active" aria-pressed="true">น้ำส้ม</button><button id="lemon" aria-pressed="false">น้ำมะนาว</button></div>
+ <div class="samples" role="group" aria-label="ตัวอย่างภาพ"><button data-sample="good">ฉลากถูกต้อง</button><button data-sample="missing">ไม่มีฉลาก</button><button data-sample="shifted">ฉลากเลื่อน</button><button data-sample="wrong">ฉลากผิดชนิด</button></div>
+ <label class="upload">หรือใส่ภาพขวดจากเครื่อง<input id="file" type="file" accept="image/png,image/jpeg,image/webp"></label>
+ <div class="previewrow"><canvas id="preview" width="400" height="500" role="img" aria-label="ภาพสินค้าเข้าระบบ"></canvas><div><strong id="imageName">ภาพตัวอย่าง: ฉลากถูกต้อง</strong>ภาพที่ระบบใช้ตรวจเมื่อขวดถึงสถานีกล้อง</div></div>
+ <div class="controls"><button id="start">เริ่มสายพาน</button><button id="pause" disabled>หยุดชั่วคราว</button><button id="reset">รีเซ็ต</button></div>
+ <div id="result" class="result" role="status" aria-live="polite"><h3>พร้อมเริ่ม</h3><p>เลือกภาพ แล้วกดเริ่มสายพาน</p></div>
+</section>
+<section class="panel"><h2>บันทึกการทำงาน</h2><div id="log" class="log" aria-live="polite"><p>รอเริ่มรอบแรก</p></div><p class="note"><span class="tag">ขอบเขตต้นแบบ:</span> การตัดรูปร่างขวดทำงานดีที่สุดกับภาพขวดเดี่ยวบนพื้นหลังเรียบหรือ PNG โปร่งใส ตัวตรวจฉลากใช้สีและตำแหน่งในภาพด้านหน้าที่จัดกลางภาพ ภาพจริงต้องปรับเกณฑ์ตามกล้อง แสง และบรรจุภัณฑ์ที่ใช้</p></section>
+</div></div><p class="foot">ตัวอย่างนี้ทำงานภายในเบราว์เซอร์ ไม่มีการส่งภาพขึ้นเซิร์ฟเวอร์</p>
+</main>
+<script>
+const $=id=>document.getElementById(id),canvas=$('preview'),ctx=canvas.getContext('2d',{willReadFrequently:true});
+let product='orange',sample='good',running=false,paused=false,elapsed=0,lastFrame=0,decision=null,decisionReason='',total=0,passed=0,rejected=0,phase=-1,uploadedCutout=null;
+const colors={orange:{drink:'#ef8a19',icon:'#ed8120',name:'น้ำส้ม'},lemon:{drink:'#e8d334',icon:'#e7c51f',name:'น้ำมะนาว'}};
+function log(message){const p=document.createElement('p');p.textContent=new Date().toLocaleTimeString('th-TH')+'  '+message;const box=$('log');if(box.firstElementChild?.textContent==='รอเริ่มรอบแรก')box.replaceChildren();box.prepend(p)}
+function status(title,message,type=''){$('result').className='result '+type;$('result').innerHTML='<h3>'+title+'</h3><p>'+message+'</p>'}
+function drawSample(kind){if(running)return;sample=kind;uploadedCutout=null;$('photoBottle').style.display='none';$('cartoonBottle').style.display='';const c=colors[product];ctx.fillStyle='#eaf1fa';ctx.fillRect(0,0,400,500);ctx.fillStyle='#d5e0ec';ctx.fillRect(0,440,400,60);ctx.fillStyle='#f9fafb';ctx.fillRect(169,76,62,36);ctx.fillStyle='#becbd9';ctx.fillRect(166,68,68,12);ctx.fillStyle=c.drink;ctx.beginPath();ctx.roundRect(120,108,160,326,35);ctx.fill();ctx.fillStyle='#ffffff18';ctx.fillRect(136,130,14,280);if(kind!=='missing'){const ly=kind==='shifted'?285:205,icon=kind==='wrong'?colors[product==='orange'?'lemon':'orange'].icon:c.icon;ctx.fillStyle='#fbfbf6';ctx.fillRect(142,ly,116,90);ctx.strokeStyle='#d2d7dc';ctx.lineWidth=2;ctx.strokeRect(142,ly,116,90);ctx.fillStyle=icon;ctx.beginPath();ctx.arc(200,ly+44,27,0,2*Math.PI);ctx.fill();ctx.fillStyle='#467c30';ctx.beginPath();ctx.ellipse(211,ly+17,12,5,-.4,0,2*Math.PI);ctx.fill()}const names={good:'ฉลากถูกต้อง',missing:'ไม่มีฉลาก',shifted:'ฉลากเลื่อน',wrong:'ฉลากผิดชนิด'};$('imageName').textContent='ภาพตัวอย่าง: '+names[kind];status('พร้อมเริ่ม','เลือกภาพ แล้วกดเริ่มสายพาน')}
+function setProduct(v){if(running)return;product=v;for(const name of ['orange','lemon']){$(name).classList.toggle('active',name===v);$(name).setAttribute('aria-pressed',name===v)}drawSample('good')}
+$('orange').onclick=()=>setProduct('orange');$('lemon').onclick=()=>setProduct('lemon');document.querySelectorAll('[data-sample]').forEach(b=>b.onclick=()=>drawSample(b.dataset.sample));
+function makeProductCutout(img){
+ const max=520,scale=Math.min(1,max/Math.max(img.width,img.height)),w=Math.max(1,Math.round(img.width*scale)),h=Math.max(1,Math.round(img.height*scale));
+ const temp=document.createElement('canvas');temp.width=w;temp.height=h;const tc=temp.getContext('2d',{willReadFrequently:true});tc.drawImage(img,0,0,w,h);const frame=tc.getImageData(0,0,w,h),d=frame.data;
+ const corners=[[2,2],[w-3,2],[2,h-3],[w-3,h-3]].map(([x,y])=>{const i=(Math.max(0,Math.min(h-1,y))*w+Math.max(0,Math.min(w-1,x)))*4;return[d[i],d[i+1],d[i+2]]});
+ const bg=[0,1,2].map(k=>corners.map(c=>c[k]).sort((a,b)=>a-b)[1]);
+ const hasAlpha=[0,1,w-1,w*(h-1)].some(p=>d[p*4+3]<180);
+ let left=w,right=-1,top=h,bottom=-1,rows=[];
+ for(let y=0;y<h;y++){
+  let lo=w,hi=-1,count=0;
+  for(let x=0;x<w;x++){
+   const i=(y*w+x)*4,r=d[i],g=d[i+1],b=d[i+2],a=d[i+3];
+   const diff=Math.max(Math.abs(r-bg[0]),Math.abs(g-bg[1]),Math.abs(b-bg[2]));
+   const foreground=hasAlpha?a>35:(diff>32&&a>35);
+   if(foreground){lo=Math.min(lo,x);hi=Math.max(hi,x);count++}
+  }
+  if(count>=2&&hi-lo<w*.82){rows[y]=[lo,hi];left=Math.min(left,lo);right=Math.max(right,hi);top=Math.min(top,y);bottom=Math.max(bottom,y)}
+ }
+ if(right<left||bottom-top<20)return {url:temp.toDataURL('image/png'),ratio:w/h,extracted:false};
+ const pad=Math.max(2,Math.round(w*.01));left=Math.max(0,left-pad);right=Math.min(w-1,right+pad);top=Math.max(0,top-pad);bottom=Math.min(h-1,bottom+pad);
+ if(!hasAlpha){
+  for(let y=0;y<h;y++){
+   let bounds=rows[y];if(!bounds&&y>=top&&y<=bottom){let before=y-1,after=y+1;while(before>=top&&!rows[before])before--;while(after<=bottom&&!rows[after])after++;bounds=before>=top&&after<=bottom?[Math.round((rows[before][0]+rows[after][0])/2),Math.round((rows[before][1]+rows[after][1])/2)]:before>=top?rows[before]:after<=bottom?rows[after]:null}
+   for(let x=0;x<w;x++){const i=(y*w+x)*4;if(!bounds||x<bounds[0]-1||x>bounds[1]+1)d[i+3]=0;else if(x===bounds[0]-1||x===bounds[1]+1)d[i+3]=110}
+  }
+ }else{for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(x<left||x>right||y<top||y>bottom)d[(y*w+x)*4+3]=0}
+ tc.putImageData(frame,0,0);
+ const cropped=document.createElement('canvas');cropped.width=right-left+1;cropped.height=bottom-top+1;cropped.getContext('2d').drawImage(temp,left,top,cropped.width,cropped.height,0,0,cropped.width,cropped.height);
+ return {url:cropped.toDataURL('image/png'),ratio:cropped.width/cropped.height,extracted:true};
+}
+function showUploadedBottle(cutout){uploadedCutout=cutout;const image=$('photoBottle'),height=112,width=Math.max(20,Math.min(88,height*cutout.ratio));image.setAttribute('href',cutout.url);image.setAttribute('width',width);image.setAttribute('height',height);image.setAttribute('x',-width/2);image.setAttribute('y',-height+25);image.style.display='';$('cartoonBottle').style.display='none'}
+$('file').addEventListener('change',e=>{if(running)return;const f=e.target.files[0];if(!f)return;if(!f.type.startsWith('image/')){status('ไฟล์ไม่รองรับ','เลือก PNG, JPG หรือ WebP','reject');return}const url=URL.createObjectURL(f),img=new Image();img.onload=()=>{ctx.fillStyle='#eaf1fa';ctx.fillRect(0,0,400,500);const s=Math.min(400/img.width,500/img.height);ctx.drawImage(img,(400-img.width*s)/2,(500-img.height*s)/2,img.width*s,img.height*s);const cutout=makeProductCutout(img);showUploadedBottle(cutout);URL.revokeObjectURL(url);sample='upload';$('imageName').textContent=f.name;status('พร้อมเริ่ม',cutout.extracted?'ตัดพื้นหลังและนำขวดจากภาพไปวางบนสายพานแล้ว':'นำภาพขึ้นสายพานแล้ว; พื้นหลังยังแยกไม่ชัด')};img.onerror=()=>{URL.revokeObjectURL(url);status('เปิดภาพไม่ได้','ลองเลือกภาพอื่น','reject')};img.src=url});
+function pixel(d,x,y){let i=(y*400+x)*4;return[d[i],d[i+1],d[i+2]]}
+function inspect(){const d=ctx.getImageData(0,0,400,500).data;let white=0,minx=400,maxx=0,miny=500,maxy=0;for(let y=175;y<365;y+=2)for(let x=125;x<275;x+=2){const[r,g,b]=pixel(d,x,y);if(r>205&&g>205&&b>195&&Math.max(r,g,b)-Math.min(r,g,b)<42){white++;minx=Math.min(x,minx);maxx=Math.max(x,maxx);miny=Math.min(y,miny);maxy=Math.max(y,maxy)}}if(white<280)return[false,'ไม่พบพื้นที่ฉลากสีขาว'];let cy=(miny+maxy)/2,cx=(minx+maxx)/2;if(Math.abs(cy-250)>25||Math.abs(cx-200)>26)return[false,'ฉลากอยู่นอกตำแหน่งที่กำหนด'];let sr=0,sg=0,n=0;for(let y=235;y<270;y+=2)for(let x=180;x<220;x+=2){const[r,g,b]=pixel(d,x,y);if(r>100&&b<130&&r>g*.85){sr+=r;sg+=g;n++}}if(n<20)return[false,'อ่านสัญลักษณ์ฉลากไม่ได้'];const found=sg/sr>.67?'เหลือง':'ส้ม',expected=product==='orange'?'ส้ม':'เหลือง';if(found!==expected)return[false,'ฉลากไม่ตรงกับ '+colors[product].name];return[true,'ฉลากถูกชนิดและอยู่ในตำแหน่งที่กำหนด']}
+function updateCounters(){$('total').textContent=total;$('passed').textContent=passed;$('rejected').textContent=rejected}
+function setPhase(n){if(n===phase)return;phase=n;for(let i=0;i<5;i++){$('f'+i).className=i<n?'done':i===n?'on':''}const messages=['ปล่อยขวดจากช่องเก็บ','สายพานลำเลียงขวด','กล้องตรวจฉลาก','ขวดถึงตัวดันคัดออก','ส่งขวดออกจากระบบ'];if(n>=0&&n<5)log(messages[n])}
+function bottlePosition(t){let x=142,y=322;if(t<.7){x=142+42*(t/.7)}else if(t<3){x=184+(463-184)*((t-.7)/2.3)}else if(t<4){x=463}else if(t<5.9){x=463+(710-463)*((t-4)/1.9)}else{let q=Math.min(1,(t-5.9)/1.3);x=710+(decision?177:145)*q;y=322+(decision?0:159)*q}return[x,y]}
+function render(t){const[x,y]=bottlePosition(t);$('bottle').setAttribute('transform',`translate(${x.toFixed(1)} ${y.toFixed(1)})`);$('bottle').style.display='';$('pusher').setAttribute('d',t>=5.85&&!decision&&t<6.7?'M713 265 V335':'M713 265 V293');$('sensorLamp').firstElementChild.setAttribute('fill',t>=3&&t<4?(decision?'#22c55e':'#ef4444'):'#94a3b8')}
+function frame(now){if(!running||paused)return;if(!lastFrame)lastFrame=now;elapsed+=Math.min((now-lastFrame)/1000,.06);lastFrame=now;if(elapsed<.7)setPhase(0);else if(elapsed<3)setPhase(1);else if(elapsed<4){setPhase(2);if(decision===null){[decision,decisionReason]=inspect();status(decision?'PASS — ฉลากผ่าน':'REJECT — พบปัญหา',decisionReason,decision?'pass':'reject');log((decision?'ผลตรวจ PASS: ':'ผลตรวจ REJECT: ')+decisionReason)}}else if(elapsed<5.9)setPhase(3);else setPhase(4);render(elapsed);if(elapsed>=7.2){running=false;total++;if(decision)passed++;else rejected++;updateCounters();$('scene').classList.remove('running');$('live').className='live';$('live').textContent=decision?'ส่งถึงช่องรับสินค้า':'ส่งถึงถาด Reject';$('start').disabled=false;$('pause').disabled=true;log(decision?'จบรอบ: จ่ายสินค้า':'จบรอบ: คัดออก');return}requestAnimationFrame(frame)}
+function start(){if(running)return;running=true;paused=false;elapsed=0;lastFrame=0;decision=null;decisionReason='';phase=-1;render(0);$('start').disabled=true;$('pause').disabled=false;$('pause').textContent='หยุดชั่วคราว';$('scene').classList.add('running');$('live').className='live running';$('live').textContent='สายพานกำลังทำงาน';status('กำลังลำเลียง','ขวดจะหยุดที่กล้องเพื่อตรวจฉลาก');if(sample==='upload'&&uploadedCutout){showUploadedBottle(uploadedCutout)}else{$('photoBottle').style.display='none';$('cartoonBottle').style.display='';$('cartoonBottle').querySelector('rect').setAttribute('fill',product==='orange'?'url(#orangeDrink)':'url(#lemonDrink)');$('bottleIcon').setAttribute('fill',sample==='wrong'?(product==='orange'?'#e7c51f':'#ef8420'):(product==='orange'?'#ef8420':'#e7c51f'));$('bottleLabel').style.display=sample==='missing'?'none':'';$('bottleIcon').style.display=sample==='missing'?'none':''}requestAnimationFrame(frame)}
+$('start').onclick=start;$('pause').onclick=()=>{if(!running)return;paused=!paused;$('pause').textContent=paused?'ทำต่อ':'หยุดชั่วคราว';$('scene').classList.toggle('running',!paused);$('live').textContent=paused?'หยุดชั่วคราว':'สายพานกำลังทำงาน';if(!paused){lastFrame=0;requestAnimationFrame(frame)}};
+$('reset').onclick=()=>{running=false;paused=false;elapsed=0;lastFrame=0;decision=null;phase=-1;total=passed=rejected=0;updateCounters();render(0);$('scene').classList.remove('running');$('live').className='live';$('live').textContent='พร้อมเริ่ม';$('start').disabled=false;$('pause').disabled=true;$('pause').textContent='หยุดชั่วคราว';for(let i=0;i<5;i++)$('f'+i).className='';$('log').innerHTML='<p>รอเริ่มรอบแรก</p>';status('พร้อมเริ่ม','เลือกภาพ แล้วกดเริ่มสายพาน')};
+drawSample('good');render(0);
+</script>
+</body></html>

@@ -1,0 +1,22 @@
+{
+  "demo": true,
+  "config_version": "demo-v0",
+  "products": [
+    {
+      "product_id": "bottle_a",
+      "display_name": "Bottle A — รอเลือกยี่ห้อและรุ่นจริง",
+      "brand": null,
+      "size_ml": null,
+      "reference_paths": [],
+      "validated": false
+    },
+    {
+      "product_id": "bottle_b",
+      "display_name": "Bottle B — รอเลือกยี่ห้อและรุ่นจริง",
+      "brand": null,
+      "size_ml": null,
+      "reference_paths": [],
+      "validated": false
+    }
+  ]
+}

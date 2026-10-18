@@ -1,0 +1,50 @@
+งาน 04_webcam_backend_logging: Webcam, API และบันทึกลงเครื่อง
+เจ้าของงาน: คนที่ 4 (รอกรอกชื่อจริงใน docs/team.md)
+ความยาก: ยาก (4/5)
+Branch เริ่มต้น: feature/04-webcam-backend
+สถานะ: แผนพัฒนา; ดู implementation-status ก่อนรันคำสั่งแอป
+
+STEP — ลำดับลงมือทำและจุดส่งงาน
+
+1. สร้าง feature/04-webcam-backend จาก develop อ่าน docs/api-contract.md และ storage-guide
+   ตกลง request/response กับคนที่ 1/3 ก่อนเริ่ม endpoint
+
+2. สร้าง FastAPI app มี /api/health กับ /api/products ก่อน
+   load env อย่างชัดเจน ตรวจ STORAGE_ROOT และสร้างโฟลเดอร์เมื่อ service เริ่ม
+   CORS เปิดเฉพาะ origin เว็บที่กำหนดสำหรับการพัฒนา
+
+3. ทำ POST /api/locate-label รับไฟล์+expected_product แล้วเรียก locator คนที่ 3
+   endpoint นี้ใช้ค้นหามุม ไม่สร้างประวัติหนึ่งรายการทุก frame
+
+4. ทำ POST /api/inspections รับ frame ที่เลือกแล้วพร้อม client_request_id
+   validate MIME/ข้อมูลภาพ ขนาด byte/pixel และ product; invalid request คืน 4xx
+   ส่งต่อ inspection function; ไม่ใช้คำตอบสุ่มเมื่อตัวตรวจยังไม่พร้อม
+
+5. Implement idempotency: client_request_id เดิม payload เดิมได้ inspection_id เดิม
+   ถ้า id เดิมแต่คนละ payload คืน conflict; ป้องกัน double click และ retry บันทึกซ้ำ
+
+6. จัด SQLite record กับไฟล์เป็น lifecycle pending → saved / failed
+   เขียนภาพผ่าน temporary file ภายใต้ root แล้ว rename เมื่อสำเร็จ
+   original, annotated และ result.json ต้องอ้าง inspection_id เดียวกัน
+   หากบันทึกบางส่วนล้มเหลว เก็บ status กับ error ให้แก้/ลองใหม่ได้
+
+7. ทำ GET history / detail / image และ GET export CSV พร้อม pagination/filter
+   ไม่เปิดให้ client ส่ง path ใดก็ได้ ใช้ image kind + inspection_id เพื่อ lookup
+
+8. ทำ POST /api/inspections/{id}/retry-save สำหรับไฟล์ที่ยังมีใน pending job
+   ถ้า process restart แล้วไม่มี source ให้บอกถ่ายใหม่ ไม่รายงานว่าบันทึกสำเร็จ
+
+9. ทำ CameraPanel: เปิด permission หลัง click, preview, เลือกกล้อง, capture เป็น Blob
+   ตั้ง requestVideoFrameCallback/requestAnimationFrame ตามที่รองรับ ไม่ยิง API ทุก frame
+   ใช้ throttled locator หนึ่ง request ต่อครั้ง และยกเลิกเมื่อออกหน้า
+
+10. แนะนำ “หมุนช้า ๆ / หยุดนิ่ง / ภาพเบลอ” จากผล locator+quality
+    เริ่ม manual capture ก่อน auto capture; auto ต้องมี stable window และ cooldown
+    ตั้ง logic ไม่ให้ขวดใบเดิมถูกเก็บซ้ำต่อเนื่องจนกว่าจะยืนยันรอบใหม่
+
+11. เชื่อม annotated bbox กับคนที่ 1 และผลกับคนที่ 2
+    แยก result ของสินค้าออกจาก storage_status/API error; fail-save ไม่เปลี่ยน PASS เป็น FAIL
+    ตรวจกล้องถูกปิดจริงเมื่อเปลี่ยนไป Simulation หรือ History
+
+12. ทดสอบ permission denied, no camera, timeout, unreadable file, disk full/เขียนไม่ได้,
+    retry และ backend restart; บันทึกวิธีรันกับตำแหน่งจัดเก็บจริง ส่ง PR เข้า develop

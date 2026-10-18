@@ -1,0 +1,48 @@
+งาน 05_dataset_testing: Dataset และการทดสอบ
+เจ้าของงาน: คนที่ 5 (รอกรอกชื่อจริงใน docs/team.md)
+ความยาก: ปานกลางถึงยาก (4/5)
+Branch เริ่มต้น: feature/05-dataset-testing
+สถานะ: แผนพัฒนา; ดู implementation-status ก่อนรันคำสั่งแอป
+
+STEP — ลำดับลงมือทำและจุดส่งงาน
+
+1. เปิด Issue 05 แล้วตกลงสินค้า A/B ว่าเป็นยี่ห้อ รุ่น และขนาดใด
+   รหัส product คงที่; บันทึก template กับ catalog version
+
+2. เขียน acceptance ของฉลากก่อนติดป้ายข้อมูล
+   มีฉลากครบ, ชนิดตรง expected_product, ตำแหน่ง/มุมใน tolerance
+   ไม่ใช้ผลจากโปรแกรมเป็น ground truth โดยตรง
+
+3. ถ่ายภาพจริงด้วย Webcam เป้าหมายหลายใบและหลาย session
+   ปกติ/เอียง/หันหลัง/แสงสะท้อน/ไม่มีฉลาก/ผิดชนิด; บันทึก condition ที่เกิดจริง
+   ขวดหันหลังในภาพเดียวให้ REVIEW ถ้ายังไม่มีหลักฐานว่าฉลากหายจริง
+
+4. เก็บชุดหลายมุมของขวดใบเดียวสำหรับ Simulation
+   เริ่ม 12 มุมที่ 30° หรือจำนวนที่ทีมทำได้ พร้อม angle_deg และ group id
+   ขวดไทยที่มีฉลากรอบตัวอาจมีหลายมุมที่อ่านได้ ไม่บังคับว่ามีด้านหน้าเดียวเสมอ
+
+5. ทำ CSV manifest ตาม examples/labels.csv
+   ให้คนที่สองตรวจทาน label และ expected product; ไม่ทราบให้ REVIEW/ว่างตาม field
+   แยก wrong_label (ขวดติดฉลากผิด) กับ wrong_product (หยิบคนละยี่ห้อ) ตาม evidence จริง
+
+6. แบ่ง development/validation/test เป็นกลุ่มขวดและ session
+   ตรวจ duplicate hash และภาพดัดแปลงก่อนแบ่ง; เก็บ test ไว้ไม่ปรับ threshold
+
+7. ส่ง development และ references ให้คนที่ 3 ทำ baseline
+   ส่งภาพ/expected output ที่เหมือนกันให้คนที่ 1/2/4 ทดลองเชื่อม
+
+8. ทำ tests ของ contract: PASS/FAIL/REVIEW, null score/bbox, unknown product
+   API invalid upload, retry, storage failure และ History ต้องตรงกับไฟล์จริง
+
+9. ทดสอบ simulation: หมุนครบเวลา, pause/resume/reset, response ช้า,
+   ส่งผลถูกขวด และ count/log ไม่ซ้ำเมื่อ replay หรือกดซ้ำ
+
+10. ทดสอบ Webcam: เปิด/ปฏิเสธ permission, ภาพ mirror, blur,
+    เปลี่ยนหน้าแล้วกล้องปิด, auto capture ไม่ถ่ายขวดเดิมซ้ำรัว ๆ
+
+11. ล็อก config แล้วรัน final test เพียงเพื่อประเมิน
+    รายงานจำนวนต่อคลาส, confusion matrix, fail recall, false pass,
+    false reject, REVIEW rate และ median/p95 เวลา พร้อมระบุเครื่องที่ใช้
+
+12. สรุปเคสที่ผิดและข้อจำกัด ส่ง PR พร้อม report และวิธีทำซ้ำ
+    ทุกคนเขียนรายงานส่วนตน; คนที่ 5 รวบรวม ไม่ใช่เขียนแทนทั้งทีม

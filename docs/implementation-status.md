@@ -1,0 +1,17 @@
+# สถานะความสามารถ
+
+| ส่วน | สถานะฐานเริ่มต้น |
+|---|---|
+| คู่มือ env/step/process 01–05 | พร้อมเริ่มทำงาน |
+| Git workflow, API contract, dataset/storage guides | มีเอกสาร |
+| CI ตรวจเอกสาร/โครงสร้าง | มีสคริปต์และ workflow |
+| HTML conveyor prototype | ทดลองได้ เกณฑ์สีพื้นฐานสำหรับภาพที่ควบคุม |
+| React app แยก 3 หน้า | ยังต้องพัฒนา |
+| Three.js conveyor / rotation | ยังต้องพัฒนา |
+| Webcam capture/guidance | ยังต้องพัฒนา |
+| OpenCV inspection ที่ validate กับขวดไทย | ยังต้องพัฒนา/เก็บข้อมูล |
+| Local persistence / SQLite / History API | ยังต้องพัฒนา |
+| Accuracy / timing ที่วัดจริง | ยังไม่มี |
+
+ทุก PR อัปเดตตามหลักฐานรันจริง พร้อม test/ภาพ/รายงาน ไม่ใช้ภาพ mockup ยืนยันว่าเสร็จ
+requirements.txt เป็นรายการเตรียมเครื่องเริ่มต้น ยังไม่ได้ lock จากแอปที่รันทดสอบครบ

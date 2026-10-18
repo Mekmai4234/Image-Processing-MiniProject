@@ -1,0 +1,10 @@
+# Initial environment manifest, to lock after first tested implementation.
+fastapi
+uvicorn
+python-multipart
+python-dotenv
+numpy
+opencv-python-headless
+Pillow
+pytest
+httpx

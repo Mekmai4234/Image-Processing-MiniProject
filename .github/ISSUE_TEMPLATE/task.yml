@@ -1,0 +1,34 @@
+name: งานพัฒนา
+description: แยกงานย่อยจาก 01–05
+title: "[TASK] "
+labels: [task]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: ส่วนที่รับผิดชอบ
+      options:
+        - 01 Web UI
+        - 02 Simulation 3D
+        - 03 Image Processing
+        - 04 Webcam Backend Logging
+        - 05 Dataset Testing
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: ผลที่ต้องการและปัญหาที่แก้
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: เกณฑ์รับงานและวิธีทดสอบ
+      description: ระบุ Input/Output, กรณีผิดพลาด และหลักฐานส่งมอบ
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: ต้องเชื่อมงานใคร / Issue ที่เกี่ยวข้อง

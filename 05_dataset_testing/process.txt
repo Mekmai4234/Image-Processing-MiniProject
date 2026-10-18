@@ -1,0 +1,44 @@
+งาน 05_dataset_testing: Dataset และการทดสอบ
+เจ้าของงาน: คนที่ 5 (รอกรอกชื่อจริงใน docs/team.md)
+ความยาก: ปานกลางถึงยาก (4/5)
+Branch เริ่มต้น: feature/05-dataset-testing
+สถานะ: แผนพัฒนา; ดู implementation-status ก่อนรันคำสั่งแอป
+
+PROCESS — หลักการ Input/Output และเกณฑ์รับงาน
+
+Input
+ภาพจริง + metadata การถ่าย + expected product + requirement ที่ตกลง
+ผล prediction จากตัวตรวจเป็นอีกคอลัมน์ ไม่ทับ ground truth
+
+Ground truth
+PASS = ฉลากครบ ชัด ตรง product และ tolerance
+FAIL = มีหลักฐานชัดว่าผิด เช่น ฉลากเลื่อนหรือ product ไม่ตรง
+REVIEW = ยังตัดสินไม่ได้ เช่น เบลอ ฉลากหันหนี/บัง/แสงสะท้อน
+ถ้ามีหลายข้อผิดให้ใช้ reason หลักตาม contract และเก็บ checks อื่นแยก
+
+Data leakage
+ภาพใบเดียวกันหลายมุมและภาพ augmentation ต้องอยู่ชุดเดียวกัน
+ห้ามให้ภาพอ้างอิง template ถูกนำมาทดสอบเป็นภาพ unseen
+สุ่มระดับภาพอย่างเดียวไม่พอ ต้อง group ด้วย physical_bottle_id/capture_session
+
+Evaluation
+Confusion matrix แสดง ground truth เทียบ prediction รวม REVIEW
+False pass = จำนวน GT FAIL ที่ predicted PASS / จำนวน GT FAIL ทั้งหมด
+False reject = จำนวน GT PASS ที่ predicted FAIL / จำนวน GT PASS ทั้งหมด
+Review rate = predicted REVIEW / จำนวนภาพ valid ทั้งหมด
+เมื่อ denominator เป็น 0 รายงาน N/A; แยก operational error ไม่ใส่เป็น fail ของขวด
+รายงานแยกยี่ห้อ โหมด และสภาพแสง ไม่สรุป accuracy รวมค่าเดียว
+
+Timing
+orientation_ms, inspection_ms, storage_ms, total_ms แยกกัน
+เปรียบเทียบเครื่อง/ความละเอียดเดิม; รวม median และ p95 พร้อมจำนวนตัวอย่าง
+เวลาภาพเคลื่อนไหวจำลองไม่ใช่เวลาอัลกอริทึมหรือเครื่องจักรจริง
+
+Log reuse
+ภาพใน storage/pass หรือ fail เป็น prediction ไม่ใช่คำตอบมนุษย์
+ให้คนตรวจทาน เก็บ reviewed_result/reviewer แล้วค่อยเพิ่ม dataset รุ่นใหม่
+เมื่อเปลี่ยน config ต้องบันทึก version เพื่อเทียบผลย้อนหลังได้
+
+เกณฑ์ส่งมอบ
+มี manifest ถูกต้อง, ไม่มี leakage ที่ตรวจพบ, ทุกผลไล่กลับภาพได้,
+มีรายงานความผิดพลาดที่สำคัญและวิธีทำซ้ำ, สาธิตครบทั้ง 2 โหมดและ history

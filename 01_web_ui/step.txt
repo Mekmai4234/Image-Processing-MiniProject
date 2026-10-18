@@ -1,0 +1,47 @@
+งาน 01_web_ui: หน้าเว็บและประสบการณ์ใช้งาน
+เจ้าของงาน: คนที่ 1 (รอกรอกชื่อจริงใน docs/team.md)
+ความยาก: ปานกลาง (3/5)
+Branch เริ่มต้น: feature/01-web-ui
+สถานะ: แผนพัฒนา; ดู implementation-status ก่อนรันคำสั่งแอป
+
+STEP — ลำดับลงมือทำและจุดส่งงาน
+
+1. อ่าน README.md, docs/scope.md, docs/api-contract.md และดู prototypes/conveyor-demo.html
+   แยกสถานะภาพออกแบบ/ข้อมูลสมมุติ ออกจากผลที่ Backend ตรวจจริง
+
+2. สร้าง feature/01-web-ui จาก develop หรือใช้ branch งานย่อยใหม่จาก develop ล่าสุด
+   ห้ามใช้โฟลเดอร์ 01 เป็นแอปใหม่; app หลักอยู่ apps/web/
+
+3. ร่าง layout 3 หน้าในธีมเดียว: navy/cyan, เขียว PASS, แดง FAIL, เหลือง REVIEW
+   มีเมนูสลับหน้า เห็นชื่อโหมดชัด และรองรับจอ notebook กับมือถือ
+
+4. สร้าง app shell React/TypeScript ใน apps/web/ และกำหนดวิธีรันจริงใน README
+   commit package.json กับ package-lock.json; ทดสอบ build ก่อนเปิด PR แรก
+
+5. สร้างหน้า Simulation ให้รับคอมโพเนนต์ฉากของคนที่ 2
+   มีตัวเลือกสินค้า, upload หลายมุม, เริ่ม/หยุด/รีเซ็ต และสรุปผล
+   ชุดภาพหลายมุมต้องเป็นขวดเดียวกัน; ภาพเดียวให้ใช้ single-view mode
+
+6. สร้างหน้า Webcam ให้รับ CameraPanel จากคนที่ 4
+   มี selector สินค้าที่คาดหวัง, กรอบจัดขวด, ข้อความภาพเบลอ/หมุนช้า ๆ และปุ่ม Capture
+   ไม่ใส่ฉากสายพานในหน้านี้; เมื่อออกหน้าให้ cleanup กล้องผ่านคนที่ 4
+
+7. สร้าง InspectionOverlay: วาดกรอบบน canvas/SVG แยกจากภาพต้นฉบับ
+   ใช้ผลตรวจจาก API; ไม่สุ่ม score และไม่ใช้ชื่อไฟล์ตัดสินผล
+   ทดสอบ object-fit contain ซึ่งอาจมีขอบว่างซ้ายขวาหรือบนล่าง
+
+8. สร้าง ResultCard: PASS/FAIL/REVIEW, reason, label_product และ match_score
+   score null แสดง “—”; ระบุว่าเป็น similarity ไม่ใช่ calibrated confidence
+   missing_label วาดกรอบแดงเส้นประจาก expected_bbox ถ้ามี; ไม่ปลอมกรอบ detected
+
+9. สร้างหน้า History รับ GET /api/inspections พร้อม pagination และ filter
+   แสดงรายการเลือกได้, original/annotated, storage_status และส่งออก CSV จาก Backend
+
+10. เชื่อม API จริงใน lib/api.ts หลังคนที่ 4 พร้อม
+    ถ้า API ล้มเหลว ให้แสดง ERROR และปุ่มลองใหม่; ห้ามเปลี่ยนเป็น FAIL ของสินค้า
+
+11. ทดสอบ resize, keyboard, focus, loading/empty/error, ปุ่มถูก disable ระหว่างบันทึก
+    ป้องกันการกดตรวจซ้ำด้วย inspection_id และแสดงสถานะบันทึกแยกจากผลตรวจ
+
+12. เปิด PR เข้า develop พร้อมภาพหน้าจอ 3 หน้า วิธีทดสอบ และอ้าง Issue 01
+    รวมได้เมื่อ overlay ตรงภาพ, ไม่ปน mock กับผลจริง และคนที่ 2/4 ต่อคอมโพเนนต์ได้
