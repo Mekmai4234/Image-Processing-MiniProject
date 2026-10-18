@@ -6,7 +6,7 @@ Branch เริ่มต้น: feature/02-simulation-3d
 
 STEP — ลำดับลงมือทำและจุดส่งงาน
 
-1. อ่าน docs/architecture.md แล้วทำ feature/02-simulation-3d จาก develop
+1. อ่าน docs/architecture.md แล้วสร้าง branch งานย่อยชื่อใหม่จาก develop ล่าสุดตาม CONTRIBUTING.md
    เริ่มจากขวดทีละใบเพื่อป้องกันผลตรวจสลับขวด
 
 2. สร้าง Scene component ที่ไม่ผูกติดกับทั้งหน้าเว็บ
@@ -21,11 +21,12 @@ STEP — ลำดับลงมือทำและจุดส่งงา�
 
 5. ทำ state machine: IDLE → FEED → ORIENT → SETTLE → INSPECT
    → WAIT_RESULT → SORT → OUTPUT → COMPLETE
-   เพิ่ม PAUSED, REVIEW และ ERROR ตาม docs/architecture.md
+   เพิ่ม PAUSED และ ERROR ตาม docs/architecture.md; REVIEW เป็นผลตรวจ ไม่ใช่สถานะเครื่อง
 
 6. ตอน ORIENT ให้เลือกภาพจาก angle_deg จริงในชุดเดียวกัน
    ส่งภาพมุมนั้นไปค้นหาฉลากผ่าน Backend; แสดงมุมที่กำลังใช้
-   ถ้าไม่พบครบหนึ่งรอบ/ถึง timeout ให้ REVIEW และคัดออก
+   ถ้าไม่พบครบหนึ่งรอบ/ถึง timeout ส่งภาพตัวแทน + supporting_images + evidence ไป inspections
+   รอ Backend ตัดสินและบันทึก REVIEW orientation_failed ตาม contract ก่อนคัดออก
 
 7. หยุดภาพ/แท่นหมุนให้ชัดก่อนจับภาพตรวจ
    ถ้าพบฉลาก ให้ตัวตรวจคุณภาพตัดสินต่อ; พบฉลากไม่ได้แปลว่า PASS

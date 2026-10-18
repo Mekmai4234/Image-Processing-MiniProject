@@ -1,6 +1,6 @@
 {
-  "inspection_id": "demo-review-003",
-  "client_request_id": "demo-request-003",
+  "inspection_id": "00000000-0000-4000-8000-000000000003",
+  "client_request_id": "10000000-0000-4000-8000-000000000003",
   "created_at": "2026-10-18T07:28:01Z",
   "source_mode": "webcam",
   "expected_product": "bottle_a",
@@ -28,10 +28,22 @@
   "config_version": "demo-v0",
   "storage_status": "saved",
   "images": {
-    "original": "/api/inspections/demo-review-003/images/original",
-    "annotated": "/api/inspections/demo-review-003/images/annotated"
+    "original": "/api/inspections/00000000-0000-4000-8000-000000000003/images/original",
+    "annotated": "/api/inspections/00000000-0000-4000-8000-000000000003/images/annotated"
   },
   "reviewed_result": null,
   "reviewer": null,
-  "demo": true
+  "demo": true,
+  "evidence": {
+    "kind": "single_view",
+    "search_status": "not_requested",
+    "supporting_angles_deg": [],
+    "reported_coverage_deg": null,
+    "verified_coverage": false,
+    "required_view_profile": null,
+    "supporting_images": []
+  },
+  "reviewed_reason": null,
+  "reviewed_at": null,
+  "storage_error": null
 }

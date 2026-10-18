@@ -1,0 +1,57 @@
+{
+  "inspection_id": "00000000-0000-4000-8000-000000000004",
+  "client_request_id": "10000000-0000-4000-8000-000000000004",
+  "created_at": "2026-10-18T07:28:01Z",
+  "source_mode": "simulation",
+  "expected_product": "bottle_a",
+  "detected_product": null,
+  "result": "REVIEW",
+  "reason": "orientation_failed",
+  "match_score": null,
+  "score_method": null,
+  "bbox": null,
+  "expected_bbox": {
+    "x": 112,
+    "y": 165,
+    "width": 176,
+    "height": 130
+  },
+  "image_width": 400,
+  "image_height": 500,
+  "orientation_deg": 0,
+  "timing_ms": {
+    "orientation": 0,
+    "inspection": 420,
+    "storage": 30,
+    "total": 450
+  },
+  "config_version": "demo-v0",
+  "storage_status": "saved",
+  "images": {
+    "original": "/api/inspections/00000000-0000-4000-8000-000000000004/images/original",
+    "annotated": "/api/inspections/00000000-0000-4000-8000-000000000004/images/annotated"
+  },
+  "reviewed_result": null,
+  "reviewer": null,
+  "demo": true,
+  "evidence": {
+    "kind": "multi_view",
+    "search_status": "exhausted",
+    "supporting_angles_deg": [
+      90,
+      180,
+      270
+    ],
+    "reported_coverage_deg": 360,
+    "verified_coverage": false,
+    "required_view_profile": null,
+    "supporting_images": [
+      "/api/inspections/00000000-0000-4000-8000-000000000004/images/supporting/0",
+      "/api/inspections/00000000-0000-4000-8000-000000000004/images/supporting/1",
+      "/api/inspections/00000000-0000-4000-8000-000000000004/images/supporting/2"
+    ]
+  },
+  "reviewed_reason": null,
+  "reviewed_at": null,
+  "storage_error": null
+}

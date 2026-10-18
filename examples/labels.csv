@@ -1,4 +1,4 @@
-image_id,filename,physical_bottle_id,capture_session,product_id,expected_product,angle_deg,label_present,position_ok,visible_enough,result,reason,split,reviewer
-demo001,not-a-real-file-001.jpg,bottle001,session001,bottle_a,bottle_a,0,yes,yes,yes,PASS,good,development,example-only
-demo002,not-a-real-file-002.jpg,bottle002,session002,bottle_b,bottle_a,0,yes,yes,yes,FAIL,wrong_label,validation,example-only
-demo003,not-a-real-file-003.jpg,bottle003,session003,bottle_a,bottle_a,,unknown,unknown,no,REVIEW,blurred_image,test,example-only
+image_id,filename,physical_bottle_id,capture_session,product_id,label_product,expected_product,angle_deg,label_present,position_ok,visible_enough,result,reason,split_group_id,split,reviewer
+demo001,not-a-real-file-001.jpg,bottle001,session001,bottle_a,bottle_a,bottle_a,0,yes,yes,yes,PASS,good,demo-group-001,development,example-only
+demo002,not-a-real-file-002.jpg,bottle002,session002,bottle_b,bottle_b,bottle_a,0,yes,yes,yes,FAIL,wrong_label,demo-group-002,validation,example-only
+demo003,not-a-real-file-003.jpg,bottle003,session003,bottle_a,,bottle_a,,unknown,unknown,no,REVIEW,blurred_image,demo-group-003,test,example-only
