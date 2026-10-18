@@ -1,6 +1,6 @@
 # ทีมและการแบ่งงาน
 
-ชื่อโครงการ: Vending Vision; Repository: MiniProject
+ชื่อโครงการ: Vending Vision; Repository: Image-Processing-MiniProject
 เจ้าของ Repository: @Mekmai4234 (ยังไม่ถือว่าเป็นคนที่ 1 โดยอัตโนมัติ)
 กรอกชื่อและ username ของสมาชิกจริงก่อน assign Issues / ขอ review
 
