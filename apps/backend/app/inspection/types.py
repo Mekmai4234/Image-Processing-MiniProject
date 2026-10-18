@@ -67,6 +67,30 @@ class Decision:
     def to_dict(self) -> dict:
         return asdict(self)
 
+    def to_inspection_fields(self) -> dict:
+        """Copy the detector-owned API fields for 04, NOT a complete response.
+
+        The adapter must supply IDs/storage/review metadata and storage/total
+        timings. Evidence image URLs stay null at each original index until
+        persistence supplies them. Diagnostics and locator details stay internal.
+        """
+        data = self.to_dict()
+        fields = {key: data[key] for key in (
+            "result", "reason", "expected_product", "detected_product",
+            "match_score", "score_method", "bbox", "expected_bbox",
+            "image_width", "image_height", "orientation_deg", "config_version",
+            "source_mode", "timing_ms",
+        )}
+        assessment = data["evidence_assessment"]
+        fields["evidence"] = {key: assessment[key] for key in (
+            "kind", "search_status", "supporting_angles_deg",
+            "reported_coverage_deg", "verified_coverage", "required_view_profile",
+        )}
+        fields["evidence"]["supporting_images"] = [
+            None for _ in assessment["supporting_indices"]
+        ]
+        return fields
+
 
 @dataclass(frozen=True)
 class Match:

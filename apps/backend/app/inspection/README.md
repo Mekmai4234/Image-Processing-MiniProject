@@ -98,6 +98,10 @@ Pipeline: validate pixels → quality/bottle ROI → label candidates → rectif
 
 Decision เป็น internal result ไม่ใช่ InspectionResult HTTP ทั้งก้อน:
 04 เติม IDs, created_at, storage_status/error, URLs, reviewed_* และ timings storage/total
+ใช้ `decision.to_inspection_fields()` เพื่อรับสำเนาเฉพาะ fields สำหรับประกอบ API
+รวม evidence ที่รักษาจำนวน/index ของภาพเสริมด้วย null placeholders แต่ยังไม่ใช่ response ครบ
+รายละเอียด mapping, ข้อเสนอ error handling และข้อมูลที่ต้องประสานกับ 05 อยู่ใน
+[เอกสารส่งต่อหลัง review](HANDOFF.md) ซึ่งยังรอ 04/05 ยืนยัน
 `timing_ms` ภายในมีเฉพาะ orientation/inspection ที่วัดจริง เวลาเปลี่ยนแต่คำตัดสิน
 กรอบและคะแนนต้องเหมือนเดิมเมื่อ pixels/config เดิม
 
