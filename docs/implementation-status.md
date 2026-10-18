@@ -6,7 +6,7 @@
 | Git workflow, API contract, dataset/storage guides | มีเอกสาร |
 | CI ตรวจเอกสาร/โครงสร้าง | มีสคริปต์และ workflow |
 | HTML conveyor prototype | ทดลองได้ เกณฑ์สีพื้นฐานสำหรับภาพที่ควบคุม |
-| React app แยก 3 หน้า | ยังต้องพัฒนา |
+| React app แยก 3 หน้า                               | app shell + 3 หน้า + โหมด DEMO รันได้ (apps/web); รอเชื่อม API จริง/ฉาก 02/กล้อง 04 |
 | Three.js conveyor / rotation | ยังต้องพัฒนา |
 | Webcam capture/guidance | ยังต้องพัฒนา |
 | OpenCV inspection ที่ validate กับขวดไทย | ยังต้องพัฒนา/เก็บข้อมูล |
