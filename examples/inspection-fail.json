@@ -1,6 +1,6 @@
 {
-  "inspection_id": "demo-fail-002",
-  "client_request_id": "demo-request-002",
+  "inspection_id": "00000000-0000-4000-8000-000000000002",
+  "client_request_id": "10000000-0000-4000-8000-000000000002",
   "created_at": "2026-10-18T07:28:01Z",
   "source_mode": "webcam",
   "expected_product": "bottle_a",
@@ -8,7 +8,7 @@
   "result": "FAIL",
   "reason": "wrong_label",
   "match_score": 0.96,
-  "score_method": "template_ccoeff_normed",
+  "score_method": "template_ccoeff_normed_clamped_v1",
   "bbox": {
     "x": 120,
     "y": 180,
@@ -33,10 +33,22 @@
   "config_version": "demo-v0",
   "storage_status": "saved",
   "images": {
-    "original": "/api/inspections/demo-fail-002/images/original",
-    "annotated": "/api/inspections/demo-fail-002/images/annotated"
+    "original": "/api/inspections/00000000-0000-4000-8000-000000000002/images/original",
+    "annotated": "/api/inspections/00000000-0000-4000-8000-000000000002/images/annotated"
   },
   "reviewed_result": null,
   "reviewer": null,
-  "demo": true
+  "demo": true,
+  "evidence": {
+    "kind": "single_view",
+    "search_status": "not_requested",
+    "supporting_angles_deg": [],
+    "reported_coverage_deg": null,
+    "verified_coverage": false,
+    "required_view_profile": null,
+    "supporting_images": []
+  },
+  "reviewed_reason": null,
+  "reviewed_at": null,
+  "storage_error": null
 }

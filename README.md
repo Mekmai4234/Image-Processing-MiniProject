@@ -98,6 +98,7 @@ Public repository ไม่ได้ทำให้เพื่อนเขี�
 
 - [Issues 01–05 และ Milestones](docs/work-board.md)
 
+- [ตำแหน่ง .env และ config ร่วม](docs/configuration.md)
 - [Architecture และ state flow](docs/architecture.md)
 - [API contract และตัวอย่างผล](docs/api-contract.md)
 - [Dataset guide](docs/dataset-guide.md)

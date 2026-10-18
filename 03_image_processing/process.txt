@@ -7,7 +7,8 @@ Branch เริ่มต้น: feature/03-image-processing
 PROCESS — หลักการ Input/Output และเกณฑ์รับงาน
 
 Input
-image, expected_product, source_mode, orientation evidence และ config_version
+image, supporting images, expected_product, source_mode, evidence และ config_version
+ใช้ evidence.kind/search_status/มุมตาม API contract v0.2; งาน 04 แปลง multipart ให้ pure functions
 ผลประมวลผลภาพเป็นความจริงจาก pixels ไม่ใช้ filename/โฟลเดอร์คำตอบเป็น feature
 
 Pipeline
@@ -22,15 +23,24 @@ match_score, score_method, bbox/expected_bbox, image size, timing และ conf
 หากไม่พบ candidate ให้ bbox=null; ไม่สร้างกรอบวัตถุสมมุติ
 
 Score
-match_score = คะแนนความคล้ายตาม method ที่เลือก (0..1), ไม่ใช่ probability
+match_score = คะแนนความคล้าย (0..1), ไม่ใช่ probability
+score_method=template_ccoeff_normed_clamped_v1: รับ raw finite [-1,1] แล้ว max(0,raw)
+input/template ไม่มี variance หรือ raw ไม่ finite → score=null, REVIEW ambiguous_match
 wrong_label อาจมี match_score สูงต่อสินค้าที่ตรวจพบได้ แต่ยังเป็น FAIL
-no label / ภาพเบลอ / ไม่สามารถจับคู่ ให้ score=null แทนตัวเลขสุ่ม
+ไม่พบฉลาก / ภาพเบลอ / ไม่สามารถจับคู่ ให้ score=null แทนตัวเลขสุ่ม
 ตรวจ tolerance และกฎ product แยกจาก score; คะแนนสูงไม่ได้ข้ามกฎตำแหน่ง
 
 Orientation
-locator บอก seen_label/usable_view; งาน 02/04 เป็นผู้ควบคุมการวนภาพ/การจับภาพ
-ครบมุมแต่ไม่มีหลักฐานพอ → REVIEW orientation_failed
-เห็นขวดครบด้านและยืนยันไม่มีฉลาก → FAIL missing_label
+locator คืน usable_view, bbox, image_width/image_height, quality และ reason ตาม contract
+quality มี sharp_enough/label_visible/bottle_visible; งาน 02/04 ควบคุมการวนภาพ/การจับภาพ
+ฉลากคนละชนิดแต่เห็นชัดยัง usable_view=true; อย่าใช้ expected_product กรองจนมองข้ามฉลากผิด
+เห็นเฉพาะ label crop แต่ประเมินตำแหน่งบนขวดไม่ได้ยังไม่ usable
+เมื่อค้นหา exhausted/timed_out ให้ส่งภาพหลักที่ดีที่สุดและ supporting images ไปตัวตรวจเสมอ
+ถ้าไม่มีหลักฐานพอ → REVIEW orientation_failed แล้วบันทึก History ผ่านคนที่ 4
+ภาพเดียวเบลอ/ฉลากหันหนีใช้ blurred_image/label_not_visible ตามสภาพจริง
+FAIL missing_label ได้เมื่อ Backend ตรวจหลักฐานผ่าน required-view profile ที่ validate แล้ว
+reported_coverage_deg และมุมจาก client เป็นข้อมูลประกอบ ไม่ใช่คำยืนยันว่าตรวจครบ
+ส่ง verified_coverage/required_view_profile และรายชื่อภาพหลักฐานให้คนที่ 4 เก็บย้อนหลัง
 Webcam ให้ผู้ใช้หมุนเองจนภาพ usable; กล้องหน้าเดียวไม่สามารถยืนยันมุมที่ไม่เห็น
 
 Error handling

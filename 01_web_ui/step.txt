@@ -9,7 +9,7 @@ STEP — ลำดับลงมือทำและจุดส่งงา�
 1. อ่าน README.md, docs/scope.md, docs/api-contract.md และดู prototypes/conveyor-demo.html
    แยกสถานะภาพออกแบบ/ข้อมูลสมมุติ ออกจากผลที่ Backend ตรวจจริง
 
-2. สร้าง feature/01-web-ui จาก develop หรือใช้ branch งานย่อยใหม่จาก develop ล่าสุด
+2. สร้าง branch งานย่อยใหม่จาก develop ล่าสุด เช่น feature/01-issue-1-app-shell
    ห้ามใช้โฟลเดอร์ 01 เป็นแอปใหม่; app หลักอยู่ apps/web/
 
 3. ร่าง layout 3 หน้าในธีมเดียว: navy/cyan, เขียว PASS, แดง FAIL, เหลือง REVIEW
@@ -30,12 +30,13 @@ STEP — ลำดับลงมือทำและจุดส่งงา�
    ใช้ผลตรวจจาก API; ไม่สุ่ม score และไม่ใช้ชื่อไฟล์ตัดสินผล
    ทดสอบ object-fit contain ซึ่งอาจมีขอบว่างซ้ายขวาหรือบนล่าง
 
-8. สร้าง ResultCard: PASS/FAIL/REVIEW, reason, label_product และ match_score
+8. สร้าง ResultCard: PASS/FAIL/REVIEW, reason, detected_product และ match_score
    score null แสดง “—”; ระบุว่าเป็น similarity ไม่ใช่ calibrated confidence
    missing_label วาดกรอบแดงเส้นประจาก expected_bbox ถ้ามี; ไม่ปลอมกรอบ detected
 
 9. สร้างหน้า History รับ GET /api/inspections พร้อม pagination และ filter
    แสดงรายการเลือกได้, original/annotated, storage_status และส่งออก CSV จาก Backend
+   แสดง supporting images จาก evidence เมื่อมี เพื่อดูหลักฐานหลายมุมย้อนหลัง
 
 10. เชื่อม API จริงใน lib/api.ts หลังคนที่ 4 พร้อม
     ถ้า API ล้มเหลว ให้แสดง ERROR และปุ่มลองใหม่; ห้ามเปลี่ยนเป็น FAIL ของสินค้า

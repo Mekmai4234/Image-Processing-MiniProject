@@ -17,12 +17,24 @@ git pull --ff-only origin develop
 ```powershell
 git switch develop
 git pull --ff-only origin develop
-git switch -c feature/01-upload-panel
+git switch -c feature/01-upload-panel-issue-N
 ```
 
 ตัวอย่างชื่อ: `feature/02-bottle-rotation`, `feature/03-label-matching`,
 `feature/04-camera-cleanup`, `test/05-storage-retry`, `docs/05-dataset-guide`
-branch ระดับงาน 01–05 เตรียมไว้แล้ว ใช้ได้; งานย่อยใหม่สร้างจาก develop ล่าสุด
+ชื่อ branch ระดับงาน 01–05 มีอยู่แล้ว อย่าใช้ git switch -c ด้วยชื่อเดิม
+แนะนำสร้าง branch งานย่อยชื่อใหม่จาก develop ล่าสุด เช่นตัวอย่างข้างบน
+หากได้รับงานให้ใช้ branch ที่เตรียมไว้ ให้เลือก branch เดิมและรวม develop ก่อน:
+
+~~~powershell
+git fetch origin
+git switch feature/01-web-ui
+git pull --ff-only origin feature/01-web-ui
+git merge origin/develop
+~~~
+
+Git จะติดตาม remote branch ชื่อเดียวกันเมื่อยังไม่มี local branch และมี origin แห่งเดียว
+เปลี่ยน 01-web-ui เป็น branch ของตัวเองจาก docs/team.md; ถ้ามี conflict ให้แก้ก่อนเริ่มงาน
 หนึ่ง PR ควรแก้โจทย์เดียวและบอกเจ้าของร่วมของไฟล์ที่ชนกัน
 
 ## Commit และ Push
@@ -33,7 +45,7 @@ git diff
 py -3 scripts/check_repository.py
 git add 01_web_ui/step.txt
 git commit -m "docs(01): explain upload workflow"
-git push -u origin feature/01-upload-panel
+git push -u origin feature/01-upload-panel-issue-N
 ```
 
 ตัวอย่าง git add เป็นเอกสารหนึ่งไฟล์ ให้ระบุไฟล์งานจริงที่จะส่ง ไม่ stage ภาพกล้องทั้งหมด
@@ -56,7 +68,7 @@ git push -u origin feature/01-upload-panel
 
 ```powershell
 git fetch origin
-git switch feature/01-upload-panel
+git switch feature/01-upload-panel-issue-N
 git merge origin/develop
 ```
 
@@ -78,3 +90,14 @@ git merge origin/develop
 01: app shell/pages/styles/overlay; 02: features/simulation;
 03: backend inspection; 04: features/webcam/API/services/db; 05: datasets guide/tests/reports
 ใช้ docs/team.md และ Issue assign จริงแทน CODEOWNERS ที่มี username สมมุติ
+
+## จัดการรอบส่งมอบ
+
+แทน N ในชื่อ branch ด้วยเลข Issue งานย่อยจริง ชื่อทุกงานต้องไม่ชนกัน
+ก่อนส่ง develop เข้า main ให้รวม origin/main กลับเข้า develop ผ่าน PR หากมี commit ใหม่
+ใช้ merge commit สำหรับ PR develop → main เพื่อคงประวัติ branch ระยะยาว
+merge commit บน main อาจทำให้ main นำ develop หนึ่ง commit แม้ไฟล์เหมือนกัน เป็นสถานะปกติ
+ห้าม reset หรือ force push เพื่อทำให้กราฟดูเท่ากัน และอย่าลบ develop หลัง merge
+
+ตัวอย่างอัปเดต main กลับ develop เมื่อจำเป็น: สร้าง fix/sync-main-issue-N จาก develop ล่าสุด,
+git merge origin/main, ตรวจงาน แล้วเปิด PR ไป develop ตามขั้นตอนปกติ

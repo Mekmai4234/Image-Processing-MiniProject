@@ -6,7 +6,7 @@ Branch เริ่มต้น: feature/04-webcam-backend
 
 STEP — ลำดับลงมือทำและจุดส่งงาน
 
-1. สร้าง feature/04-webcam-backend จาก develop อ่าน docs/api-contract.md และ storage-guide
+1. สร้าง branch งานย่อยชื่อใหม่จาก develop ล่าสุดตาม CONTRIBUTING.md อ่าน docs/api-contract.md และ storage-guide
    ตกลง request/response กับคนที่ 1/3 ก่อนเริ่ม endpoint
 
 2. สร้าง FastAPI app มี /api/health กับ /api/products ก่อน
@@ -17,6 +17,8 @@ STEP — ลำดับลงมือทำและจุดส่งงา�
    endpoint นี้ใช้ค้นหามุม ไม่สร้างประวัติหนึ่งรายการทุก frame
 
 4. ทำ POST /api/inspections รับ frame ที่เลือกแล้วพร้อม client_request_id
+   ชุดหลายมุมส่ง supporting_images + evidence ตาม contract v0.2; backend ประเมินเอง
+   รอบ orientation ที่ไม่พบฉลากก็ส่งภาพตัวแทนเพื่อบันทึก REVIEW ไม่สร้างผลที่ frontend
    validate MIME/ข้อมูลภาพ ขนาด byte/pixel และ product; invalid request คืน 4xx
    ส่งต่อ inspection function; ไม่ใช้คำตอบสุ่มเมื่อตัวตรวจยังไม่พร้อม
 

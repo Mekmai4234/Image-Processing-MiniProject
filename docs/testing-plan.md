@@ -31,3 +31,10 @@ review_rate = predicted REVIEW / จำนวน valid inspections
 ตั้งเป้าจาก baseline ก่อนเปิด test set ไม่แก้เป้าเพื่อให้ผลที่วัดผ่าน
 
 ทุก PR เพิ่มการทดสอบตามความเสี่ยงที่แก้ พร้อมคำสั่งรันที่ทำซ้ำได้
+
+## Regression ของตัวตรวจ repository
+
+รัน python -m unittest discover -s scripts -p "test_*.py" -v
+ใช้ fixture ใน temporary directory เพื่อลองกรณี sample หาย, field ผิด, split รั่ว
+และ Markdown ใน dependencies/local data ที่ไม่ควรถูกสแกน
+CI ตรวจ synthetic examples เท่านั้น; dataset จริงยังต้องใช้เครื่องมือตรวจของ 05

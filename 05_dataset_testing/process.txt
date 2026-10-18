@@ -19,7 +19,8 @@ REVIEW = ยังตัดสินไม่ได้ เช่น เบลอ
 Data leakage
 ภาพใบเดียวกันหลายมุมและภาพ augmentation ต้องอยู่ชุดเดียวกัน
 ห้ามให้ภาพอ้างอิง template ถูกนำมาทดสอบเป็นภาพ unseen
-สุ่มระดับภาพอย่างเดียวไม่พอ ต้อง group ด้วย physical_bottle_id/capture_session
+สุ่มระดับภาพอย่างเดียวไม่พอ; ห้ามขวดเดียวกันหรือ session เดียวกันข้าม split
+ใช้ split_group_id รวมกลุ่มที่เชื่อมโยงกัน และตรวจ image_id/filename ซ้ำด้วย
 
 Evaluation
 Confusion matrix แสดง ground truth เทียบ prediction รวม REVIEW
@@ -30,7 +31,7 @@ Review rate = predicted REVIEW / จำนวนภาพ valid ทั้งห�
 รายงานแยกยี่ห้อ โหมด และสภาพแสง ไม่สรุป accuracy รวมค่าเดียว
 
 Timing
-orientation_ms, inspection_ms, storage_ms, total_ms แยกกัน
+ใช้ timing_ms.orientation / inspection / storage / total ตาม API contract
 เปรียบเทียบเครื่อง/ความละเอียดเดิม; รวม median และ p95 พร้อมจำนวนตัวอย่าง
 เวลาภาพเคลื่อนไหวจำลองไม่ใช่เวลาอัลกอริทึมหรือเครื่องจักรจริง
 
