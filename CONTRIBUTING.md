@@ -6,8 +6,8 @@
 ถ้าอยู่เครื่องเจ้าของที่มี MiniProject อยู่แล้ว ให้เข้าโฟลเดอร์เดิม ไม่ clone ทับ
 
 ```powershell
-git clone https://github.com/Mekmai4234/MiniProject.git
-cd MiniProject
+git clone https://github.com/Mekmai4234/Image-Processing-MiniProject.git
+cd Image-Processing-MiniProject
 git switch develop
 git pull --ff-only origin develop
 ```

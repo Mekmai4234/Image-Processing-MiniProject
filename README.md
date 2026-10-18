@@ -1,4 +1,4 @@
-# Vending Vision — MiniProject
+# Vending Vision — Image Processing MiniProject
 
 เว็บตรวจฉลากขวดน้ำไทยด้วย Image Processing พร้อมสายพานคัดแยกจำลอง 3D
 
