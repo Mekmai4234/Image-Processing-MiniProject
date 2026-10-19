@@ -1,5 +1,30 @@
-from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field
+import math
+from typing import Any, Dict, List, Literal, Optional
+from pydantic import BaseModel, Field, field_validator
+
+
+class EvidenceInput(BaseModel):
+    kind: Literal["single_view", "multi_view"] = "single_view"
+    search_status: Literal["not_requested", "usable_view_found", "exhausted", "timed_out"] = "not_requested"
+    supporting_angles_deg: List[Optional[float]] = Field(default_factory=list)
+    reported_coverage_deg: Optional[float] = None
+
+    @field_validator("reported_coverage_deg")
+    @classmethod
+    def validate_coverage(cls, v: Optional[float]) -> Optional[float]:
+        if v is not None:
+            if not math.isfinite(v) or v < 0.0 or v > 360.0:
+                raise ValueError("reported_coverage_deg must be a finite number between 0 and 360")
+        return v
+
+    @field_validator("supporting_angles_deg")
+    @classmethod
+    def validate_angles(cls, angles: List[Optional[float]]) -> List[Optional[float]]:
+        for idx, a in enumerate(angles):
+            if a is not None:
+                if not math.isfinite(a) or a < 0.0 or a >= 360.0:
+                    raise ValueError(f"supporting angle at index {idx} must be a finite number in range 0 <= angle < 360")
+        return angles
 
 
 class HealthResponse(BaseModel):
@@ -105,6 +130,7 @@ class InspectionResult(BaseModel):
     reviewed_reason: Optional[str] = Field(None, description="Human reviewer reason")
     reviewer: Optional[str] = Field(None, description="Human reviewer name")
     reviewed_at: Optional[str] = Field(None, description="Human review timestamp")
+    is_demo: bool = Field(False, description="Whether this inspection was executed in DEMO mode")
 
 
 class InspectionListResponse(BaseModel):

@@ -8,11 +8,21 @@ export interface UseWebcamStreamOptions {
   height?: number
 }
 
+/**
+ * Robust webcam stream hook conforming to rule 6 (04-3):
+ * - Uses request generation token to cancel / discard stale in-flight getUserMedia requests
+ * - Prevents orphaned media tracks and hardware lock (turns camera LED off cleanly)
+ * - Decouples activeDeviceId state changes from camera lifecycle to avoid cyclic stream tear-downs
+ * - Immediately terminates tracks if unmounted while getUserMedia is awaiting permission
+ */
 export function useWebcamStream(options: UseWebcamStreamOptions = {}) {
   const { autoStart = false, preferredDeviceId, width = 1280, height = 720 } = options
 
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
+  const isMountedRef = useRef<boolean>(true)
+  const requestGenRef = useRef<number>(0)
+  const activeDeviceIdRef = useRef<string | null>(preferredDeviceId || null)
 
   const [status, setStatus] = useState<CameraStatus>('idle')
   const [error, setError] = useState<string | null>(null)
@@ -20,10 +30,19 @@ export function useWebcamStream(options: UseWebcamStreamOptions = {}) {
   const [activeDeviceId, setActiveDeviceId] = useState<string | null>(preferredDeviceId || null)
   const [isMirrored, setIsMirrored] = useState<boolean>(true)
 
+  // Keep activeDeviceIdRef in sync with state
+  useEffect(() => {
+    activeDeviceIdRef.current = activeDeviceId
+  }, [activeDeviceId])
+
   /**
    * Stop all active media tracks cleanly to release hardware lock (camera LED turns off)
+   * Also increments request generation token to invalidate any pending in-flight getUserMedia requests
    */
   const stopCamera = useCallback(() => {
+    // Invalidate any in-flight requests immediately
+    requestGenRef.current += 1
+
     if (streamRef.current) {
       const tracks = streamRef.current.getTracks()
       for (const track of tracks) {
@@ -36,8 +55,10 @@ export function useWebcamStream(options: UseWebcamStreamOptions = {}) {
       videoRef.current.srcObject = null
     }
 
-    setStatus('idle')
-    setError(null)
+    if (isMountedRef.current) {
+      setStatus('idle')
+      setError(null)
+    }
   }, [])
 
   /**
@@ -50,6 +71,8 @@ export function useWebcamStream(options: UseWebcamStreamOptions = {}) {
 
     try {
       const allDevices = await navigator.mediaDevices.enumerateDevices()
+      if (!isMountedRef.current) return
+
       const videoDevices = allDevices
         .filter((d) => d.kind === 'videoinput')
         .map((d, index) => ({
@@ -65,7 +88,9 @@ export function useWebcamStream(options: UseWebcamStreamOptions = {}) {
           if (prev && videoDevices.some((d) => d.deviceId === prev)) {
             return prev
           }
-          return videoDevices[0].deviceId
+          const fallback = videoDevices[0].deviceId
+          activeDeviceIdRef.current = fallback
+          return fallback
         })
       }
     } catch (err) {
@@ -94,23 +119,37 @@ export function useWebcamStream(options: UseWebcamStreamOptions = {}) {
   }
 
   /**
-   * Request camera permission and start video stream
+   * Request camera permission and start video stream using generation token
    */
   const startCamera = useCallback(
     async (deviceId?: string) => {
       if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
-        setError('เบราว์เซอร์ของคุณไม่รองรับ MediaDevices API')
-        setStatus('error')
+        if (isMountedRef.current) {
+          setError('เบราว์เซอร์ของคุณไม่รองรับ MediaDevices API')
+          setStatus('error')
+        }
         return
       }
 
-      // Stop any existing tracks first to avoid double-stream lock
-      stopCamera()
+      // Generate a new request token: any prior in-flight request is now superseded
+      const currentGen = ++requestGenRef.current
+
+      // Stop previous stream tracks cleanly before starting new request
+      if (streamRef.current) {
+        const tracks = streamRef.current.getTracks()
+        for (const track of tracks) {
+          track.stop()
+        }
+        streamRef.current = null
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null
+      }
 
       setStatus('requesting')
       setError(null)
 
-      const targetDeviceId = deviceId || activeDeviceId
+      const targetDeviceId = deviceId || activeDeviceIdRef.current
 
       const constraints: MediaStreamConstraints = {
         audio: false,
@@ -132,6 +171,10 @@ export function useWebcamStream(options: UseWebcamStreamOptions = {}) {
         try {
           stream = await navigator.mediaDevices.getUserMedia(constraints)
         } catch (initialErr: any) {
+          // If request was superseded while waiting for prompt, stop here
+          if (requestGenRef.current !== currentGen || !isMountedRef.current) {
+            return
+          }
           // If exact constraint failed, fallback to generic video
           if (targetDeviceId && initialErr?.name === 'OverconstrainedError') {
             stream = await navigator.mediaDevices.getUserMedia({
@@ -141,6 +184,15 @@ export function useWebcamStream(options: UseWebcamStreamOptions = {}) {
           } else {
             throw initialErr
           }
+        }
+
+        // CRITICAL CHECK: Has user cancelled or switched cameras while waiting for getUserMedia?
+        if (requestGenRef.current !== currentGen || !isMountedRef.current) {
+          // Stale stream! Stop all tracks immediately to prevent hardware lock
+          for (const track of stream.getTracks()) {
+            track.stop()
+          }
+          return
         }
 
         streamRef.current = stream
@@ -154,34 +206,49 @@ export function useWebcamStream(options: UseWebcamStreamOptions = {}) {
           }
         }
 
+        // Secondary check in case play() resolution took time and component unmounted
+        if (requestGenRef.current !== currentGen || !isMountedRef.current) {
+          for (const track of stream.getTracks()) {
+            track.stop()
+          }
+          streamRef.current = null
+          return
+        }
+
         setStatus('streaming')
         setError(null)
 
-        // Refresh device list to capture actual labels now that permission was granted
+        // Refresh device list to capture actual device labels now that permission is granted
         await refreshDevices()
 
-        // Sync active device ID from stream tracks if possible
+        // Sync active device ID from stream tracks
         const videoTrack = stream.getVideoTracks()[0]
         if (videoTrack) {
-          const settings = videoTrack.getSettings()
-          if (settings.deviceId) {
-            setActiveDeviceId(settings.deviceId)
+          const trackSettings = videoTrack.getSettings()
+          if (trackSettings.deviceId && trackSettings.deviceId !== activeDeviceIdRef.current) {
+            activeDeviceIdRef.current = trackSettings.deviceId
+            setActiveDeviceId(trackSettings.deviceId)
           }
         }
       } catch (err: any) {
+        // If request was superseded, do not overwrite status with error
+        if (requestGenRef.current !== currentGen || !isMountedRef.current) {
+          return
+        }
         console.error('getUserMedia error:', err)
         setStatus('error')
         setError(formatMediaError(err))
       }
     },
-    [activeDeviceId, height, refreshDevices, stopCamera, width]
+    [height, refreshDevices, width]
   )
 
   /**
-   * Switch active camera device
+   * Switch active camera device cleanly
    */
   const switchCamera = useCallback(
     async (newDeviceId: string) => {
+      activeDeviceIdRef.current = newDeviceId
       setActiveDeviceId(newDeviceId)
       await startCamera(newDeviceId)
     },
@@ -195,30 +262,44 @@ export function useWebcamStream(options: UseWebcamStreamOptions = {}) {
     setIsMirrored((prev) => !prev)
   }, [])
 
-  // Auto-start if requested
+  // Auto-start and device change listener lifecycle (isolated from activeDeviceId changes)
   useEffect(() => {
+    isMountedRef.current = true
+
     if (autoStart) {
       startCamera()
     }
     refreshDevices()
 
-    // Listen for device change (e.g. plugging in or unplugging a USB webcam)
     const handleDeviceChange = () => {
       refreshDevices()
     }
 
-    if (navigator.mediaDevices?.addEventListener) {
+    if (typeof navigator !== 'undefined' && navigator.mediaDevices?.addEventListener) {
       navigator.mediaDevices.addEventListener('devicechange', handleDeviceChange)
     }
 
-    // Cleanup tracks on unmount
+    // Cleanup tracks unconditionally on unmount
     return () => {
-      stopCamera()
-      if (navigator.mediaDevices?.removeEventListener) {
+      isMountedRef.current = false
+      requestGenRef.current += 1
+
+      if (streamRef.current) {
+        for (const track of streamRef.current.getTracks()) {
+          track.stop()
+        }
+        streamRef.current = null
+      }
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = null
+      }
+
+      if (typeof navigator !== 'undefined' && navigator.mediaDevices?.removeEventListener) {
         navigator.mediaDevices.removeEventListener('devicechange', handleDeviceChange)
       }
     }
-  }, [autoStart, refreshDevices, startCamera, stopCamera])
+  }, [autoStart, refreshDevices, startCamera])
 
   return {
     videoRef,

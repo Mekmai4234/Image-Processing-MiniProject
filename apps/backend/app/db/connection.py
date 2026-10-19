@@ -64,14 +64,17 @@ def init_db() -> None:
                 reviewed_reason TEXT,
                 reviewer TEXT,
                 reviewed_at TEXT,
-                payload_fingerprint TEXT
+                payload_fingerprint TEXT,
+                is_demo INTEGER DEFAULT 0
             );
             """)
 
-            # Migration: databases created before the fingerprint column existed
+            # Migration: databases created before columns existed
             existing_cols = {row["name"] for row in conn.execute("PRAGMA table_info(inspections);")}
             if "payload_fingerprint" not in existing_cols:
                 conn.execute("ALTER TABLE inspections ADD COLUMN payload_fingerprint TEXT;")
+            if "is_demo" not in existing_cols:
+                conn.execute("ALTER TABLE inspections ADD COLUMN is_demo INTEGER DEFAULT 0;")
 
             conn.execute("CREATE INDEX IF NOT EXISTS idx_inspections_client_req ON inspections (client_request_id);")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_inspections_created_at ON inspections (created_at);")
@@ -79,5 +82,6 @@ def init_db() -> None:
             conn.execute("CREATE INDEX IF NOT EXISTS idx_inspections_storage_status ON inspections (storage_status);")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_inspections_expected_product ON inspections (expected_product);")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_inspections_source_mode ON inspections (source_mode);")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_inspections_is_demo ON inspections (is_demo);")
     finally:
         conn.close()

@@ -36,6 +36,10 @@ class Settings:
     ROTATION_STEP_DEG: int = int(os.getenv("ROTATION_STEP_DEG", "30"))
     SAVE_ROTATION_FRAMES: bool = os.getenv("SAVE_ROTATION_FRAMES", "false").lower() in ("true", "1", "yes")
 
+    # Mode / Inspection
+    ALLOW_DEMO_MODE: bool = os.getenv("ALLOW_DEMO_MODE", "true").lower() in ("true", "1", "yes")
+    DEFAULT_TO_DEMO: bool = os.getenv("DEFAULT_TO_DEMO", "false").lower() in ("true", "1", "yes")
+
     # Paths (Resolved against REPO_ROOT if relative)
     _raw_storage_root: str = os.getenv("STORAGE_ROOT", "./storage")
     _raw_dataset_root: str = os.getenv("DATASET_ROOT", "./datasets")

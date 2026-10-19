@@ -157,4 +157,5 @@ def record_to_inspection_result(record: Dict[str, Any]) -> InspectionResult:
         reviewed_reason=record.get("reviewed_reason"),
         reviewer=record.get("reviewer"),
         reviewed_at=record.get("reviewed_at"),
+        is_demo=bool(record.get("is_demo", 0)),
     )

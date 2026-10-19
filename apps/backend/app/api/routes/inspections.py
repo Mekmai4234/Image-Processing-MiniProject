@@ -1,5 +1,6 @@
 import hashlib
 import json
+import math
 import time
 import uuid
 from typing import Any, Dict, List, Optional
@@ -7,11 +8,18 @@ from uuid import UUID
 
 from fastapi import APIRouter, File, Form, UploadFile, Query
 from fastapi.responses import FileResponse
+from pydantic import ValidationError
+
 from app.core.config import settings
 from app.core.errors import APIError
 from app.core.timezone import get_folder_date, utc_now_iso
 from app.db.repository import InspectionRepository
-from app.models.schemas import InspectionResult, InspectionListResponse, ReviewRequest
+from app.models.schemas import (
+    InspectionResult,
+    InspectionListResponse,
+    ReviewRequest,
+    EvidenceInput,
+)
 from app.services.inspection_adapter import InspectionAdapter
 from app.services.inspection_service import record_to_inspection_result
 from app.services.storage import StorageManager
@@ -26,6 +34,7 @@ def compute_payload_fingerprint(
     evidence: Dict[str, Any],
     main_image: bytes,
     supporting_images: List[bytes],
+    is_demo: bool = False,
 ) -> str:
     """SHA-256 over everything that defines an inspection request (contract: 'payload เดิม')."""
     h = hashlib.sha256()
@@ -35,6 +44,7 @@ def compute_payload_fingerprint(
         "angle_deg": None if angle_deg is None else round(float(angle_deg), 2),
         "evidence": evidence,
         "supporting_count": len(supporting_images),
+        "is_demo": is_demo,
     }
     h.update(json.dumps(meta, sort_keys=True, ensure_ascii=False).encode("utf-8"))
     h.update(hashlib.sha256(main_image).digest())
@@ -49,6 +59,7 @@ def _payload_matches(
     expected_product: str,
     source_mode: str,
     angle_deg: Optional[float],
+    is_demo: bool = False,
 ) -> bool:
     stored = existing.get("payload_fingerprint")
     if stored:
@@ -58,7 +69,12 @@ def _payload_matches(
     angle_ok = (stored_angle is None and angle_deg is None) or (
         stored_angle is not None and angle_deg is not None and abs(stored_angle - angle_deg) < 0.01
     )
-    return existing["expected_product"] == expected_product and existing["source_mode"] == source_mode and angle_ok
+    return (
+        existing["expected_product"] == expected_product
+        and existing["source_mode"] == source_mode
+        and angle_ok
+        and bool(existing.get("is_demo", 0)) == is_demo
+    )
 
 
 @router.post("/inspections", response_model=InspectionResult)
@@ -70,6 +86,7 @@ async def create_inspection(
     angle_deg: Optional[float] = Form(None, description="Angle of primary image (0 to <360)"),
     supporting_images: List[UploadFile] = File(default=[], description="Optional additional evidence images"),
     evidence: Optional[str] = Form(None, description="Optional evidence JSON string"),
+    demo: bool = Form(False, description="Enable development demo/mock mode"),
 ) -> InspectionResult:
     # 1. Validate client_request_id as UUID
     try:
@@ -82,7 +99,15 @@ async def create_inspection(
             request_id=client_request_id,
         )
 
-    # 2. (Idempotency check happens after the payload is read, see step 6b)
+    # 2. Check detector availability (04-1: Reject production requests if real detector is not available)
+    is_demo = demo or getattr(settings, "DEFAULT_TO_DEMO", False)
+    if not is_demo and not InspectionAdapter.has_detector():
+        raise APIError(
+            status_code=503,
+            code="inspection_unavailable",
+            message="Inspection algorithm from module 03 is not installed or available on this backend. For development, specify demo=true.",
+            request_id=client_request_id,
+        )
 
     # 3. Validate product
     valid_products = [p["product_id"] for p in settings.SUPPORTED_PRODUCTS]
@@ -103,6 +128,16 @@ async def create_inspection(
             request_id=client_request_id,
         )
 
+    # 4b. Validate primary angle_deg (0 <= angle < 360, must be finite)
+    if angle_deg is not None:
+        if not math.isfinite(angle_deg) or angle_deg < 0.0 or angle_deg >= 360.0:
+            raise APIError(
+                status_code=400,
+                code="invalid_angle",
+                message=f"angle_deg must be a finite number in range 0 <= angle_deg < 360, got {angle_deg}",
+                request_id=client_request_id,
+            )
+
     # 5. Read image bytes and validate total request limits
     main_image_bytes = await image.read()
     if not main_image_bytes:
@@ -114,11 +149,17 @@ async def create_inspection(
         )
 
     supporting_raw_list: List[bytes] = []
-    for sup in supporting_images:
+    for idx, sup in enumerate(supporting_images):
         if sup.filename:
             content = await sup.read()
-            if content:
-                supporting_raw_list.append(content)
+            if not content:
+                raise APIError(
+                    status_code=400,
+                    code="empty_file",
+                    message=f"Supporting image at index {idx} ({sup.filename}) is empty",
+                    request_id=client_request_id,
+                )
+            supporting_raw_list.append(content)
 
     total_views = 1 + len(supporting_raw_list)
     if total_views > settings.MAX_INSPECTION_VIEWS:
@@ -138,7 +179,7 @@ async def create_inspection(
             request_id=client_request_id,
         )
 
-    # 6. Parse evidence
+    # 6. Parse and strictly validate evidence schema & supporting images consistency
     evidence_dict: Dict[str, Any] = {
         "kind": "multi_view" if supporting_raw_list else "single_view",
         "search_status": "not_requested",
@@ -150,9 +191,7 @@ async def create_inspection(
     if evidence:
         try:
             parsed_ev = json.loads(evidence)
-            if isinstance(parsed_ev, dict):
-                evidence_dict.update(parsed_ev)
-            else:
+            if not isinstance(parsed_ev, dict):
                 raise ValueError("evidence must be a JSON object")
         except Exception as e:
             raise APIError(
@@ -161,6 +200,56 @@ async def create_inspection(
                 message=f"Invalid evidence JSON: {str(e)}",
                 request_id=client_request_id,
             )
+
+        try:
+            validated_ev = EvidenceInput.model_validate(parsed_ev)
+        except ValidationError as ve:
+            raise APIError(
+                status_code=422,
+                code="invalid_evidence",
+                message=f"Invalid evidence schema: {ve.errors()[0]['msg']}",
+                request_id=client_request_id,
+            )
+
+        kind = validated_ev.kind
+        if kind == "single_view" and len(supporting_raw_list) > 0:
+            raise APIError(
+                status_code=400,
+                code="invalid_evidence",
+                message="single_view inspection must not include supporting images",
+                request_id=client_request_id,
+            )
+        if kind == "multi_view" and len(supporting_raw_list) == 0:
+            raise APIError(
+                status_code=400,
+                code="invalid_evidence",
+                message="multi_view inspection must include at least one supporting image",
+                request_id=client_request_id,
+            )
+
+        sup_angles = validated_ev.supporting_angles_deg
+        if len(sup_angles) != len(supporting_raw_list):
+            raise APIError(
+                status_code=400,
+                code="invalid_evidence",
+                message=f"Count of supporting_angles_deg ({len(sup_angles)}) does not match count of supporting_images ({len(supporting_raw_list)})",
+                request_id=client_request_id,
+            )
+
+        evidence_dict["kind"] = kind
+        evidence_dict["search_status"] = validated_ev.search_status
+        evidence_dict["supporting_angles_deg"] = sup_angles
+        evidence_dict["reported_coverage_deg"] = validated_ev.reported_coverage_deg
+        # Backend owns coverage evaluation; client claims are never echoed blindly
+        evidence_dict["verified_coverage"] = False
+        evidence_dict["required_view_profile"] = None
+    else:
+        if supporting_raw_list:
+            evidence_dict["kind"] = "multi_view"
+            evidence_dict["supporting_angles_deg"] = [None for _ in supporting_raw_list]
+        else:
+            evidence_dict["kind"] = "single_view"
+            evidence_dict["supporting_angles_deg"] = []
 
     # 6b. Idempotency: same client_request_id + identical payload -> original record,
     #     different payload -> 409 (never a silent re-inspection)
@@ -171,6 +260,7 @@ async def create_inspection(
         evidence=evidence_dict,
         main_image=main_image_bytes,
         supporting_images=supporting_raw_list,
+        is_demo=is_demo,
     )
     existing = InspectionRepository.get_by_client_request_id(client_request_id)
     if existing:
@@ -201,6 +291,7 @@ async def create_inspection(
         angle_deg=angle_deg,
         evidence=evidence_dict,
         supporting_cv_images=supporting_cv_list,
+        demo=is_demo,
     )
     timing_inspection_ms = round((time.perf_counter() - t_start) * 1000, 2)
 
@@ -249,6 +340,7 @@ async def create_inspection(
         "timing_storage_ms": 0.0,
         "timing_total_ms": timing_inspection_ms,
         "payload_fingerprint": fingerprint,
+        "is_demo": 1 if is_demo else 0,
     }
 
     created, initial_record = InspectionRepository.create_pending(db_payload)
@@ -284,6 +376,7 @@ async def create_inspection(
         "orientation_deg": angle_deg,
         "config_version": settings.CONFIG_VERSION,
         "evidence": evidence_dict,
+        "is_demo": is_demo,
     }
 
     StorageManager.save_inspection(

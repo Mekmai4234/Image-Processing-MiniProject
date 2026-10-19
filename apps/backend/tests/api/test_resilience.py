@@ -225,3 +225,81 @@ def test_restart_does_not_mark_saved_when_source_missing():
         assert body["storage_error"]["code"] == "source_unavailable"
         assert body["storage_error"]["retryable"] is False
         assert body["images"]["original"] is None
+
+
+def test_retry_save_idempotent_on_already_saved_record():
+    """04-6: Calling retry-save on an already saved inspection must return success and not corrupt status."""
+    with TestClient(app) as client:
+        insp_id = post_inspection(client).json()["inspection_id"]
+        rec = InspectionRepository.get_by_id(insp_id)
+        assert rec["storage_status"] == "saved"
+
+        # Pending directory is already deleted/moved to final
+        pending_dir = StorageManager.get_pending_dir(insp_id)
+        assert not pending_dir.exists()
+
+        # Retry save on the saved record
+        retry_res = client.post(f"/api/inspections/{insp_id}/retry-save")
+        assert retry_res.status_code == 200
+        data = retry_res.json()
+        assert data["storage_status"] == "saved"
+        assert data["storage_error"] is None
+
+        # Verify images remain accessible
+        assert client.get(f"/api/inspections/{insp_id}/images/original").status_code == 200
+        assert client.get(f"/api/inspections/{insp_id}/images/annotated").status_code == 200
+
+
+def test_retry_save_handles_incomplete_pending_without_500():
+    """04-4: When pending files are incomplete (e.g. annotated missing due to disk full), retry must not return 500."""
+    with TestClient(app) as client:
+        insp_id = post_inspection(client).json()["inspection_id"]
+        rec = InspectionRepository.get_by_id(insp_id)
+        final_dir = settings.STORAGE_ROOT / rec["relative_folder_path"]
+        import shutil
+
+        # Simulate broken pending: only original exists, annotated/result.json missing
+        pending_dir = StorageManager.get_pending_dir(insp_id)
+        shutil.rmtree(final_dir)
+        pending_dir.mkdir(parents=True, exist_ok=True)
+        with open(pending_dir / "original.jpg", "wb") as f:
+            f.write(b"mock_bytes")
+
+        # Set status back to failed
+        InspectionRepository.update_storage_failure(insp_id, "disk_full", "Simulated disk full", retryable=True)
+
+        retry_res = client.post(f"/api/inspections/{insp_id}/retry-save")
+        # Must NOT return HTTP 500
+        assert retry_res.status_code == 200
+        data = retry_res.json()
+        assert data["storage_status"] == "failed"
+        assert data["storage_error"]["code"] == "source_unavailable"
+        assert data["storage_error"]["retryable"] is False
+
+
+def test_reconcile_does_not_mark_saved_if_annotated_or_supporting_missing():
+    """04-5: Startup reconciliation must never mark saved if annotated.jpg or a middle supporting image is missing."""
+    with TestClient(app) as client:
+        insp_id = post_inspection(client).json()["inspection_id"]
+        rec = InspectionRepository.get_by_id(insp_id)
+        final_dir = settings.STORAGE_ROOT / rec["relative_folder_path"]
+
+        # Delete annotated.jpg from final directory
+        annotated_file = final_dir / "annotated.jpg"
+        if annotated_file.exists():
+            annotated_file.unlink()
+
+        # Mark row as unsettled in DB
+        from app.db.connection import get_connection
+        conn = get_connection()
+        with conn:
+            conn.execute("UPDATE inspections SET storage_status='pending' WHERE inspection_id=?", (insp_id,))
+        conn.close()
+
+    # Re-instantiate app client to trigger startup reconciliation
+    with TestClient(app) as second:
+        body = second.get(f"/api/inspections/{insp_id}").json()
+        # Must NOT be marked saved because annotated.jpg was missing
+        assert body["storage_status"] == "failed"
+        assert body["images"]["annotated"] is None
+

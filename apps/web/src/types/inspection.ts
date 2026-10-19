@@ -80,6 +80,7 @@ export interface InspectionResult {
   reviewed_reason: string | null
   reviewer: string | null
   reviewed_at: string | null
+  is_demo?: boolean
   demo?: boolean
 }
 

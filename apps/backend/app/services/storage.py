@@ -111,21 +111,103 @@ class StorageManager:
             return False, None, error_dict
 
     @classmethod
+    def _verify_directory_files_intact(
+        cls,
+        target_dir: Path,
+        record: Dict[str, Any],
+    ) -> Tuple[bool, Optional[str]]:
+        """
+        Verify that a directory (final or pending) contains all necessary files:
+        1. original.jpg (non-empty)
+        2. annotated.jpg (non-empty)
+        3. result.json (valid JSON, matches inspection_id)
+        4. all supporting images 0..N-1 if declared in evidence
+        """
+        if not target_dir.is_dir():
+            return False, "directory_not_found"
+
+        orig_file = target_dir / "original.jpg"
+        if not orig_file.is_file() or orig_file.stat().st_size == 0:
+            return False, "missing_original_image"
+
+        annot_file = target_dir / "annotated.jpg"
+        if not annot_file.is_file() or annot_file.stat().st_size == 0:
+            return False, "missing_annotated_image"
+
+        result_file = target_dir / "result.json"
+        if not result_file.is_file() or result_file.stat().st_size == 0:
+            return False, "missing_result_json"
+
+        try:
+            with open(result_file, "r", encoding="utf-8") as f:
+                snapshot = json.load(f)
+        except Exception as e:
+            return False, f"invalid_result_json: {e}"
+
+        insp_id = record.get("inspection_id")
+        if insp_id and snapshot.get("inspection_id") != insp_id:
+            return False, "mismatched_inspection_id"
+
+        # Check supporting images from snapshot evidence
+        evidence = snapshot.get("evidence") or {}
+        supporting_angles = evidence.get("supporting_angles_deg")
+        if supporting_angles is None and record.get("evidence_json"):
+            try:
+                ev_db = json.loads(record["evidence_json"])
+                supporting_angles = ev_db.get("supporting_angles_deg")
+            except Exception:
+                pass
+
+        if supporting_angles:
+            sup_count = len(supporting_angles)
+            sup_dir = target_dir / "supporting"
+            if not sup_dir.is_dir():
+                return False, "missing_supporting_dir"
+            for idx in range(sup_count):
+                sup_img = sup_dir / f"{idx}.jpg"
+                if not sup_img.is_file() or sup_img.stat().st_size == 0:
+                    return False, f"missing_supporting_image_{idx}"
+
+        return True, None
+
+    @classmethod
     def retry_save_from_pending(
         cls,
         inspection_id: str,
     ) -> Tuple[bool, Optional[str], Optional[Dict[str, Any]]]:
         """
-        Retry saving an inspection using files left in pending dir.
-        If files in pending are lost, reports non-retryable source_unavailable error.
+        Retry saving an inspection.
+        1. If already saved and final files intact -> idempotent success.
+        2. If final directory already has all intact files -> update DB saved and return success.
+        3. If pending files are complete -> re-run save_inspection.
+        4. If pending files are missing or incomplete -> update DB failed (source_unavailable, retryable=False).
         """
         record = InspectionRepository.get_by_id(inspection_id)
         if not record:
             return False, None, {"code": "not_found", "message": "Inspection record not found", "retryable": False}
 
+        # 1. Idempotent check: if already marked saved and final files intact
+        if record.get("storage_status") == "saved" and record.get("relative_folder_path"):
+            final_dir = (settings.STORAGE_ROOT / record["relative_folder_path"]).resolve()
+            is_intact, _ = cls._verify_directory_files_intact(final_dir, record)
+            if is_intact:
+                return True, record["relative_folder_path"], None
+
+        # 2. Check if final directory already exists and is intact (even if status was pending/failed)
+        final_cand = cls.get_final_dir(record["folder_date"], record["result"], inspection_id)
+        is_final_intact, _ = cls._verify_directory_files_intact(final_cand, record)
+        if is_final_intact:
+            rel_path = f"{record['folder_date']}/{record['result'].lower()}/{inspection_id}"
+            InspectionRepository.update_storage_success(
+                inspection_id=inspection_id,
+                relative_folder_path=rel_path,
+                timing_storage_ms=0.0,
+            )
+            return True, rel_path, None
+
+        # 3. Check pending directory
         pending_dir = cls.get_pending_dir(inspection_id)
-        if not pending_dir.exists() or not (pending_dir / "original.jpg").is_file():
-            # Source lost
+        if not pending_dir.is_dir():
             error = {
                 "code": "source_unavailable",
                 "message": "Original capture sources are missing in pending storage. Please recapture.",
@@ -139,32 +221,62 @@ class StorageManager:
             )
             return False, None, error
 
-        # Load pending bytes and snapshot
-        with open(pending_dir / "original.jpg", "rb") as f:
-            original_bytes = f.read()
-        with open(pending_dir / "annotated.jpg", "rb") as f:
-            annotated_bytes = f.read()
-        with open(pending_dir / "result.json", "r", encoding="utf-8") as f:
-            decision_snapshot = json.load(f)
+        # 4. Check that pending files are complete and uncorrupted
+        is_pending_intact, reason = cls._verify_directory_files_intact(pending_dir, record)
+        if not is_pending_intact:
+            error = {
+                "code": "source_unavailable",
+                "message": f"Pending files are incomplete ({reason}). Please recapture.",
+                "retryable": False,
+            }
+            InspectionRepository.update_storage_failure(
+                inspection_id=inspection_id,
+                error_code=error["code"],
+                error_message=error["message"],
+                retryable=False,
+            )
+            return False, None, error
 
-        supporting_bytes = []
-        sup_dir = pending_dir / "supporting"
-        if sup_dir.is_dir():
-            idx = 0
-            while (sup_dir / f"{idx}.jpg").is_file():
-                with open(sup_dir / f"{idx}.jpg", "rb") as f:
-                    supporting_bytes.append(f.read())
-                idx += 1
+        # 5. Load intact pending files safely
+        try:
+            with open(pending_dir / "original.jpg", "rb") as f:
+                original_bytes = f.read()
+            with open(pending_dir / "annotated.jpg", "rb") as f:
+                annotated_bytes = f.read()
+            with open(pending_dir / "result.json", "r", encoding="utf-8") as f:
+                decision_snapshot = json.load(f)
 
-        return cls.save_inspection(
-            inspection_id=inspection_id,
-            folder_date=record["folder_date"],
-            result=record["result"],
-            original_bytes=original_bytes,
-            annotated_bytes=annotated_bytes,
-            decision_snapshot=decision_snapshot,
-            supporting_images=supporting_bytes,
-        )
+            supporting_bytes = []
+            sup_dir = pending_dir / "supporting"
+            if sup_dir.is_dir():
+                evidence = decision_snapshot.get("evidence") or {}
+                sup_count = len(evidence.get("supporting_angles_deg") or [])
+                for idx in range(sup_count):
+                    with open(sup_dir / f"{idx}.jpg", "rb") as f:
+                        supporting_bytes.append(f.read())
+
+            return cls.save_inspection(
+                inspection_id=inspection_id,
+                folder_date=record["folder_date"],
+                result=record["result"],
+                original_bytes=original_bytes,
+                annotated_bytes=annotated_bytes,
+                decision_snapshot=decision_snapshot,
+                supporting_images=supporting_bytes,
+            )
+        except Exception as e:
+            error = {
+                "code": "storage_write_error",
+                "message": f"Failed reading pending files for retry: {e}",
+                "retryable": True,
+            }
+            InspectionRepository.update_storage_failure(
+                inspection_id=inspection_id,
+                error_code=error["code"],
+                error_message=error["message"],
+                retryable=True,
+            )
+            return False, None, error
 
     @classmethod
     def get_image_path(
@@ -218,6 +330,7 @@ class StorageManager:
     def reconcile_on_startup(cls) -> Dict[str, int]:
         """
         Scan pending/failed records on backend startup and reconcile with disk.
+        Isolates errors per record so one corrupted record never halts startup.
         """
         unsettled = InspectionRepository.list_unsettled()
         reconciled = 0
@@ -225,29 +338,40 @@ class StorageManager:
 
         for r in unsettled:
             insp_id = r["inspection_id"]
-            final_cand = cls.get_final_dir(r["folder_date"], r["result"], insp_id)
-            if (final_cand / "original.jpg").is_file() and (final_cand / "result.json").is_file():
-                # Files are actually in place
-                rel_path = f"{r['folder_date']}/{r['result'].lower()}/{insp_id}"
-                InspectionRepository.update_storage_success(insp_id, rel_path, timing_storage_ms=0.0)
-                reconciled += 1
-            else:
-                # Check if pending files exist and retry save if possible
-                pending_dir = cls.get_pending_dir(insp_id)
-                if pending_dir.is_dir() and (pending_dir / "original.jpg").is_file():
-                    ok, _, _ = cls.retry_save_from_pending(insp_id)
-                    if ok:
-                        reconciled += 1
-                    else:
-                        marked_failed += 1
+            try:
+                final_cand = cls.get_final_dir(r["folder_date"], r["result"], insp_id)
+                is_intact, _ = cls._verify_directory_files_intact(final_cand, r)
+                if is_intact:
+                    # Files are fully in place on disk
+                    rel_path = f"{r['folder_date']}/{r['result'].lower()}/{insp_id}"
+                    InspectionRepository.update_storage_success(insp_id, rel_path, timing_storage_ms=0.0)
+                    reconciled += 1
                 else:
-                    # Source lost
-                    InspectionRepository.update_storage_failure(
-                        inspection_id=insp_id,
-                        error_code="source_unavailable",
-                        error_message="Capture files missing after restart. Please recapture.",
-                        retryable=False,
-                    )
-                    marked_failed += 1
+                    # Check if pending files exist and can be completed
+                    pending_dir = cls.get_pending_dir(insp_id)
+                    if pending_dir.is_dir() and (pending_dir / "original.jpg").is_file():
+                        ok, _, _ = cls.retry_save_from_pending(insp_id)
+                        if ok:
+                            reconciled += 1
+                        else:
+                            marked_failed += 1
+                    else:
+                        # Source lost or never written
+                        InspectionRepository.update_storage_failure(
+                            inspection_id=insp_id,
+                            error_code="source_unavailable",
+                            error_message="Capture files missing after restart. Please recapture.",
+                            retryable=False,
+                        )
+                        marked_failed += 1
+            except Exception as e:
+                # Per-record isolation
+                InspectionRepository.update_storage_failure(
+                    inspection_id=insp_id,
+                    error_code="storage_reconciliation_error",
+                    error_message=f"Reconciliation error on startup: {e}",
+                    retryable=False,
+                )
+                marked_failed += 1
 
         return {"total_unsettled": len(unsettled), "reconciled": reconciled, "marked_failed": marked_failed}

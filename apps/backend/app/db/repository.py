@@ -14,6 +14,7 @@ class InspectionRepository:
         """
         data = {**data}
         data.setdefault("payload_fingerprint", None)
+        data.setdefault("is_demo", 0)
         conn = get_connection()
         try:
             with conn:
@@ -28,7 +29,7 @@ class InspectionRepository:
                         image_width, image_height, orientation_deg, config_version,
                         storage_status, folder_date, relative_folder_path, evidence_json,
                         timing_orientation_ms, timing_inspection_ms, timing_storage_ms, timing_total_ms,
-                        payload_fingerprint
+                        payload_fingerprint, is_demo
                     ) VALUES (
                         :inspection_id, :client_request_id, :created_at, :source_mode,
                         :expected_product, :detected_product, :result, :reason,
@@ -38,7 +39,7 @@ class InspectionRepository:
                         :image_width, :image_height, :orientation_deg, :config_version,
                         'pending', :folder_date, :relative_folder_path, :evidence_json,
                         :timing_orientation_ms, :timing_inspection_ms, :timing_storage_ms, :timing_total_ms,
-                        :payload_fingerprint
+                        :payload_fingerprint, :is_demo
                     );
                     """,
                     data,

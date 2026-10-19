@@ -18,6 +18,7 @@ def isolated_storage(tmp_path, monkeypatch):
     from app.db.connection import init_db
 
     monkeypatch.setattr(settings, "_raw_storage_root", str(tmp_path / "storage"))
+    monkeypatch.setattr(settings, "DEFAULT_TO_DEMO", True)
     settings.validate_storage_root()
     init_db()
     yield

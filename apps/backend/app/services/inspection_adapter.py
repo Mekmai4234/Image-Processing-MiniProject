@@ -10,12 +10,26 @@ from app.core.config import settings
 from app.core.errors import APIError
 
 
+# Try importing module 03 if available in repository
+try:
+    from app.inspection.pipeline import inspect_image as run_detector_03  # type: ignore
+    HAS_REAL_DETECTOR = True
+except ImportError:
+    run_detector_03 = None
+    HAS_REAL_DETECTOR = False
+
+
 class InspectionAdapter:
     """
     Adapter between HTTP layer, image bytes, and pure Image Processing functions (Person 03).
     Handles decoding, EXIF orientation normalization, limits, blur detection,
     and visual annotations.
     """
+
+    @classmethod
+    def has_detector(cls) -> bool:
+        """Return True if real detector from module 03 is installed and available."""
+        return HAS_REAL_DETECTOR
 
     @staticmethod
     def decode_and_normalize(image_bytes: bytes) -> Tuple[np.ndarray, bytes, int, int]:
@@ -133,19 +147,16 @@ class InspectionAdapter:
 
         best_box = None
         max_area = 0
-        for c in contours:
-            bx, by, bw, bh = cv2.boundingRect(c)
-            area = bw * bh
-            # Candidate bottle or rectangular feature in central region
-            if (bh >= rh * 0.25 or area >= rw * rh * 0.05) and area > max_area:
-                max_area = area
-                best_box = (rx + bx, ry + by, bw, bh)
-
-        # If no single large contour, check overall central edge density
-        if not best_box:
-            edge_density = np.count_nonzero(edges) / float(rw * rh)
-            if edge_density >= 0.03:
-                best_box = (rx + int(rw * 0.15), ry + int(rh * 0.15), int(rw * 0.70), int(rh * 0.70))
+        # Checkerboard or noisy textures produce many small fragmented contours: reject as non-bottle
+        is_repetitive_grid = len(contours) > 25
+        if not is_repetitive_grid:
+            for c in contours:
+                bx, by, bw, bh = cv2.boundingRect(c)
+                area = bw * bh
+                # Candidate bottle: vertically prominent or coherent body in central region
+                if (bh >= rh * 0.28 or area >= rw * rh * 0.08) and (bh >= bw * 0.65) and area > max_area:
+                    max_area = area
+                    best_box = (rx + bx, ry + by, bw, bh)
 
         if not best_box:
             # Neither bottle nor distinctive object present
@@ -165,9 +176,9 @@ class InspectionAdapter:
         bottle_visible = True
         bx, by, bw, bh = best_box
 
-        # 4. Label candidate bounding box (middle portion of detected bottle region)
-        box_w = max(40, int(bw * 0.90))
-        box_h = max(30, int(bh * 0.50))
+        # 4. Label candidate bounding box (centered inside bottle region)
+        box_w = max(30, int(bw * 0.65))
+        box_h = max(25, int(bh * 0.45))
         box_x = max(0, min(w - box_w, bx + int((bw - box_w) / 2)))
         box_y = max(0, min(h - box_h, by + int((bh - box_h) / 2)))
 
@@ -181,7 +192,6 @@ class InspectionAdapter:
             edge_ratio = np.count_nonzero(label_edges) / float(label_patch.size)
             std_dev = float(np.std(label_patch))
 
-            # Check bottle/label patch edge and contrast metrics
             bottle_edge_ratio = 0.0
             bottle_std = 0.0
             if bottle_patch.size > 0:
@@ -189,11 +199,11 @@ class InspectionAdapter:
                 bottle_edge_ratio = np.count_nonzero(bottle_edges) / float(bottle_patch.size)
                 bottle_std = float(np.std(bottle_patch))
 
-            # Text/graphics label has contrast variance, internal edges, or distinct bordered sticker
+            # Bottle with distinct contrast, printed edges, or body silhouette
             label_visible = (
                 edge_ratio >= 0.005
                 or std_dev >= 8.0
-                or bottle_std >= 12.0
+                or bottle_std >= 10.0
                 or bottle_edge_ratio >= 0.003
             )
         else:
@@ -221,18 +231,34 @@ class InspectionAdapter:
         cv_bgr: np.ndarray,
         expected_product: str,
         source_mode: str,
-        angle_deg: Optional[float],
-        evidence: Dict[str, Any],
+        angle_deg: Optional[float] = None,
+        evidence: Optional[Dict[str, Any]] = None,
         supporting_cv_images: Optional[List[np.ndarray]] = None,
+        demo: bool = False,
     ) -> Dict[str, Any]:
         """
-        Baseline / Adapter inspection matching contract v0.2.
-        Person 03 can directly plug pure inspection functions here.
+        Inspect bottle image against expected product.
+        - If real detector from 03 is present and demo=False: delegates to module 03.
+        - If demo=True: executes baseline contour & label analysis.
+          Rejects images without a bottle (e.g. checkerboard, random pattern, face) as FAIL.
         """
+        if evidence is None:
+            evidence = {}
+
+        if cls.has_detector() and not demo and run_detector_03 is not None:
+            return run_detector_03(
+                cv_bgr=cv_bgr,
+                expected_product=expected_product,
+                source_mode=source_mode,
+                angle_deg=angle_deg,
+                evidence=evidence,
+                supporting_cv_images=supporting_cv_images,
+            )
+
         h, w = cv_bgr.shape[:2]
         var = cls.compute_blur_variance(cv_bgr)
 
-        # 1. Quality gate
+        # 1. Quality gate: blur check
         if var < 30.0:
             return {
                 "result": "REVIEW",
@@ -247,9 +273,10 @@ class InspectionAdapter:
                     "width": int(w * 0.4),
                     "height": int(h * 0.3),
                 },
+                "is_demo": demo,
             }
 
-        # 2. Evidence / Search status check
+        # 2. Evidence search status check
         search_status = evidence.get("search_status", "not_requested")
         if search_status in ("exhausted", "timed_out"):
             return {
@@ -265,27 +292,73 @@ class InspectionAdapter:
                     "width": int(w * 0.4),
                     "height": int(h * 0.3),
                 },
+                "is_demo": demo,
             }
 
-        # 3. Label matching (Default baseline: good pass for known catalog)
-        box_w = max(50, int(w * 0.40))
-        box_h = max(30, int(h * 0.25))
-        box_x = int((w - box_w) / 2)
-        box_y = int((h - box_h) / 2)
+        # 3. Bottle & label contour check (04-1: Reject checkerboard, background, or non-bottle objects)
+        loc = cls.locate_label(cv_bgr, expected_product)
+        quality = loc.get("quality", {})
+        bottle_visible = quality.get("bottle_visible", False)
+        label_visible = quality.get("label_visible", False)
+
+        if not bottle_visible:
+            return {
+                "result": "FAIL",
+                "reason": "no_bottle_detected",
+                "detected_product": None,
+                "match_score": 0.0,
+                "score_method": "demo_baseline_contour_v1",
+                "bbox": None,
+                "expected_bbox": {
+                    "x": int(w * 0.3),
+                    "y": int(h * 0.35),
+                    "width": int(w * 0.4),
+                    "height": int(h * 0.3),
+                },
+                "is_demo": demo,
+            }
+
+        if not label_visible:
+            return {
+                "result": "FAIL",
+                "reason": "missing_label",
+                "detected_product": None,
+                "match_score": 0.0,
+                "score_method": "demo_baseline_contour_v1",
+                "bbox": None,
+                "expected_bbox": {
+                    "x": int(w * 0.3),
+                    "y": int(h * 0.35),
+                    "width": int(w * 0.4),
+                    "height": int(h * 0.3),
+                },
+                "is_demo": demo,
+            }
+
+        # 4. Valid bottle view with label detected
+        detected_box = loc.get("bbox") or {
+            "x": int((w - max(50, int(w * 0.40))) / 2),
+            "y": int((h - max(30, int(h * 0.25))) / 2),
+            "width": max(50, int(w * 0.40)),
+            "height": max(30, int(h * 0.25)),
+        }
+        bx, by = detected_box["x"], detected_box["y"]
+        bw, bh = detected_box["width"], detected_box["height"]
 
         return {
             "result": "PASS",
             "reason": "good",
             "detected_product": expected_product,
             "match_score": 0.94,
-            "score_method": "template_ccoeff_normed_clamped_v1",
-            "bbox": {"x": box_x, "y": box_y, "width": box_w, "height": box_h},
+            "score_method": "demo_baseline_contour_v1",
+            "bbox": detected_box,
             "expected_bbox": {
-                "x": max(0, box_x - 8),
-                "y": max(0, box_y - 12),
-                "width": box_w + 16,
-                "height": box_h + 24,
+                "x": max(0, bx - 8),
+                "y": max(0, by - 12),
+                "width": bw + 16,
+                "height": bh + 24,
             },
+            "is_demo": demo,
         }
 
     @classmethod
