@@ -21,8 +21,8 @@ py -3 -m venv 05_dataset_testing/.venv
 3. ถ่ายชุดนำร่อง ทวนคำตอบและความครอบคลุมกับ 03 ก่อนเพิ่มจำนวนประมาณ 200 ภาพ เก็บสภาพแสง/ระยะ/ความละเอียด/อุปกรณ์จริง ไม่เดามุมจากการหมุนด้วยมือ
 4. เก็บภาพและ manifest ใน `datasets/` ที่ถูก ignore ใช้ [manifest.csv](templates/manifest.csv) เป็น header ขยายจาก contract ด้วย `source_image_id` สำหรับภาพ crop/resize/augmentation ถ้าไม่มีให้ว่าง รหัสนี้อ้างภาพต้นทางใน manifest เดียวกัน ภาพที่เปลี่ยน expected_product ใช้ image_id เดิมแต่เป็นอีกกรณีตรวจ
 5. ให้มนุษย์ตรวจคำตอบ แยก GT จาก predictions ผู้ตรวจที่สองตรวจเคสกำกวมและบันทึกชื่อ/ข้อยุติในบันทึก dataset ไม่คัดลอกคำตอบโปรแกรมมาเป็น GT
-6. ทำ provenance และ catalog จริง ตรวจไฟล์/hash/กลุ่ม แบ่ง development/validation/test ทั้งกลุ่มเชื่อมโยงด้วยขวด **หรือ** session รวมภาพดัดแปลงและ hash ซ้ำ templates มาจาก development เท่านั้น
-7. ส่ง development/reference ให้ 03 ผ่านช่องทางแชร์ที่ตกลง เก็บ final test และคำตอบให้ผู้ประเมินถือไว้ บันทึก dataset/config/commit version
+6. ทำ provenance และ catalog จริง ตรวจไฟล์/hash/กลุ่ม แล้วแบ่ง development/validation/test ทั้งกลุ่มเชื่อมโยงด้วยขวด **หรือ** session รวมภาพดัดแปลงและ hash ซ้ำ **แบ่ง split ก่อนเลือก templates/references** ระหว่างเตรียม proposal ให้ reference_paths ว่างได้ แต่ข้อมูลยังไม่พร้อม evaluation
+7. ทวนข้อเสนอและความครอบคลุม แล้วเลือก references จาก development ที่ได้จริง ตรวจ manifest/catalog/provenance ชุดสุดท้ายและสร้าง audit/hash ใหม่ก่อนส่ง development/reference ให้ 03 ผ่านช่องทางแชร์ที่ตกลง เก็บ final test และคำตอบให้ผู้ประเมินถือไว้ บันทึก dataset/config/commit version
 8. ทดสอบรวมตาม [checklist](integration-checklist.csv) เมื่อ implementation พร้อม ใช้ test DB และ temporary storage ห้ามเชื่อม fixture กับข้อมูลผู้ใช้ บันทึก DEMO/mock แยกผลจริง และแจ้ง defect ให้เจ้าของส่วนแก้
 9. เลือก threshold ด้วย validation จากนั้น lock config และ dataset ก่อน final test หากนำผล test ไปปรับระบบ ต้องเปิดเผยและใช้ชุดใหม่สำหรับผลยืนยันรอบถัดไป
 
@@ -51,6 +51,10 @@ py -3 -m venv 05_dataset_testing/.venv
 
 กรณี `missing_label` ต้องเพิ่ม `missing_label_evidence` ภายใต้ asset ประกอบด้วย `profile`, `validation_record`, `reviewer`, `supporting_image_ids` (array ของ image_id ขวดเดียว/session เดียว/split เดียว) เครื่องมือตรวจความครบของบันทึกและไฟล์เท่านั้น **ไม่ได้ยืนยัน coverage จาก pixels** ต้องให้ 03/05 ทวน profile กับหลักฐานจริง และทดสอบ backend แยกก่อนอ้างผลนี้ ภาพหันหลังเพียงภาพเดียวใช้ REVIEW/label_not_visible
 
+กรณี `FAIL/misplaced_label` ต้องมี `label_present=yes`, `visible_enough=yes` และ `position_ok=no` ครบทั้งสามข้อ หากไม่ครบ เครื่องมือแจ้ง error พร้อมบรรทัดและ field และไม่ให้ผ่าน evaluation โดยไม่แก้ manifest ให้เอง ให้ผู้ตรวจทวนภาพแล้วแก้ข้อมูล
+
+`label_product` ยังคงหมายถึงสินค้าที่ฉลากระบุ แยกจากตัวขวดและ expected product ตามคู่มือร่วม รอบแก้นี้ไม่เพิ่มกฎว่าต้องทราบ label_product ทุกกรณีของ misplaced_label และไม่กำหนด reason ใหม่เมื่อผิดชนิดพร้อมผิดตำแหน่ง ต้องให้ 03/05 ทวนกฎนั้นกับ pipeline ก่อนเพิ่มข้อบังคับ โดยคง quality gate ก่อน identity/position ตาม contract
+
 Catalog ใช้รูปแบบเดียวกับตัวอย่างร่วมของทีม แต่ต้องกรอก brand/size_ml/display_name และ `demo=false`, `config_version`, `reference_paths` ของจริง ไม่ใช้ catalog สังเคราะห์ประเมินผล การมี reference ไม่ได้แปลว่า detector ผ่าน validation
 
 ## ตรวจข้อมูลจริง
@@ -65,7 +69,14 @@ dHash ใช้ค้นหาคู่ภาพคล้ายเพื่อ�
 
 Exit code: 0 พร้อมตาม gate ของเครื่องมือ, 1 พบข้อผิดพลาด/ภาพคล้ายค้าง/ยังไม่มี references, 2 input อ่านไม่ได้หรือเขียน report ไม่ได้ ทุกคำสั่งเขียนเฉพาะ output ใหม่ ไม่ทับไฟล์เดิม ไม่มีการแก้ ground truth อัตโนมัติ Gate นี้ไม่รับรองความถูกต้องของคำตอบมนุษย์หรือความครอบคลุมเชิงสถิติ
 
-เพิ่ม `--propose-splits datasets/splits/proposal-v1.csv --seed 5` เพื่อเขียนข้อเสนอใหม่หลังแก้ข้อผิดพลาดข้อมูลแล้ว ไม่แก้ manifest ต้นฉบับ และไม่ย้ายไฟล์ภาพ ตรวจ coverage แต่ละสินค้าก่อนนำข้อเสนอไปใช้ ตั้ง `split_locked=true` ใน provenance เมื่อล็อกแล้ว เครื่องมือจะปฏิเสธการเสนอ split ใหม่ รายงาน audit ต้องสร้างใหม่หลังเปลี่ยน provenance
+เพิ่ม `--propose-splits datasets/splits/proposal-v1.csv --seed 5` เพื่อเขียนข้อเสนอใหม่หลังแก้ข้อผิดพลาดข้อมูลแล้ว ไม่แก้ manifest ต้นฉบับ และไม่ย้ายไฟล์ภาพ ใช้ workflow แนวทาง A ตามลำดับนี้:
+
+1. ขณะ `split_locked=false` เตรียมกลุ่มข้อมูลแล้วเสนอ split ก่อนเลือก references; ปล่อย reference_paths ว่างได้ เครื่องมือยังสร้าง proposal ได้ แต่ exit code เป็น 1 เพราะ dataset ต้นฉบับยังไม่พร้อม evaluation
+2. ทวน coverage แต่ละสินค้า/condition และนำ proposal ไปเป็น manifest รุ่นใหม่ด้วยตนเอง Proposal ไม่ตรึง references เดิมไว้ หากมี references อยู่แล้ว กลุ่มของภาพเหล่านั้นอาจย้ายไป validation/test ต้องเลือกใหม่จาก development หลังแบ่งกลุ่ม
+3. กำหนด reference_paths จาก development ใน manifest ใหม่ทั้งหมด แล้วตรวจใหม่ หาก reference เดิมอยู่ validation/test validator ต้องปฏิเสธ ห้ามใช้ภาพ test เป็น template เพื่อให้ผ่าน
+4. ล็อก config และ split เมื่อทวนครบแล้ว ตั้ง `split_locked=true` ใน provenance จากนั้นสร้าง audit ใหม่พร้อม hash ของ manifest/catalog/provenance ล่าสุด และกรอก run metadata จาก audit ใหม่นี้ เครื่องมือจะปฏิเสธการเสนอ split ใหม่เมื่อ lock แล้ว
+
+Report และ stdout ระบุ `audit_scope=source_manifest` ชัดเจน เมื่อใช้ --propose-splits จะมี `split_proposal.status=unvalidated`, `requires_new_audit=true` และข้อความให้เลือก references ใหม่ `ready_for_evaluation` กับ exit code ของคำสั่งนี้อ้าง **manifest ต้นฉบับ** เท่านั้น แม้เป็น true/0 ก็ไม่ได้รับรอง proposal ที่เพิ่งสร้าง ห้ามนำ audit/hash เดิมไปใช้กับ manifest/catalog ที่เปลี่ยนแล้ว
 
 ## ประเมินผล
 

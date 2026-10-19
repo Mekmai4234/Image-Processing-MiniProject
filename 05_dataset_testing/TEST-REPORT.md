@@ -1,4 +1,4 @@
-# ผลตรวจงาน 05 — 19 ตุลาคม 2026
+# ผลตรวจงาน 05 — 20 ตุลาคม 2026
 
 สถานะ: เครื่องมือ offline สำหรับงาน 05 พร้อมใช้งานตามขอบเขตที่ระบุใน README ยังไม่ใช่ผลประเมิน detector หรือการทดสอบระบบจริง
 
@@ -19,14 +19,24 @@ py -3 -B -m unittest discover -s scripts -p 'test_*.py' -v
 
 | รายการ | ผล |
 |---|---|
-| Tests ของ 05 | 20 tests ผ่าน |
+| Tests ของ 05 | 26 tests ผ่าน (เดิม 20 + เพิ่ม 6) |
 | Repository structure / links / synthetic contracts | ผ่าน |
 | Regression tests ของ repository เดิม | 12 tests ผ่าน |
 | CSV templates และ integration checklist | จำนวนคอลัมน์ถูกต้องทุกแถว |
 | ขอบเขตไฟล์เปลี่ยนแปลง | เฉพาะ `05_dataset_testing/` |
-| Commit / push / PR | ยังไม่ได้ทำ |
+| Commit / push / PR ของรอบแก้ review นี้ | ยังไม่ได้ทำ; งานฐานก่อนหน้านี้อยู่ PR #14 |
 
 Tests ของ 05 ใช้ภาพสังเคราะห์ที่สร้างชั่วคราวใน test fixture และ human metadata สมมุติเพื่อทดสอบเครื่องมือเท่านั้น ไม่มีการสร้าง dataset จริงหรือแอบใช้ fixture เป็นหลักฐาน accuracy ภาพ/CSV/JSON ที่ tests สร้างถูกเก็บใน temporary directory และล้างเมื่อจบ
+
+## รอบแก้ review 05-1 และ 05-2
+
+ก่อนแก้ production code เพิ่ม regression tests แล้วรัน 4 methods: ยืนยันว่า `misplaced_label` ที่มี `label_present=no/unknown` ยังถูกโค้ดเดิมรับเป็นข้อมูลพร้อม evaluation และ CLI คืน 0; อีกกรณีพบว่า error ของ visible_enough เดิมยังไม่ระบุชื่อ field ตามเกณฑ์ใหม่ ส่วนเคสฉลากเลื่อนที่ถูกต้องผ่านอยู่แล้ว
+
+หลังแก้ ตรวจ `label_present=yes`, `visible_enough=yes`, `position_ok=no` พร้อม error ระบุบรรทัด/field แล้วรัน tests ของ 05 ทั้งหมดผ่าน 26 methods รวม subtests สำหรับ no/unknown, visibility และ position ทั้งกรณีปฏิเสธและยอมรับ CLI audit คืน 1 สำหรับ manifest ขัดกัน; evaluation ทั้ง function และ CLI ปฏิเสธตั้งแต่ dataset gate และไม่สร้างรายงานผลสำเร็จ Tests ตรวจว่า manifest ต้นฉบับไม่ถูกแก้ด้วย
+
+สำหรับ workflow ใช้แนวทาง A: แบ่ง split ก่อนเลือก references Report/stdout ระบุ audit_scope ว่าตรวจ source manifest ส่วน proposal ยัง unvalidated Tests ยืนยันว่า seed=5 ย้าย reference เดิมออกจาก development ได้จริงและ validator ปฏิเสธ จากนั้นเมื่อเลือก references จาก development ใหม่และสร้าง audit/hash ใหม่จึงผ่าน อีก test ยืนยันว่าสร้าง proposal ได้ในขั้นที่ยังไม่มี references โดย readiness ของข้อมูลต้นฉบับยังเป็น false
+
+ไม่ได้เพิ่มกฎ label_product หรือ reason precedence นอก contract ปัจจุบัน ประเด็นฉลากผิดชนิดพร้อมผิดตำแหน่งยังรอ 03/05 ตกลง ไม่ได้แก้ workflow CI หรือโค้ดของ 01–04 และยังไม่ได้ส่งผลขึ้น PR ในรอบนี้
 
 ## สิ่งที่ tests ตรวจจริง
 

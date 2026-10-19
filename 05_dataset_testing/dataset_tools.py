@@ -190,13 +190,16 @@ def validate(root, manifest, catalog, provenance=None):
             errors.append(f'{prefix}: PASS contradicts visible label/product/position')
         if row['result'] == 'FAIL':
             if row['visible_enough'] != 'yes':
-                errors.append(f'{prefix}: FAIL needs sufficient visible evidence')
+                errors.append(f'{prefix}: FAIL needs visible_enough=yes (sufficient visible evidence)')
             if row['reason'] == 'wrong_label' and not (
                     row['label_present'] == 'yes' and row['label_product'] and
                     row['label_product'] != row['expected_product']):
                 errors.append(f'{prefix}: wrong_label needs a known different label')
-            if row['reason'] == 'misplaced_label' and row['position_ok'] != 'no':
-                errors.append(f'{prefix}: misplaced_label needs position_ok=no')
+            if row['reason'] == 'misplaced_label':
+                if row['label_present'] != 'yes':
+                    errors.append(f'{prefix}: misplaced_label needs label_present=yes')
+                if row['position_ok'] != 'no':
+                    errors.append(f'{prefix}: misplaced_label needs position_ok=no')
             if row['reason'] == 'missing_label':
                 evidence = assets.get(row['image_id'], {}).get('missing_label_evidence', {})
                 # This checks human evidence records, never claims to validate pixels itself.
@@ -285,7 +288,8 @@ def validate(root, manifest, catalog, provenance=None):
                          'products': dict(Counter(r['product_id'] for r in subset)),
                          'results': dict(Counter(r['result'] for r in subset)),
                          'conditions': dict(Counter(assets.get(r['image_id'], {}).get('condition', 'unknown') for r in subset))}
-    return {'ready_for_evaluation': not errors and not near and bool(reference_paths) and references_complete,
+    return {'audit_scope': 'source_manifest',
+            'ready_for_evaluation': not errors and not near and bool(reference_paths) and references_complete,
             'split_locked': metadata.get('split_locked') is True,
             'errors': errors, 'warnings': warnings, 'manifest_sha256': manifest_hash,
             'catalog_sha256': hashlib.sha256(catalog_bytes).hexdigest(),
@@ -297,6 +301,7 @@ def validate(root, manifest, catalog, provenance=None):
 
 
 def split_proposal(rows, groups, seed):
+    """Propose groups first; select references from the new development split later."""
     if len(groups) < 3:
         raise ValueError('Need at least 3 independent groups; collect separate bottles/sessions')
     groups = [list(g) for g in groups]
@@ -345,9 +350,22 @@ def main():
             if blocking:
                 raise ValueError('Cannot propose splits until data errors are fixed: ' + '; '.join(blocking))
             write_new(args.propose_splits, split_proposal(rows, groups, args.seed))
+            report['split_proposal'] = {
+                'path': args.propose_splits,
+                'status': 'unvalidated',
+                'references_policy': 'select_from_development_after_split',
+                'requires_new_audit': True,
+                'note': 'Existing references are not pinned. Apply and review the proposal, '
+                        'select development references, then create a new audit and hashes. '
+                        'This report and readiness describe only the source manifest.',
+            }
         write_new(args.report, report)
-        print(json.dumps({'errors': len(report['errors']), 'warnings': len(report['warnings']),
-                          'ready_for_evaluation': report['ready_for_evaluation']}, ensure_ascii=False))
+        summary = {'audit_scope': report['audit_scope'], 'errors': len(report['errors']),
+                   'warnings': len(report['warnings']),
+                   'ready_for_evaluation': report['ready_for_evaluation']}
+        if args.propose_splits:
+            summary['split_proposal'] = report['split_proposal']
+        print(json.dumps(summary, ensure_ascii=False))
         return 0 if report['ready_for_evaluation'] else 1
     except (OSError, ValueError, KeyError, TypeError) as exc:
         print(f'ERROR: {exc}', file=sys.stderr)

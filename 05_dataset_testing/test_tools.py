@@ -133,6 +133,72 @@ class ToolsTests(unittest.TestCase):
         self.assertIn('SHA-256 mismatch', errors)
         self.assertIn('Reference must trace', errors)
 
+    def test_misplaced_label_rejects_absent_or_unknown_label(self):
+        for present in ('no', 'unknown'):
+            with self.subTest(label_present=present):
+                self.rows[2].update(result='FAIL', reason='misplaced_label', position_ok='no',
+                                    label_present=present, label_product='', visible_enough='yes')
+                self.save()
+                before = self.manifest.read_bytes()
+                report = self.audit()
+                self.assertFalse(report['ready_for_evaluation'])
+                self.assertTrue(any('line 4' in error and 'label_present=yes' in error
+                                    for error in report['errors']), report['errors'])
+                self.assertEqual(before, self.manifest.read_bytes())
+
+    def test_misplaced_label_requires_visibility_and_wrong_position(self):
+        self.rows[2].update(result='FAIL', reason='misplaced_label', position_ok='no')
+        for field, invalid in (('visible_enough', 'no'), ('visible_enough', 'unknown'),
+                               ('position_ok', 'yes'), ('position_ok', 'unknown')):
+            with self.subTest(field=field, invalid=invalid):
+                self.rows[2].update(visible_enough='yes', position_ok='no')
+                self.rows[2][field] = invalid
+                self.save()
+                report = self.audit()
+                self.assertFalse(report['ready_for_evaluation'])
+                self.assertTrue(any('line 4' in error and field in error for error in report['errors']))
+
+    def test_misplaced_label_valid_case_is_accepted(self):
+        self.rows[2].update(result='FAIL', reason='misplaced_label', position_ok='no',
+                            label_present='yes', visible_enough='yes')
+        self.save()
+        report = self.audit()
+        self.assertEqual([], report['errors'])
+        self.assertTrue(report['ready_for_evaluation'])
+
+    def test_cli_and_evaluation_reject_contradictory_misplaced_label(self):
+        run, predictions = self.prediction_run()
+        self.eval(run, predictions)  # Prepare otherwise-valid prediction input.
+        for present in ('no', 'unknown'):
+            with self.subTest(label_present=present):
+                self.rows[2].update(result='FAIL', reason='misplaced_label', position_ok='no',
+                                    label_present=present, label_product='', visible_enough='yes')
+                self.save()
+                before = self.manifest.read_bytes()
+                audit_path = self.root / f'audit-{present}.json'
+                command = [sys.executable, '-B', str(Path(__file__).with_name('dataset_tools.py')),
+                           '--root', str(self.root), '--manifest', str(self.manifest),
+                           '--catalog', str(self.catalog), '--provenance', str(self.provenance),
+                           '--report', str(audit_path)]
+                result = subprocess.run(command, capture_output=True, text=True)
+                self.assertEqual(1, result.returncode, result.stderr)
+                self.assertFalse(json.loads(result.stdout)['ready_for_evaluation'])
+                self.assertTrue(any('label_present' in error for error in
+                                    json.loads(audit_path.read_text())['errors']))
+                with self.assertRaisesRegex(ValueError, 'Dataset gate is not ready'):
+                    self.eval(run, predictions)
+                output = self.root / f'evaluation-{present}.json'
+                command = [sys.executable, '-B', str(Path(__file__).with_name('evaluate.py')),
+                           '--root', str(self.root), '--manifest', str(self.manifest),
+                           '--catalog', str(self.catalog), '--provenance', str(self.provenance),
+                           '--predictions', str(self.root / 'pred.csv'), '--run', str(run),
+                           '--mode', 'webcam', '--report', str(output)]
+                result = subprocess.run(command, capture_output=True, text=True)
+                self.assertEqual(2, result.returncode, result.stdout)
+                self.assertIn('Dataset gate is not ready', result.stderr)
+                self.assertFalse(output.exists())
+                self.assertEqual(before, self.manifest.read_bytes())
+
     def test_near_duplicates_need_human_review(self):
         Image.new('RGB', (32, 32), 'red').save(self.root / '0.png')
         Image.new('RGB', (32, 32), 'blue').save(self.root / '1.png')
@@ -156,6 +222,72 @@ class ToolsTests(unittest.TestCase):
         self.assertEqual(set(r['split'] for r in proposal), {'development', 'validation', 'test'})
         with self.assertRaises(ValueError):
             split_proposal(self.rows, [list(range(6))], 5)
+
+    def test_split_proposal_requires_new_references_and_audit(self):
+        self.metadata['split_locked'] = False
+        self.save()
+        original = self.audit()
+        self.assertTrue(original['ready_for_evaluation'])
+        before = {p: p.read_bytes() for p in (self.manifest, self.catalog, self.provenance)}
+        proposal_path, report_path = self.root / 'proposal.csv', self.root / 'source-audit.json'
+        command = [sys.executable, '-B', str(Path(__file__).with_name('dataset_tools.py')),
+                   '--root', str(self.root), '--manifest', str(self.manifest),
+                   '--catalog', str(self.catalog), '--provenance', str(self.provenance),
+                   '--report', str(report_path), '--propose-splits', str(proposal_path), '--seed', '5']
+        result = subprocess.run(command, capture_output=True, text=True)
+        self.assertEqual(0, result.returncode, result.stderr)
+        output = json.loads(result.stdout)
+        self.assertEqual('source_manifest', output['audit_scope'])
+        self.assertEqual('unvalidated', output['split_proposal']['status'])
+        self.assertTrue(output['split_proposal']['requires_new_audit'])
+        source_report = json.loads(report_path.read_text())
+        self.assertEqual(output['split_proposal'], source_report['split_proposal'])
+        self.assertEqual(original['manifest_sha256'], source_report['manifest_sha256'])
+        for path, content in before.items():
+            self.assertEqual(content, path.read_bytes())
+
+        proposed, _ = read_csv(proposal_path, FIELDS)
+        self.assertNotEqual('development', next(r['split'] for r in proposed if r['filename'] == '0.png'))
+        self.rows = proposed
+        self.save()
+        stale_references = self.audit()
+        self.assertFalse(stale_references['ready_for_evaluation'])
+        self.assertIn('Reference must trace to development: 0.png', stale_references['errors'])
+
+        reference = next(r['filename'] for r in self.rows if r['split'] == 'development')
+        self.product['products'][0]['reference_paths'] = [reference]
+        self.save()
+        fresh = self.audit()
+        self.assertTrue(fresh['ready_for_evaluation'], fresh['errors'])
+        self.assertNotEqual(source_report['manifest_sha256'], fresh['manifest_sha256'])
+        self.assertNotEqual(source_report['catalog_sha256'], fresh['catalog_sha256'])
+        final_path = self.root / 'final-audit.json'
+        write_new(final_path, fresh)
+        final = json.loads(final_path.read_text())
+        self.assertTrue(final['ready_for_evaluation'])
+        for product in self.product['products']:
+            for ref in product['reference_paths']:
+                self.assertTrue(all(r['split'] == 'development' for r in self.rows if r['filename'] == ref))
+
+    def test_cli_can_propose_before_selecting_references(self):
+        self.metadata['split_locked'] = False
+        self.product['products'][0]['reference_paths'] = []
+        self.save()
+        proposal_path = self.root / 'proposal.csv'
+        command = [sys.executable, '-B', str(Path(__file__).with_name('dataset_tools.py')),
+                   '--root', str(self.root), '--manifest', str(self.manifest),
+                   '--catalog', str(self.catalog), '--provenance', str(self.provenance),
+                   '--report', str(self.root / 'source-audit.json'),
+                   '--propose-splits', str(proposal_path)]
+        result = subprocess.run(command, capture_output=True, text=True)
+        self.assertEqual(1, result.returncode, result.stderr)
+        output = json.loads(result.stdout)
+        self.assertFalse(output['ready_for_evaluation'])
+        self.assertEqual('unvalidated', output['split_proposal']['status'])
+        self.assertTrue(proposal_path.is_file())
+        proposed, _ = read_csv(proposal_path, FIELDS)
+        self.assertEqual(6, len(proposed))
+        self.assertEqual([], self.product['products'][0]['reference_paths'])
 
     def test_csv_and_output_never_overwrites(self):
         path = self.root / 'bad.csv'
