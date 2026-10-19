@@ -11,17 +11,14 @@ import { REASON_LABEL } from '../lib/format'
 import { newRequestId } from '../lib/ids'
 import { useInspectionRun } from '../lib/useInspectionRun'
 import { dataUrlToBlob, useObjectUrls } from '../lib/useObjectUrls'
-import type { InspectionRequest, InspectionResult } from '../types/inspection'
+import type { InspectionResult } from '../types/inspection'
+import { appendViews, buildSimulationRequest, removeView as dropView, setViewAngle, type ViewItem } from '../lib/views'
 
 const MAX_VIEWS = 12 // MAX_INSPECTION_VIEWS (backend ตรวจซ้ำเสมอ)
 const MAX_FILE_MB = 10 // MAX_UPLOAD_MB; 1 MB = 1,000,000 bytes
 
-interface View {
-  id: string
-  blob: Blob
-  name: string
+interface View extends ViewItem {
   url: string
-  angle: number | null
 }
 
 const PIPELINE = [
@@ -86,11 +83,13 @@ export function SimulationPage() {
       }
       next.push({ id: newRequestId(), blob: f, name: f.name, url: urls.create(f), angle: null })
     }
-    setViews((v) => {
-      const all = [...v, ...next]
-      if (all.length > MAX_VIEWS) setUploadError(`ส่งได้สูงสุด ${MAX_VIEWS} ภาพต่อรอบ`)
-      return all.slice(0, MAX_VIEWS).map((x, i) => ({ ...x, angle: x.angle ?? (angleOptions[i] ?? null) }))
-    })
+    // ภาพใหม่ angle=null จนผู้ใช้เลือกเอง; ภาพเดิมคงมุมเดิมทุกค่า (review 01-1)
+    const { views: merged, dropped } = appendViews(views, next, MAX_VIEWS)
+    if (dropped > 0) {
+      next.slice(next.length - dropped).forEach((x) => urls.revoke(x.url))
+      setUploadError(`ส่งได้สูงสุด ${MAX_VIEWS} ภาพต่อรอบ`)
+    }
+    setViews(merged)
     invalidate()
   }
 
@@ -110,42 +109,22 @@ export function SimulationPage() {
   }
 
   function removeView(id: string) {
-    setViews((v) => {
-      const target = v.find((x) => x.id === id)
-      if (target) urls.revoke(target.url)
-      return v.filter((x) => x.id !== id)
-    })
+    const target = views.find((x) => x.id === id)
+    if (target) urls.revoke(target.url)
+    setViews(dropView(views, id))
     if (primaryId === id) setPrimaryId(null)
     invalidate()
   }
 
   function setAngle(id: string, angle: number | null) {
-    setViews((v) => v.map((x) => (x.id === id ? { ...x, angle } : x)))
+    setViews((v) => setViewAngle(v, id, angle))
     invalidate()
   }
 
   function startInspection() {
-    if (!primary) return
-    const supporting = views.filter((v) => v.id !== primary.id)
-    const req: InspectionRequest = {
-      image: primary.blob,
-      imageName: primary.name,
-      expected_product: product,
-      source_mode: 'simulation',
-      client_request_id: newRequestId(), // รอบใหม่ = id ใหม่
-      ...(primary.angle !== null ? { angle_deg: primary.angle } : {}),
-    }
-    if (supporting.length > 0) {
-      req.supporting_images = supporting.map((v) => ({ blob: v.blob, name: v.name }))
-      req.evidence = {
-        kind: 'multi_view',
-        // ยังไม่มีฉาก ORIENT ของ 02: ส่งชุดภาพตรง ๆ ไม่อ้างว่าค้นหามุมแล้ว
-        search_status: 'not_requested',
-        supporting_angles_deg: supporting.map((v) => v.angle),
-        reported_coverage_deg: null,
-      }
-    }
-    void run.run(req)
+    // รอบใหม่ = client_request_id ใหม่; มุมที่ไม่ทราบส่งเป็น null/ไม่ส่ง ตาม contract
+    const req = buildSimulationRequest(views, primary?.id ?? null, product, newRequestId())
+    if (req) void run.run(req)
   }
 
   function resetAll() {

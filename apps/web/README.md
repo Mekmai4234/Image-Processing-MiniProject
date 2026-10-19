@@ -29,7 +29,7 @@ cd apps/web
 npm ci            # ติดตั้งตาม package-lock.json
 npm run dev       # http://localhost:5173
 npm run build     # typecheck + build ไป dist/
-npm test          # unit tests (geometry, contract form, DEMO data)
+npm test          # unit tests (geometry, contract form, มุมภาพ, DEMO data)
 npm run preview   # เปิด build ที่ http://localhost:4173
 ```
 
@@ -52,6 +52,7 @@ npm run preview   # เปิด build ที่ http://localhost:4173
 - `bbox` วาดเส้นทึบ, `expected_bbox` วาดเส้นประพร้อมป้าย "บริเวณที่ควรมีฉลาก" เท่านั้น
 - ระหว่างรอผลไม่แสดง PASS; เปลี่ยนภาพ/สินค้า/รีเซ็ตแล้วตัดผลเก่าทิ้ง (`useInspectionRun`)
 - รอบตรวจใหม่สร้าง `client_request_id` ใหม่; ปุ่มลองใหม่ส่ง payload เดิมด้วย id เดิม
+- ภาพอัปโหลดเริ่มที่ "ไม่ทราบมุม" (null) จนผู้ใช้เลือกเอง; ภาพหลักไม่ทราบมุมไม่ส่ง `angle_deg` และภาพสนับสนุนส่ง null ณ index เดิม (`src/lib/views.ts`) ชุดภาพ DEMO เท่านั้นที่กำหนดมุมไว้ล่วงหน้า
 - ผลสินค้าแยกจากสถานะบันทึก เช่น "PASS / บันทึกไม่สำเร็จ"; API error แสดง ERROR ไม่ใช่ FAIL
 - `match_score` แสดงเป็น "ความคล้าย" และ null แสดง "—"
 - สถิติ History คำนวณจาก `total` ของ API ตาม filter ไม่ hardcode
