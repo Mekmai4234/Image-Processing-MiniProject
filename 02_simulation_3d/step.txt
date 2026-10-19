@@ -2,7 +2,7 @@
 เจ้าของงาน: คนที่ 2 (รอกรอกชื่อจริงใน docs/team.md)
 ความยาก: ยาก (4/5)
 Branch เริ่มต้น: feature/02-simulation-3d
-สถานะ: แผนพัฒนา; ดู implementation-status ก่อนรันคำสั่งแอป
+สถานะ: M1 มี state machine + ฉาก Three.js ทดสอบกับ mock DEMO แล้ว (ยังไม่ต่อ API จริง); ดู apps/web/src/features/simulation/README.md
 
 STEP — ลำดับลงมือทำและจุดส่งงาน
 
@@ -47,3 +47,7 @@ STEP — ลำดับลงมือทำและจุดส่งงา�
 
 12. ส่ง PR เข้า develop พร้อมวิดีโอ/ภาพสาธิตและ checklist
     คนที่ 1 ฝัง component ได้ และคนที่ 5 ตรวจการคัดแยกกับผลที่ API ตอบตรงกัน
+
+ความคืบหน้า M1 (ทดสอบกับ mock DEMO เท่านั้น)
+ทำแล้ว: ข้อ 2–11 ใน features/simulation พร้อม unit test 44 กรณี และ e2e บน harness
+ยังไม่ทำ: ฝังในหน้า Simulation ของ 01, ต่อ API จริงของ 04, ทดสอบกับชุดภาพจริงของ 05, วัด fps บน notebook ทีม
