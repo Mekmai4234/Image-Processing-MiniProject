@@ -2,7 +2,7 @@
 เจ้าของงาน: คนที่ 2 (รอกรอกชื่อจริงใน docs/team.md)
 ความยาก: ยาก (4/5)
 Branch เริ่มต้น: feature/02-simulation-3d
-สถานะ: แผนพัฒนา; ดู implementation-status ก่อนรันคำสั่งแอป
+สถานะ: M1 มี state machine + ฉาก Three.js ทดสอบกับ mock DEMO แล้ว (ยังไม่ต่อ API จริง); ดู apps/web/src/features/simulation/README.md
 
 PROCESS — หลักการ Input/Output และเกณฑ์รับงาน
 
@@ -40,3 +40,10 @@ prototype SVG เดิมไม่ใช่ completion ของงานนี
 ขวดไม่ข้ามสถานี, ไม่ชน/ลอย, ทาง pass/reject อ่านออก,
 pause/reset ไม่เกิดผลซ้ำ, delayed response ไม่เปลี่ยนขวดผิดใบ,
 การ replay ไม่เขียนฐานข้อมูลซ้ำ และมี fallback ถ้า WebGL ใช้ไม่ได้
+
+ข้อตกลงที่เพิ่มใน M1 (19 ต.ค. 2026)
+พบ usable view → ส่งภาพหลักภาพเดียว evidence single_view/usable_view_found ไม่ส่ง supporting_images
+ค้นครบหรือหมดเวลา → ภาพตัวแทน + มุมที่ค้นแล้วเป็น supporting_images แล้วรอ Backend ตัดสิน
+ภาพตัวแทนเลือกจาก quality ของ locator (bottle_visible > sharp/label) เสมอกันใช้มุมน้อยสุด
+REVIEW มีช่อง "รอถ่ายใหม่" สีเหลืองแยกจากถาด REJECT ของ FAIL ฉากจึงมี 3 ปลายทาง
+การเคลื่อนที่ทุกช่วงเป็น segment เวลาจำลองใน state machine; scene วาดตาม state อย่างเดียว
