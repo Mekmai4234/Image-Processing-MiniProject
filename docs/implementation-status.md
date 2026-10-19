@@ -7,7 +7,7 @@
 | CI ตรวจเอกสาร/โครงสร้าง | มีสคริปต์และ workflow |
 | HTML conveyor prototype | ทดลองได้ เกณฑ์สีพื้นฐานสำหรับภาพที่ควบคุม |
 | React app แยก 3 หน้า | ยังต้องพัฒนา |
-| Three.js conveyor / rotation | ยังต้องพัฒนา |
+| Three.js conveyor / rotation | M1: scene + state machine ทดสอบกับ mock DEMO; ยังไม่ต่อ API จริง/ภาพจริง |
 | Webcam capture/guidance | ยังต้องพัฒนา |
 | OpenCV inspection ที่ validate กับขวดไทย | ยังต้องพัฒนา/เก็บข้อมูล |
 | Local persistence / SQLite / History API | ยังต้องพัฒนา |

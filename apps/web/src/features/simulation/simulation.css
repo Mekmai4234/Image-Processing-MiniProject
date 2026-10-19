@@ -1,0 +1,62 @@
+/* Scoped to .vv-sim so it cannot leak into 01's shared styles. */
+.vv-sim {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 360px;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #0a1626;
+  color: #e2e8f0;
+  font-family: system-ui, 'Noto Sans Thai', 'Leelawadee UI', sans-serif;
+}
+.vv-sim__canvas { position: absolute; inset: 0; }
+.vv-sim__overlay { position: absolute; inset: 0; pointer-events: none; padding: 12px; font-size: 13px; line-height: 1.45; }
+.vv-sim__overlay > * { pointer-events: auto; }
+.vv-sim__topbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.vv-sim__state, .vv-sim__demo, .vv-sim__chip {
+  border-radius: 999px; padding: 4px 11px; font-weight: 700; font-size: 12px;
+  background: rgba(14, 52, 96, 0.92); border: 1px solid rgba(125, 211, 252, 0.35);
+}
+.vv-sim__state--paused { background: rgba(71, 85, 105, 0.95); }
+.vv-sim__state--error { background: rgba(153, 27, 27, 0.95); border-color: #fca5a5; }
+.vv-sim__state--wait_result { background: rgba(30, 64, 175, 0.95); }
+.vv-sim__demo { background: rgba(124, 58, 237, 0.92); border-color: #c4b5fd; }
+.vv-sim__notice {
+  margin: 8px 0 0; max-width: 420px; padding: 7px 10px; border-radius: 8px;
+  background: rgba(245, 179, 1, 0.14); border: 1px solid rgba(245, 179, 1, 0.5); color: #fde68a;
+}
+.vv-sim__orient {
+  margin-top: 8px; display: inline-flex; flex-direction: column; gap: 4px; padding: 7px 10px;
+  border-radius: 8px; background: rgba(10, 22, 38, 0.82); border: 1px solid rgba(148, 163, 184, 0.3);
+}
+.vv-sim__angles { display: flex; flex-wrap: wrap; gap: 4px; }
+.vv-sim__angles span { padding: 1px 6px; border-radius: 5px; background: rgba(56, 189, 248, 0.18); font-variant-numeric: tabular-nums; }
+.vv-sim__error, .vv-sim__result {
+  position: absolute; left: 12px; bottom: 34px; display: flex; flex-direction: column; gap: 2px;
+  max-width: min(420px, calc(100% - 230px)); padding: 10px 12px; border-radius: 10px;
+  background: rgba(10, 22, 38, 0.9); border: 1px solid;
+}
+.vv-sim__error { border-color: #f87171; }
+.vv-sim__result strong { font-size: 18px; }
+.vv-sim__result--pass { border-color: #22c55e; } .vv-sim__result--pass strong { color: #4ade80; }
+.vv-sim__result--fail { border-color: #ef4444; } .vv-sim__result--fail strong { color: #f87171; }
+.vv-sim__result--review { border-color: #f5b301; } .vv-sim__result--review strong { color: #fcd34d; }
+.vv-sim__warn { color: #fdba74; }
+.vv-sim__monitor {
+  position: absolute; right: 12px; bottom: 34px; margin: 0; width: 190px; border-radius: 10px; overflow: hidden;
+  background: rgba(10, 22, 38, 0.92); border: 1px solid rgba(125, 211, 252, 0.4);
+}
+.vv-sim__monitor img { display: block; width: 100%; height: 150px; object-fit: contain; background: #020617; }
+.vv-sim__monitor-empty { height: 150px; display: grid; place-items: center; color: #64748b; background: #020617; }
+.vv-sim__monitor figcaption { padding: 5px 8px; font-size: 12px; }
+.vv-sim__footnote { position: absolute; left: 12px; right: 12px; bottom: 6px; margin: 0; font-size: 11px; color: #94a3b8; }
+.vv-sim__fallback { position: absolute; inset: 0; display: grid; place-content: center; gap: 12px; padding: 24px; text-align: center; }
+.vv-sim__fallback ol { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; list-style: none; padding: 0; margin: 0; }
+.vv-sim__fallback li { position: relative; padding: 14px 16px; border-radius: 10px; background: #13263d; border: 1px solid #1e3a5f; }
+.vv-sim__fallback li.is-active { border-color: #38bdf8; background: #0c3557; }
+.vv-sim__dot { position: absolute; top: -6px; right: -6px; width: 14px; height: 14px; border-radius: 50%; background: #38bdf8; }
+@media (max-width: 640px) {
+  .vv-sim__monitor { width: 130px; } .vv-sim__monitor img, .vv-sim__monitor-empty { height: 100px; }
+  .vv-sim__error, .vv-sim__result { max-width: calc(100% - 160px); }
+}
