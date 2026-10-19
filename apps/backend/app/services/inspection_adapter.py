@@ -13,9 +13,21 @@ from app.core.errors import APIError
 # Try importing module 03 if available in repository
 try:
     from app.inspection.pipeline import inspect_image as run_detector_03  # type: ignore
+    from app.inspection.types import (  # type: ignore
+        Evidence as DetectorEvidence,
+        Decision as DetectorDecision,
+        InspectionInputError,
+        InspectionConfigError,
+    )
+    from app.inspection.config import DetectorConfig  # type: ignore
     HAS_REAL_DETECTOR = True
 except ImportError:
     run_detector_03 = None
+    DetectorEvidence = None
+    DetectorDecision = None
+    InspectionInputError = ValueError
+    InspectionConfigError = ValueError
+    DetectorConfig = None
     HAS_REAL_DETECTOR = False
 
 
@@ -26,10 +38,39 @@ class InspectionAdapter:
     and visual annotations.
     """
 
+    _detector_config: Optional[Any] = None
+
+    @classmethod
+    def set_detector_config(cls, config: Any) -> None:
+        """Set active DetectorConfig for module 03."""
+        cls._detector_config = config
+
+    @classmethod
+    def get_detector_config(cls) -> Optional[Any]:
+        """Get active DetectorConfig."""
+        return cls._detector_config
+
     @classmethod
     def has_detector(cls) -> bool:
         """Return True if real detector from module 03 is installed and available."""
         return HAS_REAL_DETECTOR
+
+    @classmethod
+    def is_detector_ready(cls) -> bool:
+        """
+        Return True if real detector is imported AND has a valid configured DetectorConfig.
+        If config is missing, empty, or unvalidated, returns False.
+        """
+        if not HAS_REAL_DETECTOR or run_detector_03 is None:
+            return False
+        if cls._detector_config is None:
+            return False
+        try:
+            if hasattr(cls._detector_config, "validate"):
+                cls._detector_config.validate()
+            return True
+        except Exception:
+            return False
 
     @staticmethod
     def decode_and_normalize(image_bytes: bytes) -> Tuple[np.ndarray, bytes, int, int]:
@@ -90,7 +131,6 @@ class InspectionAdapter:
         gray = cv2.cvtColor(cv_bgr, cv2.COLOR_BGR2GRAY)
         return float(cv2.Laplacian(gray, cv2.CV_64F).var())
 
-    @classmethod
     @classmethod
     def locate_label(cls, cv_bgr: np.ndarray, expected_product: str) -> Dict[str, Any]:
         """
@@ -246,14 +286,91 @@ class InspectionAdapter:
             evidence = {}
 
         if cls.has_detector() and not demo and run_detector_03 is not None:
-            return run_detector_03(
-                cv_bgr=cv_bgr,
-                expected_product=expected_product,
-                source_mode=source_mode,
-                angle_deg=angle_deg,
-                evidence=evidence,
-                supporting_cv_images=supporting_cv_images,
-            )
+            if not cls.is_detector_ready():
+                raise APIError(
+                    status_code=503,
+                    code="inspection_unavailable",
+                    message="Detector configuration or catalog references from module 03 are not ready on this backend.",
+                )
+
+            # Convert evidence to module 03 Evidence dataclass
+            det_evidence = None
+            if DetectorEvidence is not None and evidence:
+                det_evidence = DetectorEvidence(
+                    kind=evidence.get("kind", "single_view"),
+                    search_status=evidence.get("search_status", "not_requested"),
+                    supporting_angles_deg=tuple(evidence.get("supporting_angles_deg") or ()),
+                    reported_coverage_deg=evidence.get("reported_coverage_deg"),
+                )
+
+            supporting_tuple = tuple(supporting_cv_images or [])
+
+            try:
+                decision = run_detector_03(
+                    image=cv_bgr,
+                    expected_product=expected_product,
+                    config=cls._detector_config,
+                    color_order="BGR",
+                    source_mode=source_mode,
+                    angle_deg=angle_deg,
+                    supporting_images=supporting_tuple,
+                    evidence=det_evidence,
+                )
+            except InspectionInputError as err:
+                raise APIError(
+                    status_code=400,
+                    code="invalid_inspection_input",
+                    message=str(err),
+                )
+            except InspectionConfigError as err:
+                raise APIError(
+                    status_code=503,
+                    code="inspection_unavailable",
+                    message=f"Detector configuration error: {str(err)}",
+                )
+            except Exception as err:
+                raise APIError(
+                    status_code=500,
+                    code="detector_runtime_error",
+                    message=f"Detector execution failed: {str(err)}",
+                )
+
+            if hasattr(decision, "to_inspection_fields"):
+                fields = decision.to_inspection_fields()
+            elif hasattr(decision, "to_dict"):
+                fields = decision.to_dict()
+            elif isinstance(decision, dict):
+                fields = decision
+            else:
+                fields = dict(decision)
+
+            def _box_to_dict(b):
+                if b is None or isinstance(b, dict):
+                    return b
+                return {
+                    "x": getattr(b, "x", 0),
+                    "y": getattr(b, "y", 0),
+                    "width": getattr(b, "width", 0),
+                    "height": getattr(b, "height", 0),
+                }
+
+            bbox_dict = _box_to_dict(fields.get("bbox"))
+            expected_bbox_dict = _box_to_dict(fields.get("expected_bbox"))
+
+            return {
+                "result": fields["result"],
+                "reason": fields["reason"],
+                "detected_product": fields.get("detected_product"),
+                "match_score": fields.get("match_score"),
+                "score_method": fields.get("score_method"),
+                "bbox": bbox_dict,
+                "expected_bbox": expected_bbox_dict,
+                "config_version": fields.get("config_version", settings.CONFIG_VERSION),
+                "evidence": fields.get("evidence", evidence),
+                "timing_ms": fields.get("timing_ms", {}),
+                "is_demo": False,
+                "demo": False,
+            }
 
         h, w = cv_bgr.shape[:2]
         var = cls.compute_blur_variance(cv_bgr)
@@ -295,7 +412,7 @@ class InspectionAdapter:
                 "is_demo": demo,
             }
 
-        # 3. Bottle & label contour check (04-1: Reject checkerboard, background, or non-bottle objects)
+        # 3. Bottle & label contour check (04-1, 04-4: Conforms to Contract v0.2 Enum)
         loc = cls.locate_label(cv_bgr, expected_product)
         quality = loc.get("quality", {})
         bottle_visible = quality.get("bottle_visible", False)
@@ -303,8 +420,8 @@ class InspectionAdapter:
 
         if not bottle_visible:
             return {
-                "result": "FAIL",
-                "reason": "no_bottle_detected",
+                "result": "REVIEW",
+                "reason": "label_not_visible",
                 "detected_product": None,
                 "match_score": 0.0,
                 "score_method": "demo_baseline_contour_v1",
@@ -319,9 +436,27 @@ class InspectionAdapter:
             }
 
         if not label_visible:
+            # 04-4: Only declare FAIL: missing_label if full 360-degree coverage was verified
+            reported_cov = evidence.get("reported_coverage_deg") or 0.0
+            if reported_cov >= 360.0:
+                return {
+                    "result": "FAIL",
+                    "reason": "missing_label",
+                    "detected_product": None,
+                    "match_score": 0.0,
+                    "score_method": "demo_baseline_contour_v1",
+                    "bbox": None,
+                    "expected_bbox": {
+                        "x": int(w * 0.3),
+                        "y": int(h * 0.35),
+                        "width": int(w * 0.4),
+                        "height": int(h * 0.3),
+                    },
+                    "is_demo": demo,
+                }
             return {
-                "result": "FAIL",
-                "reason": "missing_label",
+                "result": "REVIEW",
+                "reason": "label_not_visible",
                 "detected_product": None,
                 "match_score": 0.0,
                 "score_method": "demo_baseline_contour_v1",

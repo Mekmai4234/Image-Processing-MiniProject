@@ -16,6 +16,7 @@ def export_inspections_csv(
     product_id: Optional[str] = Query(None, description="Filter by expected product ID"),
     date_from: Optional[str] = Query(None, description="Filter from YYYY-MM-DD"),
     date_to: Optional[str] = Query(None, description="Filter to YYYY-MM-DD"),
+    demo: Optional[bool] = Query(None, description="Filter by demo mode (true/false)"),
 ):
     if date_from and date_to and date_from > date_to:
         raise APIError(
@@ -30,6 +31,7 @@ def export_inspections_csv(
         product_id=product_id,
         date_from=date_from,
         date_to=date_to,
+        demo=demo,
     )
 
     fieldnames = [
@@ -51,6 +53,7 @@ def export_inspections_csv(
         "image_height",
         "orientation_deg",
         "storage_status",
+        "demo",
         "reviewed_result",
         "reviewed_reason",
         "reviewer",
@@ -61,7 +64,9 @@ def export_inspections_csv(
     writer = csv.DictWriter(output, fieldnames=fieldnames, extrasaction="ignore")
     writer.writeheader()
     for row in rows:
-        writer.writerow(row)
+        row_dict = dict(row)
+        row_dict["demo"] = "true" if row_dict.get("is_demo") else "false"
+        writer.writerow(row_dict)
 
     csv_content = output.getvalue()
     return Response(

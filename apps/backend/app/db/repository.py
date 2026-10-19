@@ -186,6 +186,7 @@ class InspectionRepository:
         product_id: Optional[str] = None,
         date_from: Optional[str] = None,
         date_to: Optional[str] = None,
+        demo: Optional[bool] = None,
     ) -> Tuple[List[Dict[str, Any]], int]:
         """
         Query inspections with filters and pagination.
@@ -211,6 +212,9 @@ class InspectionRepository:
             if date_to:
                 conditions.append("folder_date <= ?")
                 params.append(date_to)
+            if demo is not None:
+                conditions.append("is_demo = ?")
+                params.append(1 if demo else 0)
 
             where_clause = ""
             if conditions:
@@ -239,6 +243,7 @@ class InspectionRepository:
         product_id: Optional[str] = None,
         date_from: Optional[str] = None,
         date_to: Optional[str] = None,
+        demo: Optional[bool] = None,
     ) -> List[Dict[str, Any]]:
         """Query all inspections matching filters without pagination for CSV export."""
         conn = get_connection()
@@ -260,6 +265,9 @@ class InspectionRepository:
             if date_to:
                 conditions.append("folder_date <= ?")
                 params.append(date_to)
+            if demo is not None:
+                conditions.append("is_demo = ?")
+                params.append(1 if demo else 0)
 
             where_clause = ""
             if conditions:

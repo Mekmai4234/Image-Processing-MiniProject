@@ -87,6 +87,7 @@ async def create_inspection(
     supporting_images: List[UploadFile] = File(default=[], description="Optional additional evidence images"),
     evidence: Optional[str] = Form(None, description="Optional evidence JSON string"),
     demo: bool = Form(False, description="Enable development demo/mock mode"),
+    is_demo: Optional[bool] = Form(None, description="Backward-compatible alias for demo"),
 ) -> InspectionResult:
     # 1. Validate client_request_id as UUID
     try:
@@ -99,15 +100,35 @@ async def create_inspection(
             request_id=client_request_id,
         )
 
-    # 2. Check detector availability (04-1: Reject production requests if real detector is not available)
-    is_demo = demo or getattr(settings, "DEFAULT_TO_DEMO", False)
-    if not is_demo and not InspectionAdapter.has_detector():
+    # 2. Check demo mode allowance & detector availability (04-1, 04-3)
+    requested_demo = demo or bool(is_demo)
+    allow_demo = getattr(settings, "ALLOW_DEMO_MODE", True)
+
+    if (requested_demo or getattr(settings, "DEFAULT_TO_DEMO", False)) and not allow_demo:
         raise APIError(
-            status_code=503,
-            code="inspection_unavailable",
-            message="Inspection algorithm from module 03 is not installed or available on this backend. For development, specify demo=true.",
+            status_code=403,
+            code="demo_mode_disabled",
+            message="Demo mode is disabled on this server. Real inspection module is required.",
             request_id=client_request_id,
         )
+
+    # ALLOW_DEMO_MODE has top priority over DEFAULT_TO_DEMO
+    is_demo = bool(allow_demo and (requested_demo or getattr(settings, "DEFAULT_TO_DEMO", False)))
+    if not is_demo:
+        if not InspectionAdapter.has_detector():
+            raise APIError(
+                status_code=503,
+                code="inspection_unavailable",
+                message="Inspection algorithm from module 03 is not installed or available on this backend. For development, specify demo=true.",
+                request_id=client_request_id,
+            )
+        if not InspectionAdapter.is_detector_ready():
+            raise APIError(
+                status_code=503,
+                code="inspection_unavailable",
+                message="Detector configuration or catalog references from module 03 are not ready on this backend. For development, specify demo=true.",
+                request_id=client_request_id,
+            )
 
     # 3. Validate product
     valid_products = [p["product_id"] for p in settings.SUPPORTED_PRODUCTS]
@@ -309,6 +330,11 @@ async def create_inspection(
     created_at = utc_now_iso()
     folder_date = get_folder_date()
 
+    timing_dict = inspect_output.get("timing_ms") or {}
+    timing_orientation_ms = float(timing_dict.get("orientation", 0.0))
+    timing_inspection_ms = float(timing_dict.get("inspection", timing_inspection_ms))
+    effective_config_version = inspect_output.get("config_version") or settings.CONFIG_VERSION
+
     db_payload = {
         "inspection_id": insp_id,
         "client_request_id": client_request_id,
@@ -331,14 +357,14 @@ async def create_inspection(
         "image_width": w,
         "image_height": h,
         "orientation_deg": angle_deg,
-        "config_version": settings.CONFIG_VERSION,
+        "config_version": effective_config_version,
         "folder_date": folder_date,
         "relative_folder_path": None,
         "evidence_json": json.dumps(evidence_dict, ensure_ascii=False),
-        "timing_orientation_ms": 0.0,
+        "timing_orientation_ms": timing_orientation_ms,
         "timing_inspection_ms": timing_inspection_ms,
         "timing_storage_ms": 0.0,
-        "timing_total_ms": timing_inspection_ms,
+        "timing_total_ms": timing_orientation_ms + timing_inspection_ms,
         "payload_fingerprint": fingerprint,
         "is_demo": 1 if is_demo else 0,
     }
@@ -374,8 +400,9 @@ async def create_inspection(
         "image_width": w,
         "image_height": h,
         "orientation_deg": angle_deg,
-        "config_version": settings.CONFIG_VERSION,
+        "config_version": effective_config_version,
         "evidence": evidence_dict,
+        "demo": is_demo,
         "is_demo": is_demo,
     }
 
@@ -403,6 +430,7 @@ def list_inspections(
     product_id: Optional[str] = Query(None, description="Filter by expected product ID"),
     date_from: Optional[str] = Query(None, description="Filter from YYYY-MM-DD (Asia/Bangkok)"),
     date_to: Optional[str] = Query(None, description="Filter to YYYY-MM-DD (Asia/Bangkok)"),
+    demo: Optional[bool] = Query(None, description="Filter by demo mode (true/false)"),
 ) -> InspectionListResponse:
     # Validate date range
     if date_from and date_to and date_from > date_to:
@@ -420,6 +448,7 @@ def list_inspections(
         product_id=product_id,
         date_from=date_from,
         date_to=date_to,
+        demo=demo,
     )
 
     items = [record_to_inspection_result(r) for r in rows]

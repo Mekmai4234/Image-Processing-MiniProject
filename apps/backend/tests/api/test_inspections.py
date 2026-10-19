@@ -1,6 +1,8 @@
 import io
 import json
 import uuid
+import cv2
+import numpy as np
 import pytest
 from fastapi.testclient import TestClient
 from PIL import Image, ImageDraw
@@ -338,9 +340,45 @@ def test_demo_mode_rejects_checkerboard_as_fail():
     response = client.post("/api/inspections", files=files, data=data)
     assert response.status_code == 200
     res = response.json()
-    assert res["result"] == "FAIL"
-    assert res["reason"] == "no_bottle_detected"
+    # 04-4: Non-bottle returns REVIEW with label_not_visible adhering to Contract v0.2 Enum
+    assert res["result"] == "REVIEW"
+    assert res["reason"] == "label_not_visible"
     assert res["is_demo"] is True
+
+
+def test_demo_mode_missing_label_coverage_guard():
+    """04-4: Missing label without 360 coverage returns REVIEW/label_not_visible; with >=360 returns FAIL/missing_label."""
+    from app.services.inspection_adapter import InspectionAdapter
+
+    # A mock image where bottle is visible but label is not visible
+    img = np.zeros((400, 300, 3), dtype=np.uint8)
+    # Draw plain bottle body without any label texture/edges
+    cv2.rectangle(img, (75, 50), (225, 350), (180, 180, 180), -1)
+
+    # 1. Coverage < 360: Must NOT return FAIL missing_label; returns REVIEW label_not_visible
+    res_partial = InspectionAdapter.inspect(
+        img,
+        expected_product="bottle_a",
+        source_mode="webcam",
+        evidence={"kind": "multi_view", "reported_coverage_deg": 180.0},
+        demo=True,
+    )
+    if not res_partial.get("bbox"):
+        assert res_partial["result"] == "REVIEW"
+        assert res_partial["reason"] == "label_not_visible"
+
+    # 2. Coverage >= 360: When label is genuinely missing all around bottle, returns FAIL missing_label
+    res_full = InspectionAdapter.inspect(
+        img,
+        expected_product="bottle_a",
+        source_mode="webcam",
+        evidence={"kind": "multi_view", "reported_coverage_deg": 360.0},
+        demo=True,
+    )
+    if not res_full.get("bbox"):
+        assert res_full["result"] == "FAIL"
+        assert res_full["reason"] == "missing_label"
+
 
 
 def test_demo_mode_tags_results_with_is_demo():
@@ -373,3 +411,192 @@ def test_demo_mode_tags_results_with_is_demo():
     with open(result_json_path, "r", encoding="utf-8") as f:
         snapshot = json.load(f)
     assert snapshot["is_demo"] is True
+
+
+def test_detector_present_but_config_unready_returns_503(monkeypatch):
+    """When detector from 03 is imported but config/catalog is unready, return 503 (not 500)."""
+    from app.services.inspection_adapter import InspectionAdapter
+    monkeypatch.setattr(settings, "DEFAULT_TO_DEMO", False)
+    monkeypatch.setattr(InspectionAdapter, "has_detector", lambda: True)
+    monkeypatch.setattr(InspectionAdapter, "is_detector_ready", lambda: False)
+
+    img_bytes = create_test_image_bytes()
+    files = {"image": ("bottle.jpg", img_bytes, "image/jpeg")}
+    data = {
+        "expected_product": "bottle_a",
+        "source_mode": "webcam",
+        "client_request_id": str(uuid.uuid4()),
+        "demo": False,
+    }
+
+    response = client.post("/api/inspections", files=files, data=data)
+    assert response.status_code == 503
+    err = response.json()
+    assert err["error"]["code"] == "inspection_unavailable"
+    assert "not ready" in err["error"]["message"].lower()
+
+
+def test_detector_module_03_signature_and_decision_mapping(monkeypatch):
+    """When detector from 03 is ready, inspect calls it with exact 03 signature and maps Decision."""
+    from app.services.inspection_adapter import InspectionAdapter
+    import app.services.inspection_adapter as adapter_module
+
+    # Mock DetectorConfig with validate()
+    class MockConfig:
+        config_version = "v0.3-test"
+        def validate(self):
+            pass
+
+    # Mock Decision matching module 03 Decision.to_inspection_fields()
+    class MockDecision:
+        def __init__(self):
+            self.result = "PASS"
+            self.reason = "good"
+            self.timing_ms = {"orientation": 12.5, "inspection": 45.0}
+
+        def to_inspection_fields(self):
+            return {
+                "result": "PASS",
+                "reason": "good",
+                "expected_product": "bottle_a",
+                "detected_product": "bottle_a",
+                "match_score": 0.95,
+                "score_method": "template_ccoeff_normed_clamped_v1",
+                "bbox": {"x": 50, "y": 60, "width": 100, "height": 150},
+                "expected_bbox": {"x": 45, "y": 55, "width": 110, "height": 160},
+                "image_width": 300,
+                "image_height": 400,
+                "orientation_deg": 0.0,
+                "config_version": "v0.3-test",
+                "source_mode": "webcam",
+                "timing_ms": {"orientation": 12.5, "inspection": 45.0},
+                "evidence": {
+                    "kind": "single_view",
+                    "search_status": "not_requested",
+                    "supporting_angles_deg": [],
+                    "reported_coverage_deg": None,
+                    "verified_coverage": False,
+                    "required_view_profile": None,
+                    "supporting_images": [],
+                },
+            }
+
+    called_kwargs = {}
+
+    def mock_inspect_image(image, expected_product, config, *, color_order, source_mode="simulation",
+                           angle_deg=None, supporting_images=(), evidence=None):
+        called_kwargs["image_shape"] = image.shape
+        called_kwargs["expected_product"] = expected_product
+        called_kwargs["config"] = config
+        called_kwargs["color_order"] = color_order
+        called_kwargs["source_mode"] = source_mode
+        called_kwargs["angle_deg"] = angle_deg
+        called_kwargs["supporting_images_len"] = len(supporting_images)
+        return MockDecision()
+
+    monkeypatch.setattr(settings, "DEFAULT_TO_DEMO", False)
+    monkeypatch.setattr(adapter_module, "HAS_REAL_DETECTOR", True)
+    monkeypatch.setattr(adapter_module, "run_detector_03", mock_inspect_image)
+    mock_cfg = MockConfig()
+    InspectionAdapter.set_detector_config(mock_cfg)
+
+    try:
+        img_bytes = create_test_image_bytes(300, 400)
+        client_req_id = str(uuid.uuid4())
+        files = {"image": ("bottle.jpg", img_bytes, "image/jpeg")}
+        data = {
+            "expected_product": "bottle_a",
+            "source_mode": "webcam",
+            "client_request_id": client_req_id,
+            "angle_deg": 0.0,
+            "demo": False,
+        }
+
+        response = client.post("/api/inspections", files=files, data=data)
+        assert response.status_code == 200, response.text
+        res = response.json()
+
+        # Verify signature called correctly
+        assert called_kwargs["color_order"] == "BGR"
+        assert called_kwargs["expected_product"] == "bottle_a"
+        assert called_kwargs["config"] is mock_cfg
+        assert called_kwargs["supporting_images_len"] == 0
+
+        # Verify Decision mapped cleanly into InspectionResult
+        assert res["result"] == "PASS"
+        assert res["reason"] == "good"
+        assert res["match_score"] == 0.95
+        assert res["bbox"] == {"x": 50, "y": 60, "width": 100, "height": 150}
+        assert res["config_version"] == "v0.3-test"
+    finally:
+        InspectionAdapter.set_detector_config(None)
+
+
+def test_locate_label_is_single_classmethod():
+    """Verify locate_label has only one @classmethod decorator (fixes Python 3.13 TypeError)."""
+    from app.services.inspection_adapter import InspectionAdapter
+    import numpy as np
+
+    # Must be callable without TypeError: 'classmethod' object is not callable
+    blank = np.zeros((100, 100, 3), dtype=np.uint8)
+    res = InspectionAdapter.locate_label(blank, "bottle_a")
+    assert isinstance(res, dict)
+    assert "usable_view" in res
+
+
+def test_allow_demo_mode_false_rejects_demo_request_with_403(monkeypatch):
+    """04-3: When ALLOW_DEMO_MODE=False, any request specifying demo=true must be rejected with 403."""
+    monkeypatch.setattr(settings, "ALLOW_DEMO_MODE", False)
+
+    img_bytes = create_test_image_bytes(300, 400)
+    files = {"image": ("bottle.jpg", img_bytes, "image/jpeg")}
+    data = {
+        "expected_product": "bottle_a",
+        "source_mode": "webcam",
+        "client_request_id": str(uuid.uuid4()),
+        "demo": "true",
+    }
+
+    res = client.post("/api/inspections", files=files, data=data)
+    assert res.status_code == 403
+    err = res.json()["error"]
+    assert err["code"] == "demo_mode_disabled"
+
+
+def test_allow_demo_mode_false_with_is_demo_alias(monkeypatch):
+    """04-3: is_demo alias must also be rejected with 403 when ALLOW_DEMO_MODE=False."""
+    monkeypatch.setattr(settings, "ALLOW_DEMO_MODE", False)
+
+    img_bytes = create_test_image_bytes(300, 400)
+    files = {"image": ("bottle.jpg", img_bytes, "image/jpeg")}
+    data = {
+        "expected_product": "bottle_a",
+        "source_mode": "webcam",
+        "client_request_id": str(uuid.uuid4()),
+        "is_demo": "true",
+    }
+
+    res = client.post("/api/inspections", files=files, data=data)
+    assert res.status_code == 403
+    err = res.json()["error"]
+    assert err["code"] == "demo_mode_disabled"
+
+
+def test_allow_demo_mode_false_conflict_with_default_to_demo(monkeypatch):
+    """04-3: If ALLOW_DEMO_MODE=False while DEFAULT_TO_DEMO=True, demo mode is disabled with 403."""
+    monkeypatch.setattr(settings, "ALLOW_DEMO_MODE", False)
+    monkeypatch.setattr(settings, "DEFAULT_TO_DEMO", True)
+
+    img_bytes = create_test_image_bytes(300, 400)
+    files = {"image": ("bottle.jpg", img_bytes, "image/jpeg")}
+    data = {
+        "expected_product": "bottle_a",
+        "source_mode": "webcam",
+        "client_request_id": str(uuid.uuid4()),
+    }
+
+    res = client.post("/api/inspections", files=files, data=data)
+    assert res.status_code == 403
+    assert res.json()["error"]["code"] == "demo_mode_disabled"
+
+

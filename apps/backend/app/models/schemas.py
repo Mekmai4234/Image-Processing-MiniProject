@@ -130,7 +130,8 @@ class InspectionResult(BaseModel):
     reviewed_reason: Optional[str] = Field(None, description="Human reviewer reason")
     reviewer: Optional[str] = Field(None, description="Human reviewer name")
     reviewed_at: Optional[str] = Field(None, description="Human review timestamp")
-    is_demo: bool = Field(False, description="Whether this inspection was executed in DEMO mode")
+    demo: bool = Field(False, description="Whether this inspection was executed in DEMO mode")
+    is_demo: bool = Field(False, description="Alias for demo mode flag")
 
 
 class InspectionListResponse(BaseModel):

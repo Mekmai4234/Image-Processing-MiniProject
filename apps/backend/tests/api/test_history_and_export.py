@@ -168,5 +168,63 @@ def test_export_inspections_csv(created_inspection):
 
     # Header verification
     assert "inspection_id,client_request_id,created_at" in content
+    assert "demo" in content.splitlines()[0].split(",")
     # Created inspection ID must appear in exported rows
     assert created_inspection["inspection_id"] in content
+
+
+def test_demo_lifecycle_and_filters():
+    """Verify demo field across POST -> Detail -> History list filter -> CSV export."""
+    img_bytes = create_test_image()
+    files = [("image", ("bottle_demo.jpg", img_bytes, "image/jpeg"))]
+    data = {
+        "expected_product": "bottle_a",
+        "source_mode": "webcam",
+        "demo": "true",
+        "client_request_id": str(uuid.uuid4()),
+    }
+
+    resp = client.post("/api/inspections", files=files, data=data)
+    assert resp.status_code == 200
+    insp = resp.json()
+    insp_id = insp["inspection_id"]
+
+    # 1. POST response contains both demo and is_demo
+    assert insp["demo"] is True
+    assert insp["is_demo"] is True
+
+    # 2. GET detail returns demo and is_demo
+    detail_resp = client.get(f"/api/inspections/{insp_id}")
+    assert detail_resp.status_code == 200
+    detail = detail_resp.json()
+    assert detail["demo"] is True
+    assert detail["is_demo"] is True
+
+    # 3. History filter ?demo=true includes insp_id
+    history_true = client.get("/api/inspections?demo=true&page_size=50").json()
+    found_true = [it for it in history_true["items"] if it["inspection_id"] == insp_id]
+    assert len(found_true) == 1
+    assert found_true[0]["demo"] is True
+    assert found_true[0]["is_demo"] is True
+
+    # History filter ?demo=false excludes insp_id
+    history_false = client.get("/api/inspections?demo=false&page_size=50").json()
+    found_false = [it for it in history_false["items"] if it["inspection_id"] == insp_id]
+    assert len(found_false) == 0
+
+    # 4. CSV export includes demo column and value is 'true'
+    csv_resp = client.get("/api/exports/inspections.csv?demo=true")
+    assert csv_resp.status_code == 200
+    csv_text = csv_resp.text
+    csv_lines = [line for line in csv_text.splitlines() if line.strip()]
+    header = csv_lines[0].split(",")
+    demo_idx = header.index("demo")
+
+    matching_rows = [line.split(",") for line in csv_lines[1:] if line.startswith(insp_id)]
+    assert len(matching_rows) == 1
+    assert matching_rows[0][demo_idx] == "true"
+
+    # CSV filter ?demo=false should not contain insp_id
+    csv_false = client.get("/api/exports/inspections.csv?demo=false").text
+    assert insp_id not in csv_false
+

@@ -40,6 +40,11 @@ class Settings:
     ALLOW_DEMO_MODE: bool = os.getenv("ALLOW_DEMO_MODE", "true").lower() in ("true", "1", "yes")
     DEFAULT_TO_DEMO: bool = os.getenv("DEFAULT_TO_DEMO", "false").lower() in ("true", "1", "yes")
 
+    @property
+    def effective_default_to_demo(self) -> bool:
+        """ALLOW_DEMO_MODE has top priority. If demo mode is disabled, default_to_demo is always False."""
+        return self.ALLOW_DEMO_MODE and self.DEFAULT_TO_DEMO
+
     # Paths (Resolved against REPO_ROOT if relative)
     _raw_storage_root: str = os.getenv("STORAGE_ROOT", "./storage")
     _raw_dataset_root: str = os.getenv("DATASET_ROOT", "./datasets")

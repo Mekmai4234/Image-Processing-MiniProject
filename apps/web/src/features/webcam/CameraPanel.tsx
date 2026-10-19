@@ -383,7 +383,27 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
       {inspectionResult && (
         <div className="inspection-result-card">
           <div className="result-header-row">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              {(inspectionResult.demo || inspectionResult.is_demo) && (
+                <span
+                  style={{
+                    backgroundColor: '#fef3c7',
+                    color: '#b45309',
+                    border: '1px solid #f59e0b',
+                    borderRadius: '9999px',
+                    padding: '3px 10px',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    letterSpacing: '0.05em',
+                  }}
+                >
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                  DEMO MODE (โหมดจำลอง)
+                </span>
+              )}
               <span className={`result-badge result-badge-${inspectionResult.result.toLowerCase()}`}>
                 {inspectionResult.result === 'PASS' && <CheckCircle2 className="w-5 h-5 text-emerald-600" />}
                 {inspectionResult.result === 'FAIL' && <XCircle className="w-5 h-5 text-red-600" />}
@@ -439,6 +459,16 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
                 {inspectionResult.image_width} × {inspectionResult.image_height} px
               </span>
             </div>
+            <div className="result-field">
+              <span className="result-field-label">ประเภทการตรวจ</span>
+              <span className="result-field-value font-semibold">
+                {inspectionResult.demo || inspectionResult.is_demo ? (
+                  <span style={{ color: '#d97706' }}>DEMO (จำลอง)</span>
+                ) : (
+                  <span style={{ color: '#059669' }}>PRODUCTION (ตรวจจริง)</span>
+                )}
+              </span>
+            </div>
           </div>
 
           {/* Image View Panel */}
@@ -451,7 +481,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
                   className={`btn-tool ${activeImageTab === 'annotated' ? 'active' : ''}`}
                   onClick={() => setActiveImageTab('annotated')}
                 >
-                  ภาพพร้อมีกรอบตรวจ (Annotated)
+                  ภาพพร้อมมีกรอบตรวจ (Annotated)
                 </button>
                 <button
                   type="button"
@@ -463,7 +493,28 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
               </div>
             </div>
 
-            <div className="result-image-frame">
+            <div className="result-image-frame" style={{ position: 'relative' }}>
+              {(inspectionResult.demo || inspectionResult.is_demo) && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '12px',
+                    right: '12px',
+                    zIndex: 10,
+                    backgroundColor: 'rgba(245, 158, 11, 0.9)',
+                    color: '#ffffff',
+                    fontWeight: 800,
+                    fontSize: '0.75rem',
+                    letterSpacing: '0.08em',
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.25)',
+                    pointerEvents: 'none',
+                  }}
+                >
+                  DEMO (จำลอง)
+                </div>
+              )}
               {activeImageTab === 'annotated' && inspectionResult.images.annotated ? (
                 <img
                   src={resolveImageUrl(inspectionResult.images.annotated) || ''}
