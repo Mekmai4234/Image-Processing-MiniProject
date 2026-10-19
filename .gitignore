@@ -36,3 +36,4 @@ datasets/*
 .vscode/
 Thumbs.db
 .DS_Store
+04_webcam_backend_logging/*rules.md
