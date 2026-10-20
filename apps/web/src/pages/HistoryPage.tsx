@@ -23,9 +23,10 @@ interface Filters {
   source_mode: '' | SourceMode
   result: '' | InspectionResultValue
   product_id: string
+  demo: '' | 'true' | 'false'
 }
 
-const EMPTY_FILTERS: Filters = { date_from: '', date_to: '', source_mode: '', result: '', product_id: '' }
+const EMPTY_FILTERS: Filters = { date_from: '', date_to: '', source_mode: '', result: '', product_id: '', demo: '' }
 
 function clean(f: Filters) {
   return {
@@ -34,6 +35,7 @@ function clean(f: Filters) {
     source_mode: f.source_mode || undefined,
     result: f.result || undefined,
     product_id: f.product_id || undefined,
+    demo: f.demo === 'true' ? true : f.demo === 'false' ? false : undefined,
   }
 }
 
@@ -166,6 +168,14 @@ export function HistoryPage() {
                   ))}
                 </select>
               </label>
+              <label className="field">
+                ประเภท
+                <select value={filters.demo} onChange={(e) => update('demo', e.target.value as Filters['demo'])}>
+                  <option value="">ทั้งหมด (จริงและ DEMO)</option>
+                  <option value="false">เฉพาะผลตรวจจริง</option>
+                  <option value="true">เฉพาะโหมด DEMO</option>
+                </select>
+              </label>
               {csvUrl ? (
                 <a className="btn btn-primary" href={csvUrl} download>
                   <Download size={16} aria-hidden="true" /> ส่งออก CSV
@@ -217,7 +227,12 @@ export function HistoryPage() {
                             {formatThaiDateTime(r.created_at)}
                           </button>
                         </td>
-                        <td>{MODE_LABEL[r.source_mode]}</td>
+                        <td>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                            {MODE_LABEL[r.source_mode]}
+                            {(r.demo || r.is_demo) && <DemoTag />}
+                          </span>
+                        </td>
                         <td>{productShortName(products, r.expected_product)}</td>
                         <td>
                           <ResultBadge result={r.result} />

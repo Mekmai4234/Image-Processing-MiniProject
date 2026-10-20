@@ -124,6 +124,7 @@ export function createDemoDataSource(getScenario: () => DemoScenario): DataSourc
         .filter((r) => !f.source_mode || r.source_mode === f.source_mode)
         .filter((r) => !f.result || r.result === f.result)
         .filter((r) => !f.product_id || r.expected_product === f.product_id)
+        .filter((r) => f.demo === undefined || Boolean(r.demo || r.is_demo) === f.demo)
         // ช่วงวันเวลาไทย รวมวันต้นและวันปลาย (เหมือนกติกา backend)
         .filter((r) => !f.date_from || Date.parse(r.created_at) >= Date.parse(`${f.date_from}T00:00:00+07:00`))
         .filter((r) => !f.date_to || Date.parse(r.created_at) < Date.parse(`${f.date_to}T00:00:00+07:00`) + 86_400_000)
