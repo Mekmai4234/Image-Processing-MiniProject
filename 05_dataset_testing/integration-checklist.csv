@@ -1,0 +1,27 @@
+case_id,area,scenario,expected,evidence,status,owner
+05-INT-01,detector,real normal bottles for both products,PASS good with correct label bbox,,not_tested,03
+05-INT-02,detector,clear wrong label including high similarity,FAIL wrong_label,,not_tested,03
+05-INT-03,detector,label displaced beyond agreed tolerance,FAIL misplaced_label,,not_tested,03
+05-INT-04,detector,single rear image,REVIEW label_not_visible without invented bbox,,not_tested,03
+05-INT-05,detector,blurred occluded or unknown product,REVIEW with appropriate canonical reason,,not_tested,03
+05-INT-06,detector,missing label without validated coverage,REVIEW rather than unsupported missing_label,,not_tested,03
+05-INT-07,detector,missing label with validated profile and pixel evidence,FAIL missing_label only with verified evidence preserved,,not_tested,03/04
+05-INT-08,UI,null score and bbox,display unavailable score and no invented label box,,not_tested,01
+05-INT-09,UI,narrow screen resize letterbox mirror and EXIF,overlay aligns with inspected original coordinates,,not_tested,01
+05-INT-10,simulation,slow API response,wait for matching inspection before sorting,,not_tested,02
+05-INT-11,simulation,pause reset replay and old response,no stale job update or duplicate count and log,,not_tested,02
+05-INT-12,simulation,orientation exhausted or timed out,send main plus evidence and preserve backend result,,not_tested,02/04
+05-INT-13,webcam,permission denied no device or device loss,actionable ERROR and reopening works,,not_tested,04
+05-INT-14,webcam,navigate away during stream,media tracks stop and pending response discarded,,not_tested,04
+05-INT-15,webcam,manual capture and optional auto capture cooldown,no repeated inspection of same bottle without new round,,not_tested,04
+05-INT-16,API,invalid MIME corrupt file and unknown expected product,400 or 422 without product result,,not_tested,04
+05-INT-17,API,byte pixel view-count and total-body limits,413 without product record,,not_tested,04
+05-INT-18,API,same request ID with same payload including concurrency,same inspection ID and one history record,,not_tested,04
+05-INT-19,API,same request ID with changed image order or evidence,409 conflict,,not_tested,04
+05-INT-20,storage,partial image or supporting write failure,failed status with recoverable error and unchanged prediction,,not_tested,04
+05-INT-21,storage,retry after failure or restart,original decision and ID preserved with files matching DB,,not_tested,04
+05-INT-22,storage,retry after source missing,source_unavailable and retryable false never saved,,not_tested,04
+05-INT-23,history,filters pagination and CSV including Thai date boundary,same matching rows with full filtered CSV and stable sort,,not_tested,01/04
+05-INT-24,history,human review followed by GET and export,review fields updated and original prediction immutable,,not_tested,04
+05-INT-25,history,supporting image partially missing,404 or null at original index and never saved while incomplete,,not_tested,04
+05-INT-26,end_to_end,real PASS FAIL REVIEW in Simulation and Webcam,correct sorting storage and history with captured evidence,,not_tested,05
