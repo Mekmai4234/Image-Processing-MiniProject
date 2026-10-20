@@ -346,38 +346,130 @@ def test_demo_mode_rejects_checkerboard_as_fail():
     assert res["is_demo"] is True
 
 
-def test_demo_mode_missing_label_coverage_guard():
-    """04-4: Missing label without 360 coverage returns REVIEW/label_not_visible; with >=360 returns FAIL/missing_label."""
+def test_demo_mode_unverified_coverage_never_returns_missing_label(monkeypatch):
+    """
+    04-2: Client reported_coverage_deg (even 360) without backend-verified coverage
+    must NEVER turn REVIEW/label_not_visible into FAIL/missing_label.
+    """
     from app.services.inspection_adapter import InspectionAdapter
 
-    # A mock image where bottle is visible but label is not visible
-    img = np.zeros((400, 300, 3), dtype=np.uint8)
-    # Draw plain bottle body without any label texture/edges
-    cv2.rectangle(img, (75, 50), (225, 350), (180, 180, 180), -1)
+    # Mock locate_label to return bottle is visible, but label is not visible
+    def mock_locate(image, expected_product):
+        return {
+            "usable_view": False,
+            "bbox": None,
+            "image_width": 300,
+            "image_height": 400,
+            "quality": {
+                "sharp_enough": True,
+                "label_visible": False,
+                "bottle_visible": True,
+            },
+            "reason": "label_not_visible",
+        }
 
-    # 1. Coverage < 360: Must NOT return FAIL missing_label; returns REVIEW label_not_visible
-    res_partial = InspectionAdapter.inspect(
-        img,
+    monkeypatch.setattr(InspectionAdapter, "locate_label", mock_locate)
+
+    img_bytes = create_test_image_bytes(300, 400, sharp=True)
+    sharp_img = cv2.imdecode(np.frombuffer(img_bytes, np.uint8), cv2.IMREAD_COLOR)
+
+    # 1. Single view without reported coverage -> REVIEW / label_not_visible
+    res_none = InspectionAdapter.inspect(
+        sharp_img,
         expected_product="bottle_a",
         source_mode="webcam",
-        evidence={"kind": "multi_view", "reported_coverage_deg": 180.0},
+        evidence={"kind": "single_view"},
         demo=True,
     )
-    if not res_partial.get("bbox"):
-        assert res_partial["result"] == "REVIEW"
-        assert res_partial["reason"] == "label_not_visible"
+    assert res_none["result"] == "REVIEW"
+    assert res_none["reason"] == "label_not_visible"
 
-    # 2. Coverage >= 360: When label is genuinely missing all around bottle, returns FAIL missing_label
-    res_full = InspectionAdapter.inspect(
-        img,
+    # 2. Single view claiming 360 coverage -> MUST STILL BE REVIEW / label_not_visible (NOT FAIL / missing_label)
+    res_claim_360 = InspectionAdapter.inspect(
+        sharp_img,
         expected_product="bottle_a",
         source_mode="webcam",
-        evidence={"kind": "multi_view", "reported_coverage_deg": 360.0},
+        evidence={"kind": "single_view", "reported_coverage_deg": 360.0},
         demo=True,
     )
-    if not res_full.get("bbox"):
-        assert res_full["result"] == "FAIL"
-        assert res_full["reason"] == "missing_label"
+    assert res_claim_360["result"] == "REVIEW"
+    assert res_claim_360["reason"] == "label_not_visible"
+
+    # 3. Multi-view with partial reported coverage 180 -> REVIEW / label_not_visible
+    res_multi_180 = InspectionAdapter.inspect(
+        sharp_img,
+        expected_product="bottle_a",
+        source_mode="webcam",
+        evidence={"kind": "multi_view", "reported_coverage_deg": 180.0, "supporting_angles_deg": [180.0]},
+        demo=True,
+    )
+    assert res_multi_180["result"] == "REVIEW"
+    assert res_multi_180["reason"] == "label_not_visible"
+
+    # 4. Multi-view claiming 360 reported coverage without backend verified_coverage -> STILL REVIEW / label_not_visible
+    res_multi_360 = InspectionAdapter.inspect(
+        sharp_img,
+        expected_product="bottle_a",
+        source_mode="webcam",
+        evidence={"kind": "multi_view", "reported_coverage_deg": 360.0, "supporting_angles_deg": [90.0, 180.0, 270.0]},
+        demo=True,
+    )
+    assert res_multi_360["result"] == "REVIEW"
+    assert res_multi_360["reason"] == "label_not_visible"
+
+
+def test_http_endpoint_demo_mode_claim_360_remains_review(monkeypatch):
+    """
+    04-2: Calling POST /api/inspections with demo=true and reported_coverage_deg=360
+    must return 200 with result='REVIEW' and reason='label_not_visible', not FAIL/missing_label.
+    """
+    from app.services.inspection_adapter import InspectionAdapter
+
+    def mock_locate(image, expected_product):
+        return {
+            "usable_view": False,
+            "bbox": None,
+            "image_width": 300,
+            "image_height": 400,
+            "quality": {
+                "sharp_enough": True,
+                "label_visible": False,
+                "bottle_visible": True,
+            },
+            "reason": "label_not_visible",
+        }
+
+    monkeypatch.setattr(InspectionAdapter, "locate_label", mock_locate)
+
+    img_bytes = create_test_image_bytes(300, 400)
+
+    # Case A: without reported coverage
+    data_no_cov = {
+        "expected_product": "bottle_a",
+        "source_mode": "webcam",
+        "client_request_id": str(uuid.uuid4()),
+        "demo": "true",
+    }
+    resp_a = client.post("/api/inspections", files={"image": ("bottle.jpg", img_bytes, "image/jpeg")}, data=data_no_cov)
+    assert resp_a.status_code == 200
+    res_a = resp_a.json()
+    assert res_a["result"] == "REVIEW"
+    assert res_a["reason"] == "label_not_visible"
+
+    # Case B: same image with reported_coverage_deg = 360
+    ev_claim_360 = {"kind": "single_view", "reported_coverage_deg": 360.0}
+    data_claim_360 = {
+        "expected_product": "bottle_a",
+        "source_mode": "webcam",
+        "client_request_id": str(uuid.uuid4()),
+        "demo": "true",
+        "evidence": json.dumps(ev_claim_360),
+    }
+    resp_b = client.post("/api/inspections", files={"image": ("bottle.jpg", img_bytes, "image/jpeg")}, data=data_claim_360)
+    assert resp_b.status_code == 200
+    res_b = resp_b.json()
+    assert res_b["result"] == "REVIEW"
+    assert res_b["reason"] == "label_not_visible"
 
 
 

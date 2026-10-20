@@ -412,48 +412,16 @@ class InspectionAdapter:
                 "is_demo": demo,
             }
 
-        # 3. Bottle & label contour check (04-1, 04-4: Conforms to Contract v0.2 Enum)
+        # 3. Bottle & label contour check (04-1, 04-2, 04-4: Conforms to Contract v0.2 Enum)
         loc = cls.locate_label(cv_bgr, expected_product)
         quality = loc.get("quality", {})
         bottle_visible = quality.get("bottle_visible", False)
         label_visible = quality.get("label_visible", False)
 
-        if not bottle_visible:
-            return {
-                "result": "REVIEW",
-                "reason": "label_not_visible",
-                "detected_product": None,
-                "match_score": 0.0,
-                "score_method": "demo_baseline_contour_v1",
-                "bbox": None,
-                "expected_bbox": {
-                    "x": int(w * 0.3),
-                    "y": int(h * 0.35),
-                    "width": int(w * 0.4),
-                    "height": int(h * 0.3),
-                },
-                "is_demo": demo,
-            }
-
-        if not label_visible:
-            # 04-4: Only declare FAIL: missing_label if full 360-degree coverage was verified
-            reported_cov = evidence.get("reported_coverage_deg") or 0.0
-            if reported_cov >= 360.0:
-                return {
-                    "result": "FAIL",
-                    "reason": "missing_label",
-                    "detected_product": None,
-                    "match_score": 0.0,
-                    "score_method": "demo_baseline_contour_v1",
-                    "bbox": None,
-                    "expected_bbox": {
-                        "x": int(w * 0.3),
-                        "y": int(h * 0.35),
-                        "width": int(w * 0.4),
-                        "height": int(h * 0.3),
-                    },
-                    "is_demo": demo,
-                }
+        # 04-2: Without backend-verified coverage and validated required-view profile,
+        # missing label or absent bottle must remain REVIEW/label_not_visible.
+        # Reported coverage from client metadata must never unilaterally turn this into FAIL/missing_label.
+        if not bottle_visible or not label_visible:
             return {
                 "result": "REVIEW",
                 "reason": "label_not_visible",
