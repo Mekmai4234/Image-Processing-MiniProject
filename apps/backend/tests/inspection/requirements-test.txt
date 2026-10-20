@@ -1,0 +1,3 @@
+# Isolated 03 test environment; not the shared Backend dependency lock.
+numpy==2.4.6
+opencv-python-headless==5.0.0.93
