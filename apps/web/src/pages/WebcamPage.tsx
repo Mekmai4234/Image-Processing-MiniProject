@@ -6,6 +6,7 @@ import { ResultCard } from '../components/ResultCard'
 import { DemoTag, ResultBadge } from '../components/ResultBadge'
 import { DEMO_EXAMPLES } from '../demo/demoDataSource'
 import { syntheticImage } from '../demo/synthetic'
+import { CameraPanel } from '../features/webcam'
 import { describeApiError, isAbort } from '../lib/api'
 import { useAppData } from '../lib/AppData'
 import { formatMs, formatSimilarity, LOCATOR_LABEL, productShortName } from '../lib/format'
@@ -35,6 +36,7 @@ export function WebcamPage() {
   const urls = useObjectUrls()
   const [product, setProduct] = useState('')
   useDefaultProduct(product, setProduct)
+  const [inputMode, setInputMode] = useState<'live' | 'file'>('live')
   const [frame, setFrame] = useState<{ blob: Blob; url: string; name: string } | null>(null)
   const [locator, setLocator] = useState<LocateLabelResult | null>(null)
   const [locating, setLocating] = useState(false)
@@ -51,13 +53,23 @@ export function WebcamPage() {
     setCaptures((c) => [r, ...c.filter((x) => x.inspection_id !== r.inspection_id)].slice(0, 6))
   }, [run.state])
 
+  function handleLiveInspectionComplete(result: InspectionResult) {
+    const isResultDemo = Boolean(result.demo || result.is_demo)
+    if ((source === 'demo') !== isResultDemo) {
+      // Discard stale result if mode switched before completion
+      return
+    }
+    setCaptures((c) => [result, ...c.filter((x) => x.inspection_id !== result.inspection_id)].slice(0, 6))
+    run.replaceResult(result)
+  }
+
   function newFrame(blob: Blob, name: string) {
     locCtrl.current?.abort()
     if (frame) urls.revoke(frame.url)
     setFrame({ blob, url: urls.create(blob), name })
     setLocator(null)
     setLocError(null)
-    run.reset() // ภาพใหม่ ผลเก่าไม่ใช่ของภาพนี้
+    run.reset()
   }
 
   async function loadDemoFrame() {
@@ -83,7 +95,6 @@ export function WebcamPage() {
 
   function captureAndInspect() {
     if (!frame || !product) return
-    // manual capture ตรวจได้แม้ locator ยังไม่ usable ให้ Backend ตัดสินตามภาพ
     void run.run({
       image: frame.blob,
       imageName: frame.name,
@@ -109,171 +120,243 @@ export function WebcamPage() {
     <>
       <div className="page-head">
         <div>
-          <h1>ตรวจด้วยกล้อง</h1>
+          <h1>ตรวจด้วยกล้อง (Webcam)</h1>
           <p>หมุนขวดหน้ากล้องจนเห็นฉลาก ถือนิ่ง แล้วถ่ายให้ Backend ตรวจ</p>
+        </div>
+        <div className="row" style={{ gap: '0.5rem' }}>
+          <button
+            type="button"
+            className={`btn ${inputMode === 'live' ? 'btn-primary' : ''}`}
+            onClick={() => setInputMode('live')}
+          >
+            <Video size={16} aria-hidden="true" /> กล้องสด (Live Camera)
+          </button>
+          <button
+            type="button"
+            className={`btn ${inputMode === 'file' ? 'btn-primary' : ''}`}
+            onClick={() => setInputMode('file')}
+          >
+            <FileImage size={16} aria-hidden="true" /> เลือกไฟล์ภาพ (File)
+          </button>
         </div>
       </div>
 
-      <div className="split">
-        <div className="stack">
-          <section className="panel" aria-labelledby="cam-title">
-            <div className="panel-head">
-              <div>
-                <div className="title">
-                  <Video size={20} aria-hidden="true" />
-                  <h2 id="cam-title">ภาพจากกล้อง</h2>
-                </div>
-                <p className="panel-sub">ส่วนกล้องสดเป็นของงาน 04 (CameraPanel) ระหว่างนี้ทดสอบด้วยไฟล์ภาพได้</p>
+      {inputMode === 'live' ? (
+        <div className="stack" style={{ marginTop: '1rem' }}>
+          <CameraPanel
+            dataSource={ds}
+            sourceKind={source}
+            expectedProduct={product || 'bottle_a'}
+            onProductChange={(p) => setProduct(p)}
+            onInspectionComplete={handleLiveInspectionComplete}
+            autoLocate={true}
+          />
+
+          {captures.length > 0 && (
+            <section className="panel" aria-labelledby="recent-title" style={{ marginTop: '1.5rem' }}>
+              <div className="panel-head">
+                <h2 id="recent-title">ภาพที่ตรวจล่าสุด</h2>
+                <span className="hint">เฉพาะในเซสชันนี้</span>
               </div>
-              {source === 'demo' && <DemoTag />}
-            </div>
-
-            <div className="stack-sm">
-              <InspectionOverlay
-                className="ar-video"
-                src={shown}
-                result={result}
-                locatorBox={locator?.bbox ?? null}
-                imageWidth={locator?.image_width}
-                imageHeight={locator?.image_height}
-                scanning={busy || locating}
-                alt="ภาพขวดจากกล้องหรือไฟล์"
-                status={
-                  frame ? (
-                    <>
-                      <FileImage size={14} aria-hidden="true" /> {frame.name}
-                    </>
-                  ) : undefined
-                }
-                empty={
-                  <div>
-                    <Camera size={34} aria-hidden="true" />
-                    <strong>ยังไม่มีภาพ</strong>
-                    <span className="hint">เมื่อ CameraPanel ของงาน 04 พร้อม ภาพสดจะแสดงที่นี่ ตอนนี้เลือกไฟล์ภาพเพื่อทดสอบขั้นตอน</span>
-                  </div>
-                }
-              />
-
-              {guidance && (
-                <div className={`notice ${guidance.tone}`} role="status">
-                  <ScanSearch size={16} aria-hidden="true" />
-                  <span>{guidance.text}</span>
-                </div>
-              )}
-
-              <ol className="steps" aria-label="ขั้นตอน">
-                {GUIDE.map((g, i) => (
-                  <li key={g} className={i === step ? 'active' : i < step ? 'done' : ''} aria-current={i === step ? 'step' : undefined}>
-                    <span className="n">{i + 1}</span>
-                    {g}
-                  </li>
-                ))}
-              </ol>
-            </div>
-          </section>
-
-          <section className="panel" aria-labelledby="recent-title">
-            <div className="panel-head">
-              <h2 id="recent-title">ภาพที่ถ่ายล่าสุด</h2>
-              <span className="hint">เฉพาะในหน้านี้</span>
-            </div>
-            {captures.length === 0 ? (
-              <div className="empty-state">
-                <Camera size={28} aria-hidden="true" />
-                <span>ยังไม่มีภาพที่ตรวจ กด "ถ่ายและตรวจ" เพื่อเริ่ม</span>
-              </div>
-            ) : (
               <div className="captures">
                 {captures.map((c) => (
                   <div key={c.inspection_id} className="capture" data-tone={c.result}>
-                    <InspectionOverlay src={ds.imageUrl(c, 'original')} result={c} alt="ภาพที่ตรวจ" showReadout={false} compact empty={<span className="hint">ไม่มีภาพ</span>} />
+                    <InspectionOverlay
+                      src={ds.imageUrl(c, 'original')}
+                      result={c}
+                      alt="ภาพที่ตรวจ"
+                      showReadout={false}
+                      compact
+                      empty={<span className="hint">ไม่มีภาพ</span>}
+                    />
                     <div className="info">
                       <ResultBadge result={c.result} />
-                      <strong style={{ color: 'var(--text)' }}>{productShortName(products, c.detected_product ?? c.expected_product)}</strong>
+                      <strong style={{ color: 'var(--text)' }}>
+                        {productShortName(products, c.detected_product ?? c.expected_product)}
+                      </strong>
                       <span>ความคล้าย {formatSimilarity(c.match_score)}</span>
                       <span>เวลาตรวจ {formatMs(c.timing_ms.inspection)}</span>
                     </div>
                   </div>
                 ))}
               </div>
-            )}
-          </section>
+            </section>
+          )}
         </div>
-
-        <div className="stack">
-          <section className="panel" aria-labelledby="ctl-title">
-            <div className="panel-head">
-              <div className="title">
-                <Camera size={20} aria-hidden="true" />
-                <h2 id="ctl-title">ควบคุมการตรวจ</h2>
+      ) : (
+        <div className="split">
+          <div className="stack">
+            <section className="panel" aria-labelledby="cam-title">
+              <div className="panel-head">
+                <div className="title">
+                  <Video size={20} aria-hidden="true" />
+                  <h2 id="cam-title">ภาพทดสอบจากไฟล์</h2>
+                </div>
+                {source === 'demo' && <DemoTag />}
               </div>
-            </div>
-            <div className="stack-sm">
-              <ProductSelect
-                value={product}
-                onChange={(v) => {
-                  setProduct(v)
-                  setLocator(null)
-                  run.reset()
-                }}
-                disabled={busy}
-              />
 
-              <div className="row">
-                <label className="btn" style={{ flex: 1 }}>
-                  <FileImage size={16} aria-hidden="true" /> เลือกไฟล์ภาพ
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="visually-hidden"
-                    disabled={busy}
-                    onChange={(e) => {
-                      const f = e.target.files?.[0]
-                      if (f) newFrame(f, f.name)
-                      e.target.value = ''
-                    }}
-                  />
-                </label>
-                {source === 'demo' && (
-                  <button className="btn" onClick={loadDemoFrame} disabled={busy}>
-                    ภาพตัวอย่าง
-                  </button>
+              <div className="stack-sm">
+                <InspectionOverlay
+                  className="ar-video"
+                  src={shown}
+                  result={result}
+                  locatorBox={locator?.bbox ?? null}
+                  imageWidth={locator?.image_width}
+                  imageHeight={locator?.image_height}
+                  scanning={busy || locating}
+                  alt="ภาพขวดจากกล้องหรือไฟล์"
+                  status={
+                    frame ? (
+                      <>
+                        <FileImage size={14} aria-hidden="true" /> {frame.name}
+                      </>
+                    ) : undefined
+                  }
+                  empty={
+                    <div>
+                      <Camera size={34} aria-hidden="true" />
+                      <strong>ยังไม่มีภาพ</strong>
+                      <span className="hint">เลือกไฟล์ภาพด้านขวาเพื่อเริ่มทดสอบ</span>
+                    </div>
+                  }
+                />
+
+                {guidance && (
+                  <div className={`notice ${guidance.tone}`} role="status">
+                    <ScanSearch size={16} aria-hidden="true" />
+                    <span>{guidance.text}</span>
+                  </div>
                 )}
+
+                <ol className="steps" aria-label="ขั้นตอน">
+                  {GUIDE.map((g, i) => (
+                    <li
+                      key={g}
+                      className={i === step ? 'active' : i < step ? 'done' : ''}
+                      aria-current={i === step ? 'step' : undefined}
+                    >
+                      <span className="n">{i + 1}</span>
+                      {g}
+                    </li>
+                  ))}
+                </ol>
               </div>
+            </section>
 
-              <button className="btn" onClick={locate} disabled={!frame || !product || busy || locating}>
-                <ScanSearch size={16} aria-hidden="true" /> {locating ? 'กำลังหาฉลาก…' : 'หาฉลากในภาพ'}
-              </button>
-
-              <button className="btn btn-primary btn-lg" onClick={captureAndInspect} disabled={!frame || !product || busy}>
-                <Camera size={20} aria-hidden="true" /> {busy ? 'กำลังตรวจ…' : 'ถ่ายและตรวจ'}
-              </button>
-
-              <div className="subpanel">
-                <h3 style={{ marginBottom: 10 }}>ความพร้อมของภาพ</h3>
-                <ul className="checklist">
-                  <CheckItem ok={locator ? locator.quality.sharp_enough : null}>ภาพคมชัด</CheckItem>
-                  <CheckItem ok={locator ? locator.quality.bottle_visible : null}>เห็นทั้งขวด</CheckItem>
-                  <CheckItem ok={locator ? locator.quality.label_visible : null}>เห็นฉลาก</CheckItem>
-                  <CheckItem ok={result ? result.detected_product === result.expected_product : null}>ตรงสินค้า (รู้หลังตรวจ)</CheckItem>
-                </ul>
+            <section className="panel" aria-labelledby="recent-title">
+              <div className="panel-head">
+                <h2 id="recent-title">ภาพที่ถ่ายล่าสุด</h2>
+                <span className="hint">เฉพาะในหน้านี้</span>
               </div>
-            </div>
-          </section>
+              {captures.length === 0 ? (
+                <div className="empty-state">
+                  <Camera size={28} aria-hidden="true" />
+                  <span>ยังไม่มีภาพที่ตรวจ กด "ถ่ายและตรวจ" เพื่อเริ่ม</span>
+                </div>
+              ) : (
+                <div className="captures">
+                  {captures.map((c) => (
+                    <div key={c.inspection_id} className="capture" data-tone={c.result}>
+                      <InspectionOverlay
+                        src={ds.imageUrl(c, 'original')}
+                        result={c}
+                        alt="ภาพที่ตรวจ"
+                        showReadout={false}
+                        compact
+                        empty={<span className="hint">ไม่มีภาพ</span>}
+                      />
+                      <div className="info">
+                        <ResultBadge result={c.result} />
+                        <strong style={{ color: 'var(--text)' }}>
+                          {productShortName(products, c.detected_product ?? c.expected_product)}
+                        </strong>
+                        <span>ความคล้าย {formatSimilarity(c.match_score)}</span>
+                        <span>เวลาตรวจ {formatMs(c.timing_ms.inspection)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
 
-          <section className="panel" aria-labelledby="latest-title">
-            <div className="panel-head">
-              <h2 id="latest-title">ผลล่าสุด</h2>
-            </div>
-            <ResultCard
-              state={run.state}
-              onRetry={run.retry}
-              onResultUpdate={run.replaceResult}
-              idleText="ยังไม่ได้ตรวจ ผลจะขึ้นหลัง Backend ตอบกลับเท่านั้น"
-            />
-          </section>
+          <div className="stack">
+            <section className="panel" aria-labelledby="ctl-title">
+              <div className="panel-head">
+                <div className="title">
+                  <Camera size={20} aria-hidden="true" />
+                  <h2 id="ctl-title">ควบคุมการตรวจ</h2>
+                </div>
+              </div>
+              <div className="stack-sm">
+                <ProductSelect
+                  value={product}
+                  onChange={(v) => {
+                    setProduct(v)
+                    setLocator(null)
+                    run.reset()
+                  }}
+                  disabled={busy}
+                />
+
+                <div className="row">
+                  <label className="btn" style={{ flex: 1 }}>
+                    <FileImage size={16} aria-hidden="true" /> เลือกไฟล์ภาพ
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="visually-hidden"
+                      disabled={busy}
+                      onChange={(e) => {
+                        const f = e.target.files?.[0]
+                        if (f) newFrame(f, f.name)
+                        e.target.value = ''
+                      }}
+                    />
+                  </label>
+                  {source === 'demo' && (
+                    <button className="btn" onClick={loadDemoFrame} disabled={busy}>
+                      ภาพตัวอย่าง
+                    </button>
+                  )}
+                </div>
+
+                <button className="btn" onClick={locate} disabled={!frame || !product || busy || locating}>
+                  <ScanSearch size={16} aria-hidden="true" /> {locating ? 'กำลังหาฉลาก…' : 'หาฉลากในภาพ'}
+                </button>
+
+                <button className="btn btn-primary btn-lg" onClick={captureAndInspect} disabled={!frame || !product || busy}>
+                  <Camera size={20} aria-hidden="true" /> {busy ? 'กำลังตรวจ…' : 'ถ่ายและตรวจ'}
+                </button>
+
+                <div className="subpanel">
+                  <h3 style={{ marginBottom: 10 }}>ความพร้อมของภาพ</h3>
+                  <ul className="checklist">
+                    <CheckItem ok={locator ? locator.quality.sharp_enough : null}>ภาพคมชัด</CheckItem>
+                    <CheckItem ok={locator ? locator.quality.bottle_visible : null}>เห็นทั้งขวด</CheckItem>
+                    <CheckItem ok={locator ? locator.quality.label_visible : null}>เห็นฉลาก</CheckItem>
+                    <CheckItem ok={result ? result.detected_product === result.expected_product : null}>
+                      ตรงสินค้า (รู้หลังตรวจ)
+                    </CheckItem>
+                  </ul>
+                </div>
+              </div>
+            </section>
+
+            <section className="panel" aria-labelledby="latest-title">
+              <div className="panel-head">
+                <h2 id="latest-title">ผลล่าสุด</h2>
+              </div>
+              <ResultCard
+                state={run.state}
+                onRetry={run.retry}
+                onResultUpdate={run.replaceResult}
+                idleText="ยังไม่ได้ตรวจ ผลจะขึ้นหลัง Backend ตอบกลับเท่านั้น"
+              />
+            </section>
+          </div>
         </div>
-      </div>
+      )}
     </>
   )
 }

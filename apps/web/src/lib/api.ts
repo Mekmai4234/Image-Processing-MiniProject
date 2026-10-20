@@ -10,8 +10,11 @@ import type {
   ProductCatalog,
   ProductId,
   ReviewRequest,
+  SourceMode,
 } from '../types/inspection'
 import { API_BASE_URL } from './config'
+
+export { API_BASE_URL }
 
 export type ApiErrorKind = 'http' | 'network' | 'aborted' | 'config' | 'invalid_response'
 
@@ -79,6 +82,9 @@ export function resolveApiUrl(path: string | null | undefined): string | null {
   return `${API_BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`
 }
 
+/** Alias backward-compatible สำหรับ 04 */
+export const resolveImageUrl = resolveApiUrl
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (!API_BASE_URL) throw new ApiError('config', 'VITE_API_BASE_URL is not set')
   let res: Response
@@ -120,6 +126,7 @@ export function buildInspectionForm(req: InspectionRequest): FormData {
     form.append('supporting_images', s.blob, s.name ?? `supporting-${i}.jpg`)
   }
   if (req.evidence) form.append('evidence', JSON.stringify(req.evidence))
+  if (req.demo !== undefined) form.append('demo', String(req.demo))
   return form
 }
 
@@ -137,7 +144,7 @@ export const api = {
 
   products: (signal?: AbortSignal) => request<ProductCatalog>('/api/products', { signal }),
 
-  locateLabel(image: Blob, expected: ProductId, signal?: AbortSignal) {
+  locateLabel(image: Blob, expected: ProductId = 'bottle_a', signal?: AbortSignal) {
     const form = new FormData()
     form.append('image', image, 'frame.jpg')
     form.append('expected_product', expected)
@@ -168,4 +175,74 @@ export const api = {
   exportCsvUrl(filters: Omit<InspectionFilters, 'page' | 'page_size'>): string {
     return `${API_BASE_URL}/api/exports/inspections.csv${query(filters)}`
   },
+}
+
+// -----------------------------------------------------------------------------
+// Backward-compatible individual function exports for 04 webcam module
+// -----------------------------------------------------------------------------
+export const getHealth = api.health
+export const getProducts = api.products
+export const getInspection = api.getInspection
+
+export function locateLabel(
+  imageBlob: Blob,
+  expectedProduct: string = 'bottle_a',
+  signal?: AbortSignal
+): Promise<LocateLabelResult> {
+  return api.locateLabel(imageBlob, expectedProduct, signal)
+}
+
+export interface SubmitInspectionParams {
+  image: Blob
+  expectedProduct: string
+  sourceMode: SourceMode
+  clientRequestId: string
+  angleDeg?: number | null
+  supportingImages?: Blob[]
+  evidence?: Record<string, any>
+  signal?: AbortSignal
+  demo?: boolean
+}
+
+export async function submitInspection(params: SubmitInspectionParams): Promise<InspectionResult> {
+  const req: InspectionRequest = {
+    image: params.image,
+    expected_product: params.expectedProduct,
+    source_mode: params.sourceMode,
+    client_request_id: params.clientRequestId,
+    angle_deg: params.angleDeg ?? undefined,
+    supporting_images: params.supportingImages?.map((blob, idx) => ({
+      blob,
+      name: `supporting-${idx}.jpg`,
+    })),
+    evidence: params.evidence as any,
+    demo: params.demo,
+  }
+  return api.createInspection(req, params.signal)
+}
+
+export async function getInspections(params: {
+  page?: number
+  pageSize?: number
+  result?: any
+  productId?: string
+  sourceMode?: SourceMode
+  dateFrom?: string
+  dateTo?: string
+  demo?: boolean
+  signal?: AbortSignal
+} = {}): Promise<InspectionPage> {
+  return api.listInspections(
+    {
+      page: params.page ?? 1,
+      page_size: params.pageSize ?? 10,
+      result: params.result,
+      product_id: params.productId,
+      source_mode: params.sourceMode,
+      date_from: params.dateFrom,
+      date_to: params.dateTo,
+      demo: params.demo,
+    },
+    params.signal
+  )
 }

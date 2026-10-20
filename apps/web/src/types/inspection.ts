@@ -70,7 +70,7 @@ export interface InspectionResult {
   reason: InspectionReason
   /** similarity 0..1 ไม่ใช่ calibrated confidence */
   match_score: number | null
-  score_method: 'template_ccoeff_normed_clamped_v1' | null
+  score_method: 'template_ccoeff_normed_clamped_v1' | string | null
   bbox: BBox | null
   expected_bbox: BBox | null
   image_width: number
@@ -86,8 +86,9 @@ export interface InspectionResult {
   reviewed_reason: InspectionReason | null
   reviewer: string | null
   reviewed_at: string | null
-  /** true เฉพาะข้อมูลสังเคราะห์ใน examples/ */
+  /** true เฉพาะข้อมูลสังเคราะห์ใน examples/ หรือโหมดจำลอง */
   demo?: boolean
+  is_demo?: boolean
 }
 
 export interface LocateLabelResult {
@@ -117,6 +118,8 @@ export interface ProductCatalog {
 export interface HealthStatus {
   status: string
   config_version?: string
+  timezone?: string
+  storage_root_ready?: boolean
 }
 
 export interface InspectionFilters {
@@ -129,6 +132,7 @@ export interface InspectionFilters {
   /** YYYY-MM-DD ตาม APP_TIMEZONE รวมวันต้นและวันปลาย */
   date_from?: string
   date_to?: string
+  demo?: boolean
 }
 
 export interface InspectionPage {
@@ -154,8 +158,23 @@ export interface InspectionRequest {
   angle_deg?: number
   supporting_images?: Array<{ blob: Blob; name?: string }>
   evidence?: EvidenceRequest
+  demo?: boolean
 }
 
 export interface ApiErrorBody {
   error: { code: string; message: string; request_id?: string }
 }
+
+// -----------------------------------------------------------------------------
+// Backward-compatibility aliases for 04 webcam module
+// -----------------------------------------------------------------------------
+export type BoundingBox = BBox
+export type LocateResult = LocateLabelResult
+export type InspectionResultStatus = InspectionResultValue
+export type InspectionTiming = TimingMs
+export type InspectionEvidence = EvidenceResponse
+export type ApiErrorResponse = ApiErrorBody
+export type QualityAssessment = LocateLabelResult['quality']
+export type CatalogProduct = Product
+export type CatalogResponse = ProductCatalog
+export type InspectionsListResponse = InspectionPage
