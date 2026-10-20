@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { locateLabel } from '../../lib/api'
+import type { DataSource } from '../../lib/dataSource'
+import type { SourceKind } from '../../lib/AppData'
 import type { LocateResult } from '../../types/inspection'
 import { captureThumbnail } from './captureUtils'
 import type { GuidanceInfo } from './types'
@@ -10,6 +12,8 @@ export interface UseLabelLocatorOptions {
   expectedProduct: string
   enabled?: boolean
   intervalMs?: number
+  dataSource?: DataSource
+  sourceKind?: SourceKind
 }
 
 const DEFAULT_GUIDANCE: GuidanceInfo = {
@@ -25,6 +29,8 @@ export function useLabelLocator({
   expectedProduct,
   enabled = true,
   intervalMs = 650,
+  dataSource,
+  sourceKind = 'live',
 }: UseLabelLocatorOptions) {
   const [locateResult, setLocateResult] = useState<LocateResult | null>(null)
   const [guidance, setGuidance] = useState<GuidanceInfo>(DEFAULT_GUIDANCE)
@@ -34,6 +40,12 @@ export function useLabelLocator({
   const inFlightRef = useRef<boolean>(false)
   const abortControllerRef = useRef<AbortController | null>(null)
   const timerRef = useRef<number | null>(null)
+
+  // Reset locator state when datasource or source mode changes
+  useEffect(() => {
+    setLocateResult(null)
+    setGuidance(DEFAULT_GUIDANCE)
+  }, [dataSource, sourceKind])
 
   /**
    * Derive dynamic user guidance based on backend LocateResult and quality flags
@@ -163,7 +175,9 @@ export function useLabelLocator({
           return
         }
 
-        const result = await locateLabel(thumbnailBlob, expectedProduct, abortController.signal)
+        const result = dataSource
+          ? await dataSource.locateLabel(thumbnailBlob, expectedProduct, abortController.signal)
+          : await locateLabel(thumbnailBlob, expectedProduct, abortController.signal)
 
         if (isSubscribed && !abortController.signal.aborted) {
           setLocateResult(result)
@@ -175,8 +189,11 @@ export function useLabelLocator({
         if (err?.name !== 'AbortError' && isSubscribed) {
           console.debug('Locator tick error:', err)
           setGuidance({
-            text: 'กำลังรอการเชื่อมต่อ Backend...',
-            subtext: 'ตรวจสอบให้แน่ใจว่า Backend รันอยู่ที่พอร์ต 8000',
+            text: sourceKind === 'demo' ? 'กำลังจำลองผลค้นหาฉลาก (DEMO)...' : 'กำลังรอการเชื่อมต่อ Backend...',
+            subtext:
+              sourceKind === 'demo'
+                ? 'โหมดจำลองตามสถานการณ์ที่เลือก'
+                : 'ตรวจสอบให้แน่ใจว่า Backend รันอยู่ที่พอร์ต 8000',
             tone: 'warning',
             readyToCapture: false,
           })
@@ -206,7 +223,7 @@ export function useLabelLocator({
       }
       inFlightRef.current = false
     }
-  }, [enabled, expectedProduct, intervalMs, isStreaming, videoRef])
+  }, [enabled, expectedProduct, intervalMs, isStreaming, videoRef, dataSource, sourceKind])
 
   return {
     locateResult,

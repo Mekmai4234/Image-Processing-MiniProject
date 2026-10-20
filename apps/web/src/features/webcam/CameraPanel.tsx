@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
   AlertCircle,
   AlertTriangle,
@@ -13,7 +13,8 @@ import {
   VideoOff,
   XCircle,
 } from 'lucide-react'
-import { resolveImageUrl, submitInspection } from '../../lib/api'
+import type { DataSource } from '../../lib/dataSource'
+import { liveDataSource } from '../../lib/dataSource'
 import type { InspectionResult } from '../../types/inspection'
 import { captureVideoFrame, generateClientRequestId } from './captureUtils'
 import { useLabelLocator } from './useLabelLocator'
@@ -22,12 +23,16 @@ import type { CameraPanelProps } from './types'
 import './CameraPanel.css'
 
 export const CameraPanel: React.FC<CameraPanelProps> = ({
+  dataSource,
+  sourceKind = 'live',
   expectedProduct = 'bottle_a',
   onProductChange,
   onInspectionComplete,
   autoLocate = true,
   className = '',
 }) => {
+  const effectiveDs: DataSource = dataSource ?? liveDataSource
+
   // 1. Camera stream hook (Rule 6.1, 6.7: proper permission & track cleanup)
   const {
     videoRef,
@@ -50,6 +55,8 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
     expectedProduct,
     enabled: autoLocate,
     intervalMs: 600,
+    dataSource: effectiveDs,
+    sourceKind,
   })
 
   // Local state for capture and inspection
@@ -59,6 +66,26 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
   const [captureError, setCaptureError] = useState<string | null>(null)
   const [isFlashActive, setIsFlashActive] = useState<boolean>(false)
   const [activeImageTab, setActiveImageTab] = useState<'annotated' | 'original'>('annotated')
+
+  const captureSeqRef = useRef<number>(0)
+  const captureAbortRef = useRef<AbortController | null>(null)
+
+  // Discard in-flight requests and clear inspection results when source switches
+  useEffect(() => {
+    captureSeqRef.current++
+    captureAbortRef.current?.abort()
+    captureAbortRef.current = null
+    setIsCapturing(false)
+    setInspectionResult(null)
+    setCaptureError(null)
+  }, [dataSource, sourceKind])
+
+  useEffect(() => {
+    return () => {
+      captureSeqRef.current++
+      captureAbortRef.current?.abort()
+    }
+  }, [])
 
   // Keep selected product in sync with prop if changed from outside
   useEffect(() => {
@@ -75,6 +102,11 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
     const video = videoRef.current
     if (!video || !isStreaming) return
 
+    const seq = ++captureSeqRef.current
+    captureAbortRef.current?.abort()
+    const abortCtrl = new AbortController()
+    captureAbortRef.current = abortCtrl
+
     setIsCapturing(true)
     setCaptureError(null)
 
@@ -87,22 +119,36 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
       const frame = await captureVideoFrame(video, 'image/jpeg', 0.92)
       const clientRequestId = generateClientRequestId()
 
-      const result = await submitInspection({
-        image: frame.blob,
-        expectedProduct: selectedProduct,
-        sourceMode: 'webcam',
-        clientRequestId,
-      })
+      const result = await effectiveDs.createInspection(
+        {
+          image: frame.blob,
+          imageName: 'webcam-capture.jpg',
+          expected_product: selectedProduct,
+          source_mode: 'webcam',
+          client_request_id: clientRequestId,
+          demo: sourceKind === 'demo',
+        },
+        abortCtrl.signal,
+      )
+
+      if (seq !== captureSeqRef.current || abortCtrl.signal.aborted) {
+        return
+      }
 
       setInspectionResult(result)
       onInspectionComplete?.(result)
     } catch (err: any) {
+      if (seq !== captureSeqRef.current || abortCtrl.signal.aborted) {
+        return
+      }
       console.error('Inspection error:', err)
       setCaptureError(err?.message || 'เกิดข้อผิดพลาดในการตรวจสอบภาพ')
     } finally {
-      setIsCapturing(false)
+      if (seq === captureSeqRef.current) {
+        setIsCapturing(false)
+      }
     }
-  }, [isStreaming, onInspectionComplete, selectedProduct, videoRef])
+  }, [effectiveDs, isStreaming, onInspectionComplete, selectedProduct, sourceKind, videoRef])
 
   // Compute scaled bounding box for overlay HUD
   const renderBoundingBoxOverlay = () => {
@@ -517,12 +563,12 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
               )}
               {activeImageTab === 'annotated' && inspectionResult.images.annotated ? (
                 <img
-                  src={resolveImageUrl(inspectionResult.images.annotated) || ''}
+                  src={effectiveDs.imageUrl(inspectionResult, 'annotated') || ''}
                   alt="Annotated Inspection Result"
                 />
               ) : inspectionResult.images.original ? (
                 <img
-                  src={resolveImageUrl(inspectionResult.images.original) || ''}
+                  src={effectiveDs.imageUrl(inspectionResult, 'original') || ''}
                   alt="Original Inspection Capture"
                 />
               ) : (

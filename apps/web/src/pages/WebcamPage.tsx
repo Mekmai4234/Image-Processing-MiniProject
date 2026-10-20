@@ -54,6 +54,11 @@ export function WebcamPage() {
   }, [run.state])
 
   function handleLiveInspectionComplete(result: InspectionResult) {
+    const isResultDemo = Boolean(result.demo || result.is_demo)
+    if ((source === 'demo') !== isResultDemo) {
+      // Discard stale result if mode switched before completion
+      return
+    }
     setCaptures((c) => [result, ...c.filter((x) => x.inspection_id !== result.inspection_id)].slice(0, 6))
     run.replaceResult(result)
   }
@@ -139,6 +144,8 @@ export function WebcamPage() {
       {inputMode === 'live' ? (
         <div className="stack" style={{ marginTop: '1rem' }}>
           <CameraPanel
+            dataSource={ds}
+            sourceKind={source}
             expectedProduct={product || 'bottle_a'}
             onProductChange={(p) => setProduct(p)}
             onInspectionComplete={handleLiveInspectionComplete}

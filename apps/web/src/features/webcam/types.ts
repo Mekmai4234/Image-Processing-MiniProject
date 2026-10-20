@@ -1,4 +1,6 @@
 import type { InspectionResult } from '../../types/inspection'
+import type { DataSource } from '../../lib/dataSource'
+import type { SourceKind } from '../../lib/AppData'
 
 export type CameraStatus = 'idle' | 'requesting' | 'streaming' | 'error'
 
@@ -24,6 +26,8 @@ export interface CaptureFrameResult {
 }
 
 export interface CameraPanelProps {
+  dataSource?: DataSource
+  sourceKind?: SourceKind
   expectedProduct?: string
   onProductChange?: (productId: string) => void
   onInspectionComplete?: (result: InspectionResult) => void
