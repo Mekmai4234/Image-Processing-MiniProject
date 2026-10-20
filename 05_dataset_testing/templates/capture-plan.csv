@@ -1,0 +1,11 @@
+planned_group,split,product_id,physical_bottle_ids,capture_sessions,conditions,target_images,actual_images,reviewer,second_reviewer,status
+group-01,development,,,,,,,,,not_started
+group-02,development,,,,,,,,,not_started
+group-03,development,,,,,,,,,not_started
+group-04,development,,,,,,,,,not_started
+group-05,development,,,,,,,,,not_started
+group-06,development,,,,,,,,,not_started
+group-07,validation,,,,,,,,,not_started
+group-08,validation,,,,,,,,,not_started
+group-09,test,,,,,,,,,not_started
+group-10,test,,,,,,,,,not_started
