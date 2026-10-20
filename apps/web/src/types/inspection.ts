@@ -86,9 +86,8 @@ export interface InspectionResult {
   reviewed_reason: InspectionReason | null
   reviewer: string | null
   reviewed_at: string | null
-  /** true เฉพาะโหมดจำลองหรือข้อมูลสังเคราะห์ */
+  /** true เฉพาะข้อมูลสังเคราะห์ใน examples/ หรือโหมดจำลอง */
   demo?: boolean
-  /** alias backward-compatible */
   is_demo?: boolean
 }
 
@@ -119,6 +118,8 @@ export interface ProductCatalog {
 export interface HealthStatus {
   status: string
   config_version?: string
+  timezone?: string
+  storage_root_ready?: boolean
 }
 
 export interface InspectionFilters {
@@ -131,7 +132,6 @@ export interface InspectionFilters {
   /** YYYY-MM-DD ตาม APP_TIMEZONE รวมวันต้นและวันปลาย */
   date_from?: string
   date_to?: string
-  /** กรองโหมด demo */
   demo?: boolean
 }
 

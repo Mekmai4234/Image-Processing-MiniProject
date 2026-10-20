@@ -36,10 +36,7 @@ export function WebcamPage() {
   const urls = useObjectUrls()
   const [product, setProduct] = useState('')
   useDefaultProduct(product, setProduct)
-
-  // Mode: live webcam stream (04) vs manual file upload test (01)
-  const [inputMode, setInputMode] = useState<'webcam' | 'file'>('webcam')
-
+  const [inputMode, setInputMode] = useState<'live' | 'file'>('live')
   const [frame, setFrame] = useState<{ blob: Blob; url: string; name: string } | null>(null)
   const [locator, setLocator] = useState<LocateLabelResult | null>(null)
   const [locating, setLocating] = useState(false)
@@ -56,8 +53,9 @@ export function WebcamPage() {
     setCaptures((c) => [r, ...c.filter((x) => x.inspection_id !== r.inspection_id)].slice(0, 6))
   }, [run.state])
 
-  function handleInspectionComplete(r: InspectionResult) {
-    setCaptures((c) => [r, ...c.filter((x) => x.inspection_id !== r.inspection_id)].slice(0, 6))
+  function handleLiveInspectionComplete(result: InspectionResult) {
+    setCaptures((c) => [result, ...c.filter((x) => x.inspection_id !== result.inspection_id)].slice(0, 6))
+    run.replaceResult(result)
   }
 
   function newFrame(blob: Blob, name: string) {
@@ -117,39 +115,41 @@ export function WebcamPage() {
     <>
       <div className="page-head">
         <div>
-          <h1>ตรวจด้วยกล้อง</h1>
+          <h1>ตรวจด้วยกล้อง (Webcam)</h1>
           <p>หมุนขวดหน้ากล้องจนเห็นฉลาก ถือนิ่ง แล้วถ่ายให้ Backend ตรวจ</p>
         </div>
         <div className="row" style={{ gap: '0.5rem' }}>
           <button
-            className={`btn ${inputMode === 'webcam' ? 'btn-primary' : ''}`}
-            onClick={() => setInputMode('webcam')}
+            type="button"
+            className={`btn ${inputMode === 'live' ? 'btn-primary' : ''}`}
+            onClick={() => setInputMode('live')}
           >
-            <Video size={16} aria-hidden="true" /> กล้องเว็บแคมสด
+            <Video size={16} aria-hidden="true" /> กล้องสด (Live Camera)
           </button>
           <button
+            type="button"
             className={`btn ${inputMode === 'file' ? 'btn-primary' : ''}`}
             onClick={() => setInputMode('file')}
           >
-            <FileImage size={16} aria-hidden="true" /> ทดสอบด้วยไฟล์ภาพ
+            <FileImage size={16} aria-hidden="true" /> เลือกไฟล์ภาพ (File)
           </button>
         </div>
       </div>
 
-      {inputMode === 'webcam' ? (
-        <div className="stack" style={{ gap: '1.5rem' }}>
+      {inputMode === 'live' ? (
+        <div className="stack" style={{ marginTop: '1rem' }}>
           <CameraPanel
             expectedProduct={product || 'bottle_a'}
-            onProductChange={setProduct}
-            onInspectionComplete={handleInspectionComplete}
+            onProductChange={(p) => setProduct(p)}
+            onInspectionComplete={handleLiveInspectionComplete}
             autoLocate={true}
           />
 
           {captures.length > 0 && (
-            <section className="panel" aria-labelledby="recent-title">
+            <section className="panel" aria-labelledby="recent-title" style={{ marginTop: '1.5rem' }}>
               <div className="panel-head">
-                <h2 id="recent-title">ประวัติการตรวจในเซสชันนี้</h2>
-                <span className="hint">เฉพาะในหน้านี้</span>
+                <h2 id="recent-title">ภาพที่ตรวจล่าสุด</h2>
+                <span className="hint">เฉพาะในเซสชันนี้</span>
               </div>
               <div className="captures">
                 {captures.map((c) => (
@@ -181,12 +181,9 @@ export function WebcamPage() {
           <div className="stack">
             <section className="panel" aria-labelledby="cam-title">
               <div className="panel-head">
-                <div>
-                  <div className="title">
-                    <FileImage size={20} aria-hidden="true" />
-                    <h2 id="cam-title">ทดสอบด้วยไฟล์ภาพ</h2>
-                  </div>
-                  <p className="panel-sub">เลือกภาพขวดจากเครื่องเพื่อทดสอบ locator และการตรวจผ่าน API</p>
+                <div className="title">
+                  <Video size={20} aria-hidden="true" />
+                  <h2 id="cam-title">ภาพทดสอบจากไฟล์</h2>
                 </div>
                 {source === 'demo' && <DemoTag />}
               </div>
@@ -212,7 +209,7 @@ export function WebcamPage() {
                     <div>
                       <Camera size={34} aria-hidden="true" />
                       <strong>ยังไม่มีภาพ</strong>
-                      <span className="hint">เลือกไฟล์ภาพเพื่อทดสอบขั้นตอน</span>
+                      <span className="hint">เลือกไฟล์ภาพด้านขวาเพื่อเริ่มทดสอบ</span>
                     </div>
                   }
                 />
@@ -321,11 +318,7 @@ export function WebcamPage() {
                   <ScanSearch size={16} aria-hidden="true" /> {locating ? 'กำลังหาฉลาก…' : 'หาฉลากในภาพ'}
                 </button>
 
-                <button
-                  className="btn btn-primary btn-lg"
-                  onClick={captureAndInspect}
-                  disabled={!frame || !product || busy}
-                >
+                <button className="btn btn-primary btn-lg" onClick={captureAndInspect} disabled={!frame || !product || busy}>
                   <Camera size={20} aria-hidden="true" /> {busy ? 'กำลังตรวจ…' : 'ถ่ายและตรวจ'}
                 </button>
 
