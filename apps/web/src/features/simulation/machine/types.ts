@@ -41,6 +41,8 @@ export interface JobViewInput {
   /** Known turntable angle of this real photo, 0..<360, or null if unknown (single view only). */
   angle_deg: number | null
   image: Blob
+  /** Original file name, sent as the multipart file name. */
+  name?: string
 }
 
 export interface JobInput {

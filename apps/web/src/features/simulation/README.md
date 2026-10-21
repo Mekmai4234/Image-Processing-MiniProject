@@ -1,6 +1,6 @@
 # features/simulation — งาน 02 (Three.js conveyor)
 
-สถานะ: **ใช้ได้กับ mock (DEMO) เท่านั้น** ยังไม่ได้ต่อ API จริง เพราะ app shell ของ 01 และ endpoint ของ 04 ยังไม่มี
+สถานะ: component + ตัวต่อ DataSource พร้อมให้ 01 ประกอบเข้าหน้า Simulation (ตกลงกับ 01: 02 แก้เฉพาะ `features/simulation/`, 01 แก้ `SimulationPage.tsx` และ `slots.ts`)
 อ้างอิง [API contract v0.2](../../../../../docs/api-contract.md) และ [architecture](../../../../../docs/architecture.md)
 
 ## โครงสร้าง
@@ -10,28 +10,110 @@
 | `machine/` | state machine แบบ pure function (`transition`) + การคำนวณ evidence + ตำแหน่ง (`poseOf`) ไม่มี timer/fetch/Three.js |
 | `controller/` | `SimulationController` รัน effect: เรียก API พร้อม AbortController และ timeout เวลาจริง, simulation clock, กันนับซ้ำ |
 | `scene/` | `ConveyorScene` วาดจาก state อย่างเดียว + `FallbackDiagram` เมื่อไม่มี WebGL |
-| `api/` | `InspectionPort`, mock (DEMO), adapter HTTP ชั่วคราว, type ของ contract |
+| `api/` | `InspectionPort`, `createDataSourcePort(ds)` ต่อ DataSource ของ 01, mock สำหรับ test, type จาก `src/types/inspection.ts` |
 | `SimulationScene.tsx` | React component ให้ 01 ฝัง |
 
 ## วิธีฝังในหน้า Simulation (สำหรับ 01)
 
-```tsx
-import { SimulationScene, machineConfigFrom, parseSimulationDefaults } from '@/features/simulation'
+### 1. สร้าง port และ config
 
-// defaults มาจาก GET /api/products → simulation_defaults (ไม่อ่าน .env จาก browser)
-const config = machineConfigFrom(parseSimulationDefaults(products) ?? undefined)
+```tsx
+import { useMemo, useRef, useState } from 'react'
+import {
+  SimulationScene, createDataSourcePort, machineConfigFrom, parseSimulationDefaults, toJobInput,
+  type SimulationSceneHandle, type SimulationSnapshot, type CompletedEvent,
+} from '../features/simulation'
+
+const { ds, catalog } = useAppData()
+// ds ของ 01 (live หรือ demo) → port; ds เปลี่ยน = ฉากทิ้งงานเดิมแล้วสร้างใหม่ (ต้อง useMemo)
+const port = useMemo(() => createDataSourcePort(ds), [ds])
+// simulation_defaults จาก GET /api/products (ไม่อ่าน .env จาก browser); ไม่มีค่า → ค่าเริ่ม 360/30
+const config = useMemo(() => machineConfigFrom(parseSimulationDefaults(catalog) ?? undefined), [catalog])
+```
+
+### 2. วาง component และรับ event
+
+```tsx
+const sceneRef = useRef<SimulationSceneHandle>(null)
+const [snap, setSnap] = useState<SimulationSnapshot | null>(null)
 
 <SimulationScene
-  ref={sceneRef}                // start(job) / pause / resume / reset / retry / replay / setSpeed
-  port={port}                   // adapter ของ client ร่วม หรือ MockInspectionPort (แสดงป้าย DEMO)
-  config={config}               // เปลี่ยนค่า → เปลี่ยน key เพื่อ remount
-  onSnapshot={setSnapshot}      // สถานะ/มุม/สถานี/ผล/error (ไม่ยิงทุกเฟรม)
-  onCompleted={countAndRefresh} // ครั้งเดียวต่อ inspection_id เมื่อขวดถึงปลายทาง → ใช้นับสถิติ
+  ref={sceneRef}
+  port={port}
+  config={config}
+  onSnapshot={setSnap}              // ยิงเมื่อมีการเปลี่ยนที่มีความหมาย ไม่ใช่ทุกเฟรม
+  onCompleted={(e: CompletedEvent) => addToSessionStats(e.result)}  // ครั้งเดียวต่อ inspection_id
+  onReplayed={() => {}}             // เล่นซ้ำ: ห้ามนับ
+  showOverlay={false}               // ถ้า 01 ทำ panel เอง ปิด overlay ในฉากได้ (ป้าย DEMO/ข้อจำกัดต้องแสดงที่ panel ของ 01 แทน)
 />
 ```
 
-`sceneRef.current.start({ expected_product, views: [{ angle_deg, image }] })` คืนรายการปัญหาของ input (ว่าง = เริ่มแล้ว)
-Three.js มีขนาดใหญ่ แนะนำให้ 01 โหลดหน้า Simulation ด้วย `React.lazy`
+props `bottleShape` (รูปทรงขวดจากภาพ) และ `quality` (คุณภาพการเรนเดอร์) ยังไม่มีใน PR นี้ จะเพิ่มใน PR ถัดไปของ 02
+
+### 3. ปุ่มควบคุม → handle
+
+| ปุ่มในหน้า | เรียก | หมายเหตุ |
+|---|---|---|
+| ตรวจชุดภาพนี้ (Run) | `sceneRef.current?.start(toJobInput(product, views))` | คืน `ValidationIssue[]`; ว่าง = เริ่มแล้ว; ไม่ว่าง = แสดง `issue.message` (เช่น หลายภาพแต่มีภาพไม่ระบุมุม) |
+| Pause / ทำต่อ | `pause()` / `resume()` | ใช้ได้เมื่อ `snap.state` ไม่ใช่ IDLE/COMPLETE/ERROR/PAUSED |
+| รีเซ็ต | `reset()` | ทิ้งงาน ไม่ลบ History — แสดง `RESET_NOTICE` ถ้ากดระหว่างทำงาน |
+| ลองใหม่ | `retry()` | เปิดเมื่อ `snap.state === 'ERROR' && snap.error?.retryable` |
+| เล่นซ้ำ | `replay()` | เปิดเมื่อ `snap.state === 'COMPLETE'`; ไม่ยิง API ไม่นับสถิติ |
+| Speed | `setSpeed(x)` | 0.25–3; ไม่กระทบ timeout ของ network |
+
+`views` คือ `{ blob, name, angle }` แบบเดียวกับ `ViewItem` ใน `lib/views` — **ไม่ต้องใช้** `buildSimulationRequest`/`useInspectionRun` แล้ว เพราะ controller ของฉากสร้างคำขอและ evidence เอง (ส่งคำขอเดียว ไม่ซ้ำ)
+
+### 4. field ใน `SimulationSnapshot`
+
+| field | ใช้ทำอะไรในหน้า |
+|---|---|
+| `state` | IDLE / FEED / ORIENT / SETTLE / INSPECT / WAIT_RESULT / SORT / OUTPUT / COMPLETE / PAUSED / ERROR → pipeline + ปุ่ม (`STATE_LABEL` มีข้อความไทย) |
+| `phase`, `paused` | phase จริงแม้กำลัง pause |
+| `demo` | true เมื่อ ds เป็น DEMO → แสดง DemoTag |
+| `job_id`, `inspection_id` | id ของงานในฉาก / id จาก backend (ผูก History) |
+| `mode` | `single_view` → แสดง `SINGLE_VIEW_NOTICE` |
+| `current_station` | ตำแหน่งขวด (ค่าตาม type `Station`) |
+| `orient` | `tried_angles`, `total`, `current_view_index`, `search_status` → กล่อง "Orientation status" (`SEARCH_STATUS_LABEL`) |
+| `current_angle_deg` | มุมของภาพที่กำลังค้น/ที่เลือก |
+| `current_image` | Blob ของภาพจริงที่ locator กำลังดูใน ORIENT |
+| `captured_image`, `captured_angle_deg` | **Blob ของภาพจริงที่ส่งตรวจ** + มุม → "Captured inspection image" |
+| `result` | `InspectionResult` เต็ม (result, reason, match_score, bbox, expected_bbox, image_width/height, storage_status, images, evidence) |
+| `route` | pass / reject / review |
+| `error` | `{ message, status, code, retryable }` เมื่อ state = ERROR (ไม่ใช่ผลสินค้า) |
+| `replaying`, `speed`, `has_buffered_response` | สถานะเสริม |
+
+### 5. "Captured inspection image" + กรอบ
+
+`captured_image` คือ Blob เดียวกับที่ส่ง `POST /api/inspections` และ `result.bbox` อยู่ในพิกัด pixel ของภาพนั้น (`result.image_width/height`)
+จึงส่งเข้า `InspectionOverlay` ของ 01 ได้ตรง ๆ:
+
+```tsx
+const urls = useObjectUrls()                       // lib/useObjectUrls ของ 01
+const [capturedUrl, setCapturedUrl] = useState<string | null>(null)
+useEffect(() => {
+  const blob = snap?.captured_image
+  if (!blob) { setCapturedUrl(null); return }
+  const url = urls.create(blob)
+  setCapturedUrl(url)
+  return () => urls.revoke(url)
+}, [snap?.captured_image])                         // Blob เดิมตลอดงาน → สร้าง URL ครั้งเดียวต่องาน
+
+<InspectionOverlay
+  src={capturedUrl}
+  alt="ภาพที่ใช้ตรวจ"
+  imageWidth={snap?.result?.image_width}
+  imageHeight={snap?.result?.image_height}
+  result={snap?.result ?? null}
+  scanning={snap?.state === 'WAIT_RESULT'}
+/>
+```
+
+ข้อควรระวัง: โหมด DEMO ของ 01 คืนพิกัดจาก `examples/` ที่ไม่ได้คำนวณจากภาพนี้จริง — ถ้าจะใช้ภาพสังเคราะห์ให้ใช้ `ds.imageUrl(result, 'original')` แบบเดิมของหน้า
+
+### 6. สถิติ
+
+นับจาก `onCompleted` เท่านั้น (ยิงเมื่อขวดถึงปลายทาง ครั้งเดียวต่อ `inspection_id`) — ไม่นับจาก snapshot และไม่นับ `onReplayed`
+Three.js มีขนาดใหญ่ แนะนำให้โหลดหน้า Simulation ด้วย `React.lazy`
 
 ## ข้อตกลงที่โค้ดบังคับ
 
@@ -59,15 +141,14 @@ Three.js มีขนาดใหญ่ แนะนำให้ 01 โหลด
 
 ## การทดสอบ
 
-ยังไม่มี package.json ใน `apps/web` จึงทดสอบด้วย harness นอก repo (Vite + Vitest + Playwright)
-หลัง 01 ตั้ง app แล้วให้ย้ายคำสั่งเข้า `apps/web/package.json`:
+รันใน `apps/web`: `npm test` และ `npm run build`
 
-- unit: `vitest run` ครอบ `__tests__/*.test.ts` (44 กรณี: transition ทุกสถานะ, pause/reset/retry/replay, evidence, controller + mock)
-- e2e (harness): PASS/FAIL/REVIEW, ERROR→retry, pause ระหว่างดัน, replay ไม่นับ, remount 15 รอบไม่มี loop ค้าง, WebGL fallback
+- unit: `__tests__/*.test.ts` 52 กรณี — transition ทุกสถานะ, pause/reset/retry/replay, evidence, controller + mock
+  และ controller + `createDataSourcePort` กับ DEMO DataSource ของ 01 (PASS, หันหนีทุกมุม → REVIEW, 503 → retry, storage failed)
+- e2e (harness นอก repo รอบ M1): PASS/FAIL/REVIEW, ERROR→retry, pause ระหว่างดัน, replay ไม่นับ, remount 15 รอบไม่มี loop ค้าง, WebGL fallback
 
 ## ข้อจำกัดที่รู้อยู่
 
 - ยังไม่ได้ทดสอบกับ API จริงหรือภาพขวดจริงจาก 05
-- `api/contract.ts` เป็นสำเนา type ชั่วคราว ต้องเปลี่ยนไปใช้ `src/types/inspection.ts` เมื่อ 01 สร้าง
-- `api/httpPort.ts` เป็น adapter ชั่วคราว ต้องเปลี่ยนไปใช้ client ร่วมของ 01
+- ยังไม่ได้ฝังในหน้า Simulation จริง (รอ 01)
 - frame rate วัดได้แค่บน software renderer ในเครื่องทดสอบ ต้องวัดซ้ำบน notebook ของทีม

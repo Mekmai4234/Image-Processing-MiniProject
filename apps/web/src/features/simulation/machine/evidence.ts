@@ -188,10 +188,11 @@ export function buildInspectionRequest(job: Job, plan: InspectionPlan): Inspecti
     supporting_images: plan.supporting_view_indices.map((i) => {
       const view = job.views[i]
       if (!view) throw new Error('supporting view missing')
-      return view.image
+      return view.name ? { blob: view.image, name: view.name } : { blob: view.image }
     }),
     evidence: buildEvidence(job, plan),
   }
+  if (primary.name) request.imageName = primary.name
   if (primary.angle_deg !== null) request.angle_deg = primary.angle_deg
   return Object.freeze(request)
 }

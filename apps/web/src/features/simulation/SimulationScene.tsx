@@ -32,9 +32,9 @@ export interface SimulationSceneHandle {
 }
 
 export interface SimulationSceneProps {
-  /** Mock (DEMO) or the adapter over 01's shared API client. Fixed for the component's lifetime. */
+  /** createDataSourcePort(ds) — memoize it; a new port resets the scene and abandons the job. */
   port: InspectionPort
-  /** From GET /api/products simulation_defaults. Change `key` to apply a new config. */
+  /** From GET /api/products simulation_defaults — memoize it; a new config resets the scene. */
   config: MachineConfig
   onSnapshot?: (snapshot: SimulationSnapshot) => void
   /** Once per inspection_id when the bottle reaches its destination: the only place to count. */
@@ -123,9 +123,10 @@ export const SimulationScene = forwardRef<SimulationSceneHandle, SimulationScene
       scene?.dispose()
       controllerRef.current = null
     }
-    // port/config are intentionally fixed per mount; remount with a new `key` to change them.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [forceFallback])
+    // A new port (DEMO ↔ live) or config abandons the current job and builds a fresh
+    // controller + scene; the cleanup above aborts requests and disposes the renderer.
+    // Pass memoized values so this only happens when the source/config really changes.
+  }, [port, config, forceFallback])
 
   return (
     <div className={`vv-sim ${className ?? ''}`}>

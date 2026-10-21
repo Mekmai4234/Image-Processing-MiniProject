@@ -35,6 +35,18 @@ export interface SimulationSnapshot {
     search_status: SearchStatus | null
   } | null
   primary_view_index: number | null
+  /**
+   * The real photo the locator is looking at right now (ORIENT), or null. Same Blob the user
+   * uploaded; the page makes its own object URL.
+   */
+  current_image: Blob | null
+  /**
+   * The exact photo sent (or about to be sent) to POST /api/inspections, once chosen. Use it
+   * with `result` (bbox, image_width/height) for the "Captured inspection image" panel.
+   */
+  captured_image: Blob | null
+  /** Angle of captured_image, or null when unknown (single photo without angle). */
+  captured_angle_deg: number | null
   result: InspectionResult | null
   route: Route | null
   error: SimError | null
@@ -363,6 +375,10 @@ export class SimulationController {
             }
           : null,
       primary_view_index: s.plan?.primary_view_index ?? null,
+      current_image:
+        s.phase === 'ORIENT' && job && currentViewIndex !== null ? (job.views[currentViewIndex]?.image ?? null) : null,
+      captured_image: s.request?.image ?? null,
+      captured_angle_deg: s.request ? (s.request.angle_deg ?? null) : null,
       result: s.result,
       route: s.route,
       error: s.error,
