@@ -123,6 +123,7 @@ export interface HealthStatus {
   detector_ready?: boolean
   detector_status?: string
   readiness_reason?: string | null
+  detector_reason?: string | null
 }
 
 export interface InspectionFilters {
