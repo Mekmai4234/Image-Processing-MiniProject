@@ -26,6 +26,7 @@ import { captureVideoFrame, generateClientRequestId } from './captureUtils'
 import { useLabelLocator } from './useLabelLocator'
 import { useWebcamStream } from './useWebcamStream'
 import type { AutoCapturePhase, CameraPanelProps } from './types'
+import { DwellTimer } from './dwellTimer'
 import './CameraPanel.css'
 
 export const CameraPanel: React.FC<CameraPanelProps> = ({
@@ -85,12 +86,28 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
 
   const captureSeqRef = useRef<number>(0)
   const captureAbortRef = useRef<AbortController | null>(null)
-  const dwellTimerRef = useRef<number | null>(null)
-  const dwellStartRef = useRef<number | null>(null)
   const frozenObjectUrlRef = useRef<string | null>(null)
+  const bottleAbsentCountRef = useRef<number>(0)
 
-  // Discard in-flight requests and clear inspection results when source switches
+  // Dwell timer controller with generation token invalidation (17-1 & 17-2)
+  const handleCaptureRef = useRef<((token?: number) => Promise<void>) | null>(null)
+  const dwellTimerRef = useRef<DwellTimer | null>(null)
+  if (!dwellTimerRef.current) {
+    dwellTimerRef.current = new DwellTimer({
+      dwellMs: 800,
+      tickIntervalMs: 50,
+      onProgress: (p) => setDwellProgress(p),
+      onComplete: (token) => {
+        setAutoPhase('inspecting')
+        void handleCaptureRef.current?.(token)
+      },
+    })
+  }
+
+  // Discard in-flight requests and clear inspection results when source switches (17-1)
   useEffect(() => {
+    dwellTimerRef.current?.invalidate()
+    bottleAbsentCountRef.current = 0
     captureSeqRef.current++
     captureAbortRef.current?.abort()
     captureAbortRef.current = null
@@ -108,9 +125,9 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
 
   useEffect(() => {
     return () => {
+      dwellTimerRef.current?.invalidate()
       captureSeqRef.current++
       captureAbortRef.current?.abort()
-      if (dwellTimerRef.current) clearInterval(dwellTimerRef.current)
       if (frozenObjectUrlRef.current) {
         URL.revokeObjectURL(frozenObjectUrlRef.current)
       }
@@ -120,91 +137,132 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
   // Keep selected product in sync with prop if changed from outside
   useEffect(() => {
     setSelectedProduct(expectedProduct)
+    dwellTimerRef.current?.invalidate()
   }, [expectedProduct])
 
   const handleProductSelect = (prodId: string) => {
     setSelectedProduct(prodId)
+    dwellTimerRef.current?.invalidate()
+    if (autoCaptureEnabled && autoPhase === 'holding') {
+      setAutoPhase('waiting_bottle')
+    }
     onProductChange?.(prodId)
   }
 
   // 3. Core capture and submit handler
-  const handleCaptureAndInspect = useCallback(async () => {
-    const video = videoRef.current
-    if (!video || !isStreaming || isCapturing) return
-
-    const seq = ++captureSeqRef.current
-    captureAbortRef.current?.abort()
-    const abortCtrl = new AbortController()
-    captureAbortRef.current = abortCtrl
-
-    setIsCapturing(true)
-    setCaptureError(null)
-
-    // Trigger visual shutter flash
-    setIsFlashActive(true)
-    setTimeout(() => setIsFlashActive(false), 220)
-
-    try {
-      // Capture at real video dimensions
-      const frame = await captureVideoFrame(video, 'image/jpeg', 0.92)
-      const clientRequestId = generateClientRequestId()
-
-      // Create frozen frame URL to preview immediately
-      if (frozenObjectUrlRef.current) {
-        URL.revokeObjectURL(frozenObjectUrlRef.current)
-      }
-      const frozenUrl = URL.createObjectURL(frame.blob)
-      frozenObjectUrlRef.current = frozenUrl
-      setFrozenFrameUrl(frozenUrl)
-      setViewMode('frozen')
-
-      const result = await effectiveDs.createInspection(
-        {
-          image: frame.blob,
-          imageName: 'webcam-capture.jpg',
-          expected_product: selectedProduct,
-          source_mode: 'webcam',
-          client_request_id: clientRequestId,
-          demo: sourceKind === 'demo',
-        },
-        abortCtrl.signal,
-      )
-
-      if (seq !== captureSeqRef.current || abortCtrl.signal.aborted) {
+  const handleCaptureAndInspect = useCallback(
+    async (triggeredToken?: number) => {
+      const dwell = dwellTimerRef.current
+      if (triggeredToken !== undefined && dwell && !dwell.isTokenValid(triggeredToken)) {
         return
       }
 
-      setInspectionResult(result)
-      onInspectionComplete?.(result)
+      const video = videoRef.current
+      if (!video || !isStreaming || isCapturing) return
 
-      if (autoCaptureEnabled) {
-        setAutoPhase('awaiting_removal')
-      }
-    } catch (err: any) {
-      if (seq !== captureSeqRef.current || abortCtrl.signal.aborted) {
-        return
-      }
-      console.error('Inspection error:', err)
-      setCaptureError(err?.message || 'เกิดข้อผิดพลาดในการตรวจสอบภาพ')
-      if (autoCaptureEnabled) {
-        setAutoPhase('waiting_bottle')
-      }
-    } finally {
-      if (seq === captureSeqRef.current) {
-        setIsCapturing(false)
-      }
-    }
-  }, [autoCaptureEnabled, effectiveDs, isCapturing, isStreaming, onInspectionComplete, selectedProduct, sourceKind, videoRef])
+      const sessionTokenSnapshot = dwell?.token ?? 0
+      const seq = ++captureSeqRef.current
+      captureAbortRef.current?.abort()
+      const abortCtrl = new AbortController()
+      captureAbortRef.current = abortCtrl
 
-  // 4. Auto-capture State Machine (Module 04-B)
+      setIsCapturing(true)
+      setCaptureError(null)
+
+      // Trigger visual shutter flash
+      setIsFlashActive(true)
+      setTimeout(() => setIsFlashActive(false), 220)
+
+      try {
+        // Capture at real video dimensions
+        const frame = await captureVideoFrame(video, 'image/jpeg', 0.92)
+
+        if (
+          (dwell && !dwell.isTokenValid(sessionTokenSnapshot)) ||
+          seq !== captureSeqRef.current ||
+          abortCtrl.signal.aborted
+        ) {
+          return
+        }
+
+        const clientRequestId = generateClientRequestId()
+
+        // Create frozen frame URL to preview immediately
+        if (frozenObjectUrlRef.current) {
+          URL.revokeObjectURL(frozenObjectUrlRef.current)
+        }
+        const frozenUrl = URL.createObjectURL(frame.blob)
+        frozenObjectUrlRef.current = frozenUrl
+        setFrozenFrameUrl(frozenUrl)
+        setViewMode('frozen')
+
+        if (
+          (dwell && !dwell.isTokenValid(sessionTokenSnapshot)) ||
+          seq !== captureSeqRef.current ||
+          abortCtrl.signal.aborted
+        ) {
+          return
+        }
+
+        const result = await effectiveDs.createInspection(
+          {
+            image: frame.blob,
+            imageName: 'webcam-capture.jpg',
+            expected_product: selectedProduct,
+            source_mode: 'webcam',
+            client_request_id: clientRequestId,
+            demo: sourceKind === 'demo',
+          },
+          abortCtrl.signal,
+        )
+
+        if (
+          (dwell && !dwell.isTokenValid(sessionTokenSnapshot)) ||
+          seq !== captureSeqRef.current ||
+          abortCtrl.signal.aborted
+        ) {
+          return
+        }
+
+        setInspectionResult(result)
+        onInspectionComplete?.(result)
+
+        if (autoCaptureEnabled) {
+          setAutoPhase('awaiting_removal')
+        }
+      } catch (err: any) {
+        if (
+          (dwell && !dwell.isTokenValid(sessionTokenSnapshot)) ||
+          seq !== captureSeqRef.current ||
+          abortCtrl.signal.aborted
+        ) {
+          return
+        }
+        console.error('Inspection error:', err)
+        setCaptureError(err?.message || 'เกิดข้อผิดพลาดในการตรวจสอบภาพ')
+        if (autoCaptureEnabled) {
+          setAutoPhase('waiting_bottle')
+        }
+      } finally {
+        if (seq === captureSeqRef.current) {
+          setIsCapturing(false)
+        }
+      }
+    },
+    [autoCaptureEnabled, effectiveDs, isCapturing, isStreaming, onInspectionComplete, selectedProduct, sourceKind, videoRef],
+  )
+
+  handleCaptureRef.current = handleCaptureAndInspect
+
+  // 4. Auto-capture State Machine (Module 04-B / 17-1 / 17-2)
   useEffect(() => {
+    const dwell = dwellTimerRef.current
+    if (!dwell) return
+
     if (!autoCaptureEnabled || !isStreaming) {
+      dwell.cancel()
       setAutoPhase('idle')
-      setDwellProgress(0)
-      if (dwellTimerRef.current) {
-        clearInterval(dwellTimerRef.current)
-        dwellTimerRef.current = null
-      }
+      bottleAbsentCountRef.current = 0
       return
     }
 
@@ -212,10 +270,16 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
     if (autoPhase === 'awaiting_removal') {
       const bottleSeen = locateResult?.quality?.bottle_visible || locateResult?.usable_view
       if (!bottleSeen) {
-        // Bottle was removed, ready for the next one!
-        setAutoPhase('waiting_bottle')
-        setViewMode('live')
-        setDwellProgress(0)
+        bottleAbsentCountRef.current++
+        if (bottleAbsentCountRef.current >= 2) {
+          // Bottle was removed for >= 2 locator ticks, ready for next bottle!
+          setAutoPhase('waiting_bottle')
+          setViewMode('live')
+          dwell.cancel()
+          bottleAbsentCountRef.current = 0
+        }
+      } else {
+        bottleAbsentCountRef.current = 0
       }
       return
     }
@@ -228,46 +292,25 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
     const isUsable = Boolean(locateResult?.usable_view)
 
     if (!isUsable) {
-      // Bottle not ready or lost focus
-      if (dwellTimerRef.current) {
-        clearInterval(dwellTimerRef.current)
-        dwellTimerRef.current = null
-      }
-      dwellStartRef.current = null
-      setDwellProgress(0)
+      // Bottle not ready or lost focus -> cancel dwell and reset to waiting
+      dwell.cancel()
       if (autoPhase !== 'waiting_bottle') {
         setAutoPhase('waiting_bottle')
       }
       return
     }
 
-    // Bottle is usable -> start / continue dwell timer (800ms)
-    const DWELL_MS = 800
-    if (!dwellStartRef.current) {
-      dwellStartRef.current = Date.now()
+    // Bottle is usable -> start dwell countdown (800ms) if not already running
+    if (!dwell.hasStarted) {
       setAutoPhase('holding')
-
-      dwellTimerRef.current = window.setInterval(() => {
-        if (!dwellStartRef.current) return
-        const elapsed = Date.now() - dwellStartRef.current
-        const progress = Math.min(100, Math.round((elapsed / DWELL_MS) * 100))
-        setDwellProgress(progress)
-
-        if (elapsed >= DWELL_MS) {
-          if (dwellTimerRef.current) {
-            clearInterval(dwellTimerRef.current)
-            dwellTimerRef.current = null
-          }
-          dwellStartRef.current = null
-          setAutoPhase('inspecting')
-          void handleCaptureAndInspect()
-        }
-      }, 50)
+      dwell.start()
     }
-  }, [autoCaptureEnabled, autoPhase, handleCaptureAndInspect, isCapturing, isStreaming, locateResult])
+  }, [autoCaptureEnabled, autoPhase, isCapturing, isStreaming, locateResult])
 
-  // Return to live camera stream / Next bottle
+  // Return to live camera stream / Next bottle (Manual bypass)
   const handleReturnToLive = () => {
+    dwellTimerRef.current?.cancel()
+    bottleAbsentCountRef.current = 0
     setViewMode('live')
     if (autoCaptureEnabled) {
       setAutoPhase('waiting_bottle')
@@ -661,7 +704,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
             <button
               type="button"
               className={`btn-primary-capture ${guidance.readyToCapture ? 'highlight' : ''}`}
-              onClick={handleCaptureAndInspect}
+              onClick={() => void handleCaptureAndInspect()}
               disabled={!isStreaming || isCapturing}
               title="กดเพื่อถ่ายภาพและส่งตรวจความละเอียดจริง"
             >

@@ -502,6 +502,26 @@ def get_inspection_files(inspection_id: str) -> InspectionFilesResponse:
 @router.get("/inspections/{inspection_id}/download")
 def download_inspection_bundle(inspection_id: str):
     """Download ZIP bundle containing original, annotated, result.json, and supporting files."""
+    record = InspectionRepository.get_by_id(inspection_id)
+    if not record:
+        raise APIError(
+            status_code=404,
+            code="not_found",
+            message=f"Inspection '{inspection_id}' not found",
+            request_id=inspection_id,
+        )
+
+    files_info = StorageManager.get_inspection_files(inspection_id)
+    if not files_info or not files_info.get("all_available"):
+        missing = [f["name"] for f in (files_info["files"] if files_info else []) if not f.get("available")]
+        missing_msg = f" ({', '.join(missing)})" if missing else ""
+        raise APIError(
+            status_code=409,
+            code="files_incomplete",
+            message=f"Inspection files are incomplete{missing_msg}. Bundle download is unavailable.",
+            request_id=inspection_id,
+        )
+
     zip_buf = StorageManager.create_inspection_zip(inspection_id)
     if not zip_buf:
         raise APIError(

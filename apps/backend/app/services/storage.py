@@ -477,18 +477,24 @@ class StorageManager:
             "storage_status": storage_status,
             "all_available": all_available,
             "files": file_items,
-            "download_zip_url": f"/api/inspections/{inspection_id}/download" if (orig_avail or res_avail) else None,
+            "download_zip_url": f"/api/inspections/{inspection_id}/download" if all_available else None,
         }
 
     @classmethod
     def create_inspection_zip(cls, inspection_id: str) -> Optional[io.BytesIO]:
         """
         Bundle inspection files into an in-memory ZIP archive.
-        Includes original.jpg, annotated.jpg, immutable result.json, and supporting images.
+        Requires all inspection files to be physically present and non-empty.
+        Does NOT produce partial ZIP archives if any required files are missing or 0 bytes.
         If human review metadata exists, writes a separate review_metadata.json without overwriting decision snapshot.
         """
         record = InspectionRepository.get_by_id(inspection_id)
         if not record:
+            return None
+
+        # Verify all files are available and non-empty (17-3)
+        files_info = cls.get_inspection_files(inspection_id)
+        if not files_info or not files_info.get("all_available"):
             return None
 
         target_dir = cls.get_inspection_dir(inspection_id)
@@ -501,19 +507,19 @@ class StorageManager:
         with zipfile.ZipFile(zip_buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
             # 1. original.jpg
             orig_p = target_dir / "original.jpg"
-            if orig_p.is_file():
+            if orig_p.is_file() and orig_p.stat().st_size > 0:
                 zf.write(orig_p, arcname="original.jpg")
                 files_added += 1
 
             # 2. annotated.jpg
             annot_p = target_dir / "annotated.jpg"
-            if annot_p.is_file():
+            if annot_p.is_file() and annot_p.stat().st_size > 0:
                 zf.write(annot_p, arcname="annotated.jpg")
                 files_added += 1
 
             # 3. result.json (immutable decision snapshot)
             res_p = target_dir / "result.json"
-            if res_p.is_file():
+            if res_p.is_file() and res_p.stat().st_size > 0:
                 zf.write(res_p, arcname="result.json")
                 files_added += 1
 
@@ -521,7 +527,7 @@ class StorageManager:
             sup_dir = target_dir / "supporting"
             if sup_dir.is_dir():
                 for sf in sorted(sup_dir.glob("*.jpg")):
-                    if sf.is_file():
+                    if sf.is_file() and sf.stat().st_size > 0:
                         zf.write(sf, arcname=f"supporting/{sf.name}")
                         files_added += 1
 

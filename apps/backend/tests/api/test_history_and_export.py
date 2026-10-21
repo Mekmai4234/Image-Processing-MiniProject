@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from PIL import Image, ImageDraw
 
 from app.main import app
+from app.services.storage import StorageManager
 
 client = TestClient(app)
 
@@ -334,4 +335,78 @@ def test_health_readiness_fields():
     assert "detector_ready" in data
     assert "detector_status" in data
     assert data["detector_status"] in ("ready", "demo_ready", "unavailable")
+
+
+def test_incomplete_files_zip_download_rejected(created_inspection):
+    """17-3: If annotated.jpg is missing, all_available must be False, download_zip_url None, and download 409."""
+    insp_id = created_inspection["inspection_id"]
+    insp_dir = StorageManager.get_inspection_dir(insp_id)
+    assert insp_dir is not None and insp_dir.is_dir()
+
+    annot_path = insp_dir / "annotated.jpg"
+    assert annot_path.is_file()
+
+    # Backup and delete annotated.jpg
+    annot_backup = annot_path.read_bytes()
+    try:
+        annot_path.unlink()
+
+        # 1. Check /api/inspections/{id}/files
+        files_resp = client.get(f"/api/inspections/{insp_id}/files")
+        assert files_resp.status_code == 200
+        files_data = files_resp.json()
+        assert files_data["all_available"] is False
+        assert files_data["download_zip_url"] is None
+
+        # Verify annotated.jpg is marked unavailable
+        annot_item = next(f for f in files_data["files"] if f["name"] == "annotated.jpg")
+        assert annot_item["available"] is False
+        assert annot_item["download_url"] is None
+
+        # 2. Check /api/inspections/{id}/download: must NOT create partial zip, must return 409
+        dl_resp = client.get(f"/api/inspections/{insp_id}/download")
+        assert dl_resp.status_code == 409
+        err = dl_resp.json()["error"]
+        assert err["code"] == "files_incomplete"
+        assert "annotated.jpg" in err["message"]
+    finally:
+        # Restore file for any teardown or downstream tests
+        annot_path.write_bytes(annot_backup)
+
+
+def test_zero_byte_file_treated_as_incomplete(created_inspection):
+    """17-3: If annotated.jpg has 0 bytes (corrupted/empty), treat as incomplete and reject zip."""
+    insp_id = created_inspection["inspection_id"]
+    insp_dir = StorageManager.get_inspection_dir(insp_id)
+    assert insp_dir is not None
+
+    annot_path = insp_dir / "annotated.jpg"
+    annot_backup = annot_path.read_bytes()
+    try:
+        # Truncate to 0 bytes
+        annot_path.write_bytes(b"")
+        assert annot_path.stat().st_size == 0
+
+        # /files must report unavailable
+        files_resp = client.get(f"/api/inspections/{insp_id}/files")
+        assert files_resp.status_code == 200
+        files_data = files_resp.json()
+        assert files_data["all_available"] is False
+        assert files_data["download_zip_url"] is None
+
+        # /download must reject with 409
+        dl_resp = client.get(f"/api/inspections/{insp_id}/download")
+        assert dl_resp.status_code == 409
+        assert dl_resp.json()["error"]["code"] == "files_incomplete"
+    finally:
+        annot_path.write_bytes(annot_backup)
+
+
+def test_download_non_existent_inspection():
+    """Non-existent inspection ID returns 404 on download."""
+    random_id = str(uuid.uuid4())
+    resp = client.get(f"/api/inspections/{random_id}/download")
+    assert resp.status_code == 404
+    assert resp.json()["error"]["code"] == "not_found"
+
 
