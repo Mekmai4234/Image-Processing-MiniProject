@@ -382,6 +382,52 @@
   color: #64748b;
 }
 
+.camera-placeholder-title {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.camera-title-error {
+  color: #fca5a5;
+}
+
+.camera-title-off {
+  color: #cbd5e1;
+}
+
+.camera-icon-error {
+  color: #f87171;
+  opacity: 0.8;
+}
+
+.placeholder-action-btn {
+  margin-top: 0.5rem;
+  width: auto;
+  padding: 0.6rem 1.25rem;
+}
+
+.btn-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.control-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.control-title-icon {
+  width: 1rem;
+  height: 1rem;
+  color: #12d5f5;
+}
+
+.product-loading-hint {
+  color: #94a3b8;
+  font-size: 0.75rem;
+}
+
 /* HUD Overlay */
 .camera-hud-overlay {
   position: absolute;
@@ -657,6 +703,12 @@ input:checked + .toggle-slider:before {
   background: rgba(16, 185, 129, 0.15);
   color: #34d399;
   border: 1px solid #059669;
+}
+
+.phase-error_waiting_retry {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid #dc2626;
 }
 
 .phase-idle {
@@ -944,4 +996,79 @@ input:checked + .toggle-slider:before {
   max-width: 100%;
   max-height: 420px;
   object-fit: contain;
+}
+
+.result-verdict-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.result-meta-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.demo-badge-icon,
+.storage-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.verdict-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.result-images-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.result-images-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.result-images-tabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 640px) {
+  .webcam-step-ribbon {
+    padding: 0.5rem 0.6rem;
+    gap: 0.25rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .webcam-step-ribbon::-webkit-scrollbar {
+    display: none;
+  }
+
+  .step-item {
+    font-size: 0.75rem;
+    gap: 0.35rem;
+    flex-shrink: 0;
+  }
+
+  .step-num {
+    width: 18px;
+    height: 18px;
+    font-size: 0.65rem;
+  }
+
+  .step-divider {
+    min-width: 8px;
+    flex: 0 1 12px;
+  }
 }

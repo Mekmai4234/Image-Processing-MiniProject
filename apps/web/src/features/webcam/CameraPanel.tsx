@@ -21,6 +21,8 @@ import {
 import type { DataSource } from '../../lib/dataSource'
 import { liveDataSource } from '../../lib/dataSource'
 import { useAppData } from '../../lib/AppData'
+import { describeApiError } from '../../lib/api'
+import { productName, REASON_LABEL } from '../../lib/format'
 import type { InspectionRequest, InspectionResult, Product } from '../../types/inspection'
 import { captureVideoFrame, generateClientRequestId } from './captureUtils'
 import { useLabelLocator } from './useLabelLocator'
@@ -147,7 +149,10 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
     lastFailedRequestRef.current = null
     setCaptureError(null)
     dwellTimerRef.current?.invalidate()
-    if (autoCaptureEnabled && autoPhase === 'holding') {
+    captureSeqRef.current++
+    captureAbortRef.current?.abort()
+    setIsCapturing(false)
+    if (autoCaptureEnabled && (autoPhase === 'holding' || autoPhase === 'error_waiting_retry' || autoPhase === 'inspecting')) {
       setAutoPhase('waiting_bottle')
     }
     onProductChange?.(prodId)
@@ -248,9 +253,9 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
         }
         console.error('Inspection error:', err)
         lastFailedRequestRef.current = currentReq
-        setCaptureError(err?.message || 'เกิดข้อผิดพลาดในการตรวจสอบภาพ')
+        setCaptureError(describeApiError(err))
         if (autoCaptureEnabled) {
-          setAutoPhase('waiting_bottle')
+          setAutoPhase('error_waiting_retry')
         }
       } finally {
         if (seq === captureSeqRef.current) {
@@ -261,11 +266,13 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
     [autoCaptureEnabled, effectiveDs, isCapturing, isStreaming, onInspectionComplete, selectedProduct, sourceKind, videoRef],
   )
 
-  // Retry last failed inspection reusing the identical client_request_id and payload
+  // Retry last failed inspection reusing the identical client_request_id and payload (17-4)
   const handleRetryLastInspection = useCallback(async () => {
     const failedReq = lastFailedRequestRef.current
     if (!failedReq || isCapturing) return
 
+    const dwell = dwellTimerRef.current
+    const sessionTokenSnapshot = dwell?.token ?? 0
     const seq = ++captureSeqRef.current
     captureAbortRef.current?.abort()
     const abortCtrl = new AbortController()
@@ -277,7 +284,11 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
     try {
       const result = await effectiveDs.createInspection(failedReq, abortCtrl.signal)
 
-      if (seq !== captureSeqRef.current || abortCtrl.signal.aborted) {
+      if (
+        (dwell && !dwell.isTokenValid(sessionTokenSnapshot)) ||
+        seq !== captureSeqRef.current ||
+        abortCtrl.signal.aborted
+      ) {
         return
       }
 
@@ -290,13 +301,17 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
         setAutoPhase('awaiting_removal')
       }
     } catch (err: any) {
-      if (seq !== captureSeqRef.current || abortCtrl.signal.aborted) {
+      if (
+        (dwell && !dwell.isTokenValid(sessionTokenSnapshot)) ||
+        seq !== captureSeqRef.current ||
+        abortCtrl.signal.aborted
+      ) {
         return
       }
       console.error('Inspection retry error:', err)
-      setCaptureError(err?.message || 'เกิดข้อผิดพลาดในการตรวจสอบภาพ')
+      setCaptureError(describeApiError(err))
       if (autoCaptureEnabled) {
-        setAutoPhase('waiting_bottle')
+        setAutoPhase('error_waiting_retry')
       }
     } finally {
       if (seq === captureSeqRef.current) {
@@ -307,7 +322,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
 
   handleCaptureRef.current = handleCaptureAndInspect
 
-  // 4. Auto-capture State Machine (Module 04-B / 17-1 / 17-2)
+  // 4. Auto-capture State Machine (Module 04-B / 17-1 / 17-2 / 17-4)
   useEffect(() => {
     const dwell = dwellTimerRef.current
     if (!dwell) return
@@ -334,6 +349,33 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
       } else {
         bottleAbsentCountRef.current = 0
       }
+      return
+    }
+
+    // Phase: error_waiting_retry -> hold and wait for user to retry or remove bottle
+    if (autoPhase === 'error_waiting_retry') {
+      dwell.cancel()
+      const bottleSeen = locateResult?.quality?.bottle_visible || locateResult?.usable_view
+      if (!bottleSeen) {
+        bottleAbsentCountRef.current++
+        if (bottleAbsentCountRef.current >= 2) {
+          // Bottle was physically removed by user, ready for new bottle!
+          lastFailedRequestRef.current = null
+          setCaptureError(null)
+          setAutoPhase('waiting_bottle')
+          setViewMode('live')
+          dwell.cancel()
+          bottleAbsentCountRef.current = 0
+        }
+      } else {
+        bottleAbsentCountRef.current = 0
+      }
+      return
+    }
+
+    // Guard: never auto-dwell if there is a pending failed request awaiting retry
+    if (lastFailedRequestRef.current) {
+      dwell.cancel()
       return
     }
 
@@ -519,7 +561,18 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
                 <select
                   className="device-select"
                   value={activeDeviceId || ''}
-                  onChange={(e) => switchCamera(e.target.value)}
+                  onChange={(e) => {
+                    dwellTimerRef.current?.invalidate()
+                    captureAbortRef.current?.abort()
+                    captureSeqRef.current++
+                    lastFailedRequestRef.current = null
+                    setCaptureError(null)
+                    setIsCapturing(false)
+                    if (autoCaptureEnabled && (autoPhase === 'holding' || autoPhase === 'error_waiting_retry')) {
+                      setAutoPhase('waiting_bottle')
+                    }
+                    switchCamera(e.target.value)
+                  }}
                   aria-label="เลือกอุปกรณ์กล้อง"
                 >
                   {devices.map((device) => (
@@ -608,31 +661,31 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
               <div className="camera-placeholder-screen">
                 {cameraStatus === 'error' ? (
                   <>
-                    <AlertCircle className="camera-placeholder-icon text-red-400" />
-                    <div className="font-semibold text-red-300 text-base">ไม่สามารถเปิดกล้องได้</div>
+                    <AlertCircle className="camera-placeholder-icon camera-icon-error" />
+                    <div className="camera-placeholder-title camera-title-error">ไม่สามารถเปิดกล้องได้</div>
                     <div className="camera-placeholder-text">{cameraError}</div>
                     <button
                       type="button"
-                      className="btn-primary-capture mt-2"
+                      className="btn-primary-capture placeholder-action-btn"
                       onClick={() => startCamera()}
                     >
-                      <RefreshCw className="w-4 h-4" />
+                      <RefreshCw className="btn-icon" />
                       <span>ลองใหม่อีกครั้ง</span>
                     </button>
                   </>
                 ) : (
                   <>
                     <VideoOff className="camera-placeholder-icon" />
-                    <div className="font-semibold text-slate-300 text-base">กล้องปิดอยู่</div>
+                    <div className="camera-placeholder-title camera-title-off">กล้องปิดอยู่</div>
                     <div className="camera-placeholder-text">
                       กดปุ่ม <strong>"เปิดกล้อง"</strong> เพื่อเริ่มการสแกนฉลากขวดแบบเรียลไทม์
                     </div>
                     <button
                       type="button"
-                      className="btn-primary-capture mt-2"
+                      className="btn-primary-capture placeholder-action-btn"
                       onClick={() => startCamera()}
                     >
-                      <Video className="w-4 h-4" />
+                      <Video className="btn-icon" />
                       <span>เปิดกล้องเว็บแคม</span>
                     </button>
                   </>
@@ -710,16 +763,16 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
                   </button>
                 ))
               ) : (
-                <div className="text-slate-400 text-xs">กำลังโหลดรายการสินค้า...</div>
+                <div className="product-loading-hint">กำลังโหลดรายการสินค้า...</div>
               )}
             </div>
           </div>
 
           {/* Auto Capture & Continuous Inspection Mode (04-B) */}
           <div className="control-panel-card">
-            <div className="flex items-center justify-between">
-              <h3 className="control-card-title mb-0">
-                <Zap className="w-4 h-4 text-cyan-400" />
+            <div className="control-card-header">
+              <h3 className="control-card-title">
+                <Zap className="control-title-icon" />
                 <span>ตรวจอัตโนมัติ (Auto-Capture)</span>
               </h3>
               <label className="toggle-switch">
@@ -742,6 +795,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
                 {autoPhase === 'holding' && `ถือนิ่ง (${dwellProgress}%)`}
                 {autoPhase === 'inspecting' && 'กำลังตรวจวิเคราะห์...'}
                 {autoPhase === 'awaiting_removal' && 'ตรวจเสร็จแล้ว: นำขวดออกเพื่อเริ่มขวดใหม่'}
+                {autoPhase === 'error_waiting_retry' && 'ส่งตรวจไม่สำเร็จ: กดลองใหม่ หรือนำขวดออก'}
                 {autoPhase === 'idle' && 'พร้อมทำงาน'}
               </div>
             )}
@@ -793,7 +847,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
             {viewMode === 'frozen' && (
               <button
                 type="button"
-                className="btn-next-bottle mt-2"
+                className="btn-next-bottle"
                 onClick={handleReturnToLive}
               >
                 <Play className="w-4 h-4" />
@@ -808,31 +862,31 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
       {inspectionResult && (
         <div className="latest-result-card">
           <div className="result-header-row">
-            <div className="flex items-center gap-3 flex-wrap">
+            <div className="result-verdict-group">
               {(inspectionResult.demo || inspectionResult.is_demo) && (
                 <span className="demo-badge-pill">
-                  <AlertTriangle className="w-3.5 h-3.5" />
+                  <AlertTriangle className="demo-badge-icon" />
                   DEMO MODE (จำลอง)
                 </span>
               )}
               <span className={`result-verdict-tag verdict-${inspectionResult.result.toLowerCase()}`}>
-                {inspectionResult.result === 'PASS' && <CheckCircle2 className="w-5 h-5" />}
-                {inspectionResult.result === 'FAIL' && <XCircle className="w-5 h-5" />}
-                {inspectionResult.result === 'REVIEW' && <AlertTriangle className="w-5 h-5" />}
+                {inspectionResult.result === 'PASS' && <CheckCircle2 className="verdict-icon" />}
+                {inspectionResult.result === 'FAIL' && <XCircle className="verdict-icon" />}
+                {inspectionResult.result === 'REVIEW' && <AlertTriangle className="verdict-icon" />}
                 <span>{inspectionResult.result}</span>
               </span>
               <span className="result-reason-text">
-                เหตุผล: <code>{inspectionResult.reason}</code>
+                เหตุผล: <strong>{REASON_LABEL[inspectionResult.reason] ?? inspectionResult.reason}</strong>
               </span>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="result-meta-group">
               <span className="result-storage-tag">
-                <HardDrive className="w-3.5 h-3.5" />
+                <HardDrive className="storage-icon" />
                 บันทึก: <strong>{inspectionResult.storage_status}</strong>
               </span>
               <span className="result-storage-tag">
-                <Clock className="w-3.5 h-3.5" />
+                <Clock className="storage-icon" />
                 {inspectionResult.timing_ms.total} ms
               </span>
             </div>
@@ -842,11 +896,13 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
           <div className="result-metrics-grid">
             <div className="metric-box">
               <span className="metric-label">สินค้าที่คาดหวัง</span>
-              <span className="metric-value">{inspectionResult.expected_product}</span>
+              <span className="metric-value">{productName(productCatalog, inspectionResult.expected_product)}</span>
             </div>
             <div className="metric-box">
               <span className="metric-label">สินค้าที่ตรวจพบ</span>
-              <span className="metric-value">{inspectionResult.detected_product || '—'}</span>
+              <span className="metric-value">
+                {inspectionResult.detected_product ? productName(productCatalog, inspectionResult.detected_product) : '—'}
+              </span>
             </div>
             <div className="metric-box">
               <span className="metric-label">
@@ -874,11 +930,11 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
 
           {/* Stored Images Switcher */}
           <div className="result-images-container">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+            <div className="result-images-header">
+              <span className="result-images-title">
                 ภาพผลตรวจที่บันทึก
               </span>
-              <div className="flex gap-2">
+              <div className="result-images-tabs">
                 <button
                   type="button"
                   className={`btn-img-tab ${activeImageTab === 'annotated' ? 'active' : ''}`}

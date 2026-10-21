@@ -18,7 +18,13 @@ export interface GuidanceInfo {
   readyToCapture: boolean
 }
 
-export type AutoCapturePhase = 'idle' | 'waiting_bottle' | 'holding' | 'inspecting' | 'awaiting_removal'
+export type AutoCapturePhase =
+  | 'idle'
+  | 'waiting_bottle'
+  | 'holding'
+  | 'inspecting'
+  | 'awaiting_removal'
+  | 'error_waiting_retry'
 
 export interface CaptureFrameResult {
   blob: Blob
