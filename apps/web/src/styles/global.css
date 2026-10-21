@@ -463,6 +463,30 @@ td .rowbtn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 4px; 
 .notice.info { background: var(--cyan-soft); border-color: rgba(18, 213, 245, 0.35); }
 .notice svg { flex: none; margin-top: 2px; }
 
+.detail { display: grid; gap: var(--s-3); }
+.detail-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-2) var(--s-3); }
+.detail-head h2 { font-size: var(--fs-lg); }
+.detail-id { font-variant-numeric: tabular-nums; }
+
+dl.kv { display: grid; grid-template-columns: minmax(130px, auto) 1fr; gap: 6px var(--s-4); margin: var(--s-1) 0 0; font-size: var(--fs-base); }
+dl.kv dt { color: var(--text-2); }
+dl.kv dd { margin: 0; font-variant-numeric: tabular-nums; }
+
+.detail-actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); padding-top: var(--s-3); border-top: 1px solid var(--line); }
+
+.files { display: grid; gap: var(--s-2); }
+.files-table { border: 1px solid var(--line-strong); border-radius: var(--r-control); border-collapse: separate; border-spacing: 0; overflow: hidden; font-size: var(--fs-sm); }
+.files-table th, .files-table td { padding: 7px 12px; }
+.files-table thead th { position: static; background: var(--bg-raise); }
+.files-table tbody tr { cursor: default; }
+.files-table tbody tr:hover { background: transparent; }
+.files-table td svg { vertical-align: -3px; color: var(--text-2); }
+.files-table .center { text-align: center; }
+.files-table td.file-saved svg { color: var(--pass); }
+.files-table td.file-pending svg { color: var(--cyan); }
+.files-table td.file-missing svg { color: var(--error); }
+.files-table td.file-unknown svg { color: var(--muted); }
+
 .review-callout {
   display: flex; align-items: flex-start; gap: var(--s-3);
   padding: var(--s-3) var(--s-4);

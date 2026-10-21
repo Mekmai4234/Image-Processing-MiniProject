@@ -1,13 +1,11 @@
 import { CheckCircle2, ChevronLeft, ChevronRight, Clock3, Download, FileText, Inbox, RefreshCw, XCircle } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
-import { ReviewPanel } from '../components/history/ReviewPanel'
-import { InspectionOverlay } from '../components/InspectionOverlay'
+import { InspectionDetail } from '../components/history/InspectionDetail'
 import { StatCard } from '../components/StatCard'
-import { ResultDetails } from '../components/ResultCard'
 import { DemoTag, ResultBadge } from '../components/ResultBadge'
 import { describeApiError, isAbort } from '../lib/api'
 import { useAppData } from '../lib/AppData'
-import { formatSimilarity, formatThaiDateTime, MODE_LABEL, productShortName, REASON_LABEL, shortId, STORAGE_LABEL } from '../lib/format'
+import { formatSimilarity, formatThaiDateTime, MODE_LABEL, productShortName, REASON_LABEL, STORAGE_LABEL } from '../lib/format'
 import {
   type InspectionPage,
   type InspectionResult,
@@ -279,70 +277,9 @@ export function HistoryPage() {
         </div>
 
         <aside className="panel" aria-label="รายละเอียดการตรวจ">
-          {selected ? <Detail key={selected.inspection_id} r={selected} onUpdate={replace} /> : <p className="hint">เลือกรายการเพื่อดูภาพและรายละเอียด</p>}
+          {selected ? <InspectionDetail key={selected.inspection_id} r={selected} onUpdate={replace} /> : <p className="hint">เลือกรายการเพื่อดูภาพและรายละเอียด</p>}
         </aside>
       </div>
     </>
-  )
-}
-
-
-function Detail({ r, onUpdate }: { r: InspectionResult; onUpdate(r: InspectionResult): void }) {
-  const { ds } = useAppData()
-  const [tab, setTab] = useState<'overlay' | 'annotated'>('overlay')
-  const original = ds.imageUrl(r, 'original')
-  const annotated = ds.imageUrl(r, 'annotated')
-
-  return (
-    <div className="stack-sm">
-      <div className="row-between">
-        <h2>การตรวจ {shortId(r.inspection_id)}</h2>
-        <ResultBadge result={r.result} />
-      </div>
-      <p className="hint">{formatThaiDateTime(r.created_at)}</p>
-
-      <div className="tabs" role="tablist" aria-label="รูปแบบภาพ">
-        <button role="tab" aria-selected={tab === 'overlay'} onClick={() => setTab('overlay')}>
-          ต้นฉบับ + กรอบ
-        </button>
-        <button role="tab" aria-selected={tab === 'annotated'} onClick={() => setTab('annotated')}>
-          ภาพ annotated
-        </button>
-      </div>
-      <InspectionOverlay
-        className="ar-detail"
-        src={tab === 'overlay' ? original : annotated}
-        result={tab === 'overlay' ? r : null}
-        imageWidth={r.image_width}
-        imageHeight={r.image_height}
-        alt={tab === 'overlay' ? 'ภาพต้นฉบับพร้อมกรอบ' : 'ภาพ annotated จาก Backend'}
-        empty={<span>ภาพยังไม่ถูกบันทึก ({STORAGE_LABEL[r.storage_status]})</span>}
-      />
-
-      {r.evidence.supporting_images.length > 0 && (
-        <div className="stack-sm">
-          <h3>หลักฐานมุมอื่น</h3>
-          <div className="supporting">
-            {r.evidence.supporting_images.map((_, i) => {
-              const url = ds.imageUrl(r, { supporting: i })
-              const angle = r.evidence.supporting_angles_deg[i]
-              return (
-                <figure key={i}>
-                  {url ? <img src={url} alt={`ภาพหลักฐานมุม ${angle ?? 'ไม่ทราบ'}`} /> : <div className="missing">ยังไม่บันทึก</div>}
-                  <figcaption>{angle === null || angle === undefined ? 'ไม่ทราบมุม' : `${angle}°`}</figcaption>
-                </figure>
-              )
-            })}
-          </div>
-          <p className="hint">
-            ค้นหามุม: {r.evidence.search_status}, ครอบคลุมที่รายงาน {r.evidence.reported_coverage_deg ?? '—'}°{' '}
-            {r.evidence.verified_coverage ? '(ยืนยันแล้ว)' : '(ยังไม่ยืนยัน)'}
-          </p>
-        </div>
-      )}
-
-      <ResultDetails result={r} onResultUpdate={onUpdate} />
-      <ReviewPanel r={r} onUpdate={onUpdate} />
-    </div>
   )
 }
