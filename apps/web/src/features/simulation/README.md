@@ -45,10 +45,10 @@ const [snap, setSnap] = useState<SimulationSnapshot | null>(null)
   onCompleted={(e: CompletedEvent) => addToSessionStats(e.result)}  // ครั้งเดียวต่อ inspection_id
   onReplayed={() => {}}             // เล่นซ้ำ: ห้ามนับ
   showOverlay={false}               // ถ้า 01 ทำ panel เอง ปิด overlay ในฉากได้ (ป้าย DEMO/ข้อจำกัดต้องแสดงที่ panel ของ 01 แทน)
-  bottleShape={null}                // รอ API ของ 04; null = รูปทรงสำรอง
-  quality="auto"
 />
 ```
+
+props `bottleShape` (รูปทรงขวดจากภาพ) และ `quality` (คุณภาพการเรนเดอร์) ยังไม่มีใน PR นี้ จะเพิ่มใน PR ถัดไปของ 02
 
 ### 3. ปุ่มควบคุม → handle
 
@@ -88,8 +88,24 @@ const [snap, setSnap] = useState<SimulationSnapshot | null>(null)
 จึงส่งเข้า `InspectionOverlay` ของ 01 ได้ตรง ๆ:
 
 ```tsx
-const capturedUrl = useObjectUrl(snap?.captured_image ?? null)   // สร้าง/revoke object URL ใน 01
-<InspectionOverlay src={capturedUrl} result={snap?.result ?? null} scanning={snap?.state === 'WAIT_RESULT'} />
+const urls = useObjectUrls()                       // lib/useObjectUrls ของ 01
+const [capturedUrl, setCapturedUrl] = useState<string | null>(null)
+useEffect(() => {
+  const blob = snap?.captured_image
+  if (!blob) { setCapturedUrl(null); return }
+  const url = urls.create(blob)
+  setCapturedUrl(url)
+  return () => urls.revoke(url)
+}, [snap?.captured_image])                         // Blob เดิมตลอดงาน → สร้าง URL ครั้งเดียวต่องาน
+
+<InspectionOverlay
+  src={capturedUrl}
+  alt="ภาพที่ใช้ตรวจ"
+  imageWidth={snap?.result?.image_width}
+  imageHeight={snap?.result?.image_height}
+  result={snap?.result ?? null}
+  scanning={snap?.state === 'WAIT_RESULT'}
+/>
 ```
 
 ข้อควรระวัง: โหมด DEMO ของ 01 คืนพิกัดจาก `examples/` ที่ไม่ได้คำนวณจากภาพนี้จริง — ถ้าจะใช้ภาพสังเคราะห์ให้ใช้ `ds.imageUrl(result, 'original')` แบบเดิมของหน้า
