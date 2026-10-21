@@ -187,7 +187,7 @@ a { color: var(--cyan); }
   font-size: 0.85rem;
 }
 
-.main { flex: 1; width: 100%; max-width: 1480px; margin: 0 auto; padding: var(--s-5); }
+.main { flex: 1; width: 100%; max-width: 1680px; margin: 0 auto; padding: var(--s-5); }
 
 .page-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--s-4); margin-bottom: var(--s-5); }
 .page-head p { color: var(--text-2); margin-top: 4px; }
@@ -202,9 +202,8 @@ a { color: var(--cyan); }
 
 /* ---------- Layout ---------- */
 
-.split-wide { grid-template-columns: minmax(0, 1.5fr) minmax(340px, 1fr) !important; }
 .inspect-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s-5); align-items: start; }
-.split { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(320px, 1fr); gap: var(--s-5); align-items: start; }
+.split { display: grid; grid-template-columns: minmax(0, 2fr) minmax(340px, 1fr); gap: var(--s-5); align-items: start; }
 .stack { display: grid; gap: var(--s-5); }
 .stack-sm { display: grid; gap: var(--s-3); }
 .row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-3); }
@@ -436,7 +435,8 @@ td .rowbtn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 4px; 
 .pager { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); padding: var(--s-3) 0; color: var(--text-2); font-size: 0.85rem; }
 
 .filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--s-3); align-items: end; }
-.filters input[type='date'] { width: 100%; }
+.filters .field { min-width: 0; }
+.filters input[type='date'], .filters select { width: 100%; min-width: 0; }
 
 .tabs { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: var(--r-control); overflow: hidden; }
 .tabs button { font: inherit; font-size: 0.88rem; padding: 8px; border: 0; background: var(--bg-raise); color: var(--text-2); cursor: pointer; }
