@@ -142,3 +142,28 @@ describe('toJobInput', () => {
     ])
   })
 })
+
+describe('snapshot for the captured-image panel', () => {
+  it('exposes the photo being located, then the exact photo sent with the result', async () => {
+    const { controller, completed } = setup('pass')
+    const views = [0, 90].map((a) => ({ blob: blob(`v${a}`), angle: a }))
+    controller.start(toJobInput('bottle_a', views))
+    expect(controller.getSnapshot().captured_image).toBeNull()
+    await runUntil(controller, 'ORIENT')
+    for (let i = 0; i < 40 && controller.getState().orient?.sub !== 'locating'; i++) {
+      controller.tick(0.05)
+      await vi.advanceTimersByTimeAsync(50)
+    }
+    expect(controller.getSnapshot().current_image).toBe(views[0]!.blob)
+    await runUntil(controller, 'WAIT_RESULT')
+    const waiting = controller.getSnapshot()
+    expect(waiting.current_image).toBeNull()
+    expect(waiting.captured_image).toBe(views[0]!.blob)
+    expect(waiting.captured_angle_deg).toBe(0)
+    await runUntil(controller, 'COMPLETE')
+    const done = controller.getSnapshot()
+    expect(done.captured_image).toBe(controller.getState().request?.image)
+    expect(done.result?.inspection_id).toBe(completed[0]?.inspection_id)
+    expect(done.result?.image_width).toBeGreaterThan(0)
+  })
+})
