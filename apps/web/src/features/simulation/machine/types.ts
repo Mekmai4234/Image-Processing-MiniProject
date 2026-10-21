@@ -90,6 +90,7 @@ export interface OrientProgress {
 export type SegmentKind =
   | 'feed'
   | 'rotate'
+  | 'to_inspect'
   | 'settle'
   | 'capture'
   | 'to_divert'

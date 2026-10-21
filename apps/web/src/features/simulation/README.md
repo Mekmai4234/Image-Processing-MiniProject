@@ -72,7 +72,7 @@ const [snap, setSnap] = useState<SimulationSnapshot | null>(null)
 | `demo` | true เมื่อ ds เป็น DEMO → แสดง DemoTag |
 | `job_id`, `inspection_id` | id ของงานในฉาก / id จาก backend (ผูก History) |
 | `mode` | `single_view` → แสดง `SINGLE_VIEW_NOTICE` |
-| `current_station` | ตำแหน่งขวด (ค่าตาม type `Station`) |
+| `current_station` | conveyor / orient_turntable / inspect_camera / reject_tray / review_lane / pass_output |
 | `orient` | `tried_angles`, `total`, `current_view_index`, `search_status` → กล่อง "Orientation status" (`SEARCH_STATUS_LABEL`) |
 | `current_angle_deg` | มุมของภาพที่กำลังค้น/ที่เลือก |
 | `current_image` | Blob ของภาพจริงที่ locator กำลังดูใน ORIENT |
@@ -114,6 +114,15 @@ Three.js มีขนาดใหญ่ แนะนำให้โหลดห�
 - `onCompleted` ส่งครั้งเดียวต่อ `inspection_id`; replay ส่ง `onReplayed` แทน
 - unmount ยกเลิก rAF, abort คำขอ และ dispose geometry/material/texture/renderer
 
+## ฉาก (02-B)
+
+- สายการผลิต: ช่องปล่อยขวด → สายพาน → **ORIENT** แท่นหมุนพร้อมกล้อง locator → **INSPECT** กล่องครอบกล้องตรวจและไฟ LED → ตัวดัน **REJECT** (แดง) → ตัวดัน **REVIEW** (เหลือง ช่องรอถ่ายใหม่) → สายพาน **PASS** (เขียว)
+- หาฉลากที่แท่นหมุน เมื่อเลือกภาพได้แล้ว ขวดจะคงมุมนั้นไว้แล้วเลื่อนไปที่กล่องกล้องตรวจ (`to_inspect`) ก่อนถ่าย
+- สายพานและลูกกลิ้งเลื่อนเท่าระยะที่ขวดเคลื่อนจริง และเฉพาะช่วงที่ขวดอยู่
+- ขวดในตู้ปล่อยเป็นของตกแต่ง ไม่สร้างผลตรวจหรือ History; ขวดที่กำลังตรวจมีวงแหวนสีฟ้าใต้ขวด
+- ป้ายสถานีอยู่หลังสายพานบนเสา ไม่บังขวดหรือกล้อง
+- มุมกล้องจัดให้เห็นทั้งเครื่องทุกขนาดหน้าจอ (คำนวณใหม่เมื่อ resize)
+
 ## ค่าตั้ง (ปรับได้ใน `machineConfigFrom` / `ControllerOptions`)
 
 | ค่า | ค่าเริ่ม | ชนิดเวลา |
@@ -127,7 +136,7 @@ Three.js มีขนาดใหญ่ แนะนำให้โหลดห�
 
 รันใน `apps/web`: `npm test` และ `npm run build`
 
-- unit: `__tests__/*.test.ts` 52 กรณี — transition ทุกสถานะ, pause/reset/retry/replay, evidence, controller + mock
+- unit: `__tests__/*.test.ts` 55 กรณี — transition ทุกสถานะ, pause/reset/retry/replay, evidence, controller + mock
   และ controller + `createDataSourcePort` กับ DEMO DataSource ของ 01 (PASS, หันหนีทุกมุม → REVIEW, 503 → retry, storage failed)
 - e2e (harness นอก repo รอบ M1): PASS/FAIL/REVIEW, ERROR→retry, pause ระหว่างดัน, replay ไม่นับ, remount 15 รอบไม่มี loop ค้าง, WebGL fallback
 

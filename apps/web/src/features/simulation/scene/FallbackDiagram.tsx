@@ -2,7 +2,8 @@ import type { SimulationSnapshot, Station } from '../controller/SimulationContro
 
 const STATIONS: Array<{ id: Station; label: string }> = [
   { id: 'conveyor', label: 'สายพาน' },
-  { id: 'camera_turntable', label: 'แท่นหมุน + กล้อง' },
+  { id: 'orient_turntable', label: 'ORIENT แท่นหมุน' },
+  { id: 'inspect_camera', label: 'INSPECT กล้องตรวจ' },
   { id: 'reject_tray', label: 'REJECT' },
   { id: 'review_lane', label: 'REVIEW' },
   { id: 'pass_output', label: 'PASS' },
