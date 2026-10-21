@@ -181,7 +181,7 @@ export function HistoryPage() {
                   <Download size={16} aria-hidden="true" /> ส่งออก CSV
                 </a>
               ) : (
-                <button className="btn" disabled title="CSV ต้องมาจาก Backend จริง ใช้ไม่ได้ในโหมด DEMO">
+                <button className="btn" disabled title={source === 'demo' ? 'CSV ต้องมาจาก Backend จริง ใช้ไม่ได้ในโหมด DEMO' : 'ยังไม่ได้ตั้ง VITE_API_BASE_URL จึงยังไม่มี Backend ให้ส่งออก'}>
                   <Download size={16} aria-hidden="true" /> ส่งออก CSV
                 </button>
               )}
