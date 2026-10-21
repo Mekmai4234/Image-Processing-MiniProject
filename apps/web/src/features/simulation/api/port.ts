@@ -1,5 +1,6 @@
 import type {
   EvidenceRequest,
+  InspectionRequest as SharedInspectionRequest,
   InspectionResult,
   LocateLabelResponse,
   ProductId,
@@ -7,8 +8,8 @@ import type {
 } from './contract'
 
 /**
- * Everything the simulation needs from the backend. The real adapter wraps 01's shared API
- * client; the mock adapter is DEMO-only. The simulation never talks to fetch directly.
+ * Everything the simulation needs from the backend. In the app this is `createDataSourcePort(ds)`
+ * over 01's DataSource (live API or DEMO store); `MockInspectionPort` is for tests only.
  */
 export interface InspectionPort {
   /** True for synthetic adapters; the scene must show a DEMO badge while this is true. */
@@ -24,17 +25,13 @@ export interface LocateLabelRequest {
 }
 
 /**
- * Multipart fields for POST /api/inspections. Built exactly once per job and reused unchanged
- * on retry, so the same client_request_id always travels with the same payload.
+ * The shared InspectionRequest narrowed to what the simulation always sends. Built exactly once
+ * per job and reused unchanged on retry, so the same client_request_id always travels with the
+ * same payload. Assignable to the shared type, so it goes to DataSource.createInspection as-is.
  */
-export interface InspectionRequest {
-  image: Blob
-  expected_product: ProductId
+export type InspectionRequest = SharedInspectionRequest & {
   source_mode: 'simulation'
-  client_request_id: string
-  /** Omitted (undefined) when the main image angle is unknown. */
-  angle_deg?: number
-  supporting_images: Blob[]
+  supporting_images: Array<{ blob: Blob; name?: string }>
   evidence: EvidenceRequest
 }
 

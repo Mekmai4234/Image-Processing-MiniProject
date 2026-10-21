@@ -1,0 +1,74 @@
+{
+  "checklist_sha256": "7ece4a0a60ea82efdb50cd34ff31e35aebeb6ad07d01cccf646d304daf78fb6e",
+  "records_consistent": true,
+  "ready_for_acceptance": false,
+  "status_counts": {
+    "not_tested": 31,
+    "blocked": 1,
+    "passed": 4,
+    "failed": 3
+  },
+  "by_data_kind": {
+    "browser": {
+      "not_tested": 12,
+      "passed": 1,
+      "failed": 3
+    },
+    "hardware": {
+      "not_tested": 5
+    },
+    "real": {
+      "not_tested": 7,
+      "blocked": 1
+    },
+    "synthetic": {
+      "not_tested": 7,
+      "passed": 3
+    },
+    "visual": {}
+  },
+  "missing_passed_evidence_kinds": [
+    "hardware",
+    "real",
+    "visual"
+  ],
+  "pending_case_ids": [
+    "05-INT-01",
+    "05-INT-02",
+    "05-INT-03",
+    "05-INT-04",
+    "05-INT-05",
+    "05-INT-06",
+    "05-INT-07",
+    "05-INT-08",
+    "05-INT-09",
+    "05-INT-10",
+    "05-INT-11",
+    "05-INT-12",
+    "05-INT-13",
+    "05-INT-14",
+    "05-INT-15",
+    "05-INT-16",
+    "05-INT-17",
+    "05-INT-18",
+    "05-INT-19",
+    "05-INT-20",
+    "05-INT-21",
+    "05-INT-22",
+    "05-INT-23",
+    "05-INT-24",
+    "05-INT-25",
+    "05-INT-26",
+    "05-INT-27",
+    "05-INT-28",
+    "05-INT-29",
+    "05-INT-30",
+    "05-INT-31",
+    "05-INT-32",
+    "05-BR-01",
+    "05-BR-02",
+    "05-BR-03"
+  ],
+  "errors": [],
+  "note": "Record consistency is not system acceptance. Human review is still required; synthetic tests cannot replace real, hardware or visual evidence."
+}

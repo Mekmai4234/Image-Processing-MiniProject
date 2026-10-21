@@ -120,9 +120,14 @@ export interface HealthStatus {
   config_version?: string
   timezone?: string
   storage_root_ready?: boolean
+  /**
+   * ตัวตรวจจริง (03) import ได้และ config/reference พร้อม — แยกจาก status ของ service
+   * ร่างฟิลด์ที่ 01 เสนอให้ 04 เพิ่มใน GET /api/health; ไม่ส่งมา = ยังไม่ทราบ
+   */
   detector_ready?: boolean
   detector_status?: string
   readiness_reason?: string | null
+  /** เหตุผลเมื่อ detector_ready=false เช่น ยังไม่มี reference ของสินค้า */
   detector_reason?: string | null
 }
 

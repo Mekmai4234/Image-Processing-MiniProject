@@ -1,0 +1,53 @@
+- banner:
+  - link "Vending Vision หน้าแรก":
+    - /url: /simulation
+    - generic: VENDING VISION
+  - navigation "โหมดการทำงาน":
+    - link "Simulation":
+      - /url: /simulation
+      - text: Simulation
+    - link "Webcam" [active]:
+      - /url: /webcam
+      - text: Webcam
+    - link "History":
+      - /url: /history
+      - text: History
+  - group "แหล่งข้อมูล":
+    - button "API จริง"
+    - button "DEMO" [pressed]
+- status:
+  - strong: โหมด DEMO
+  - generic: ข้อมูลสังเคราะห์จาก examples/ ไม่ได้ตรวจภาพจริง ใช้ทดสอบหน้าจอเท่านั้น
+  - text: ผลที่จะจำลอง
+  - combobox "ผลที่จะจำลอง":
+    - option "PASS ฉลากถูกต้อง" [selected]
+    - option "FAIL ฉลากผิดสินค้า"
+    - option "REVIEW ภาพเบลอ"
+    - option "REVIEW หามุมไม่สำเร็จ"
+    - option "PASS แต่บันทึกไม่สำเร็จ"
+    - option "ERROR ระบบตรวจไม่พร้อม (503)"
+- main:
+  - heading "ตรวจด้วยกล้อง (Webcam)" [level=1]
+  - paragraph: หมุนขวดหน้ากล้องจนเห็นฉลาก ถือนิ่ง แล้วถ่ายให้ Backend ตรวจ
+  - button "กล้องสด (Live Camera)":
+    - text: กล้องสด (Live Camera)
+  - button "เลือกไฟล์ภาพ (File)":
+    - text: เลือกไฟล์ภาพ (File)
+  - generic: Webcam Live Inspection
+  - generic: ปิดกล้อง
+  - button "เปิดกล้อง":
+    - generic: เปิดกล้อง
+  - generic: กล้องปิดอยู่
+  - text: กดปุ่ม
+  - strong: "\"เปิดกล้อง\""
+  - text: เพื่อขอสิทธิ์เข้าถึงเว็บแคมและเริ่มระบบตรวจสอบฉลาก
+  - button "เปิดกล้องเว็บแคม":
+    - generic: เปิดกล้องเว็บแคม
+  - generic: "สินค้าที่ต้องการตรวจ:"
+  - button "น้ำดื่มขวด A (สิงห์ 600ml)"
+  - button "น้ำดื่มขวด B (คริสตัล 600ml)"
+  - button "ถ่ายภาพเพื่อตรวจ (Capture)" [disabled]:
+    - generic: ถ่ายภาพเพื่อตรวจ (Capture)
+- contentinfo:
+  - generic: Vending Vision ระบบตรวจฉลากขวดน้ำด้วย Image Processing
+  - generic: กำลังแสดงข้อมูลสังเคราะห์ (DEMO)

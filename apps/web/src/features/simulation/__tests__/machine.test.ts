@@ -55,7 +55,7 @@ describe('single view', () => {
     d.idle(600)
     expect(d.state.phase).toBe('WAIT_RESULT')
     expect(d.count('INSPECT')).toBe(1)
-    expect(poseOf(d.state).x).toBe(LAYOUT.turntable_x)
+    expect(poseOf(d.state).x).toBe(LAYOUT.inspect_x)
   })
 
   it.each([
@@ -328,5 +328,56 @@ describe('pause, reset, retry, replay', () => {
     const d = new Driver(initialState())
     d.send({ type: 'PAUSE', now: 0 })
     expect(d.state.paused).toBeNull()
+  })
+})
+
+describe('stations along the line', () => {
+  it('orients on the turntable, then carries the chosen angle to the inspection enclosure', () => {
+    const d = new Driver(initialState())
+    d.start(multiJob([0, 90]))
+    d.tickTo('ORIENT')
+    expect(poseOf(d.state).station).toBe('turntable')
+    d.tickUntilLocate()
+    let loc = d.lastEffect('LOCATE')
+    d.send({ type: 'LOCATE_OK', token: d.state.token, attempt: loc?.attempt ?? 0, response: locate(false), now: d.now })
+    d.tickUntilLocate()
+    loc = d.lastEffect('LOCATE')
+    d.send({ type: 'LOCATE_OK', token: d.state.token, attempt: loc?.attempt ?? 0, response: locate(true), now: d.now })
+    expect(d.state.phase).toBe('SETTLE')
+    expect(d.state.motion?.kind).toBe('to_inspect')
+    const xs: number[] = []
+    while (d.state.phase === 'SETTLE') {
+      d.idle(0.05)
+      xs.push(poseOf(d.state).x)
+      expect(d.state.angle_deg).toBe(90)
+    }
+    expect(Math.min(...xs)).toBeGreaterThanOrEqual(LAYOUT.turntable_x)
+    expect(xs.at(-1)).toBe(LAYOUT.inspect_x)
+    expect(poseOf(d.state).station).toBe('inspect')
+  })
+
+  it('a locate error waits on the turntable; an inspect error waits in the enclosure', () => {
+    const a = new Driver(initialState())
+    a.start(multiJob())
+    a.tickTo('ORIENT')
+    a.tickUntilLocate()
+    const loc = a.lastEffect('LOCATE')
+    a.send({ type: 'LOCATE_FAIL', token: a.state.token, attempt: loc?.attempt ?? 0, error: { ...err503, source: 'locate' }, now: a.now })
+    expect(poseOf(a.state).station).toBe('turntable')
+
+    const b = new Driver(initialState())
+    toWaitResult(b)
+    b.send({ type: 'INSPECT_FAIL', token: b.state.token, error: err503, now: b.now })
+    expect(poseOf(b.state).station).toBe('inspect')
+  })
+
+  it('single photo skips the search but still travels to the inspection camera', () => {
+    const d = new Driver(initialState())
+    d.start(singleJob())
+    d.tickTo('SETTLE')
+    expect(d.state.motion?.kind).toBe('to_inspect')
+    expect(d.count('LOCATE')).toBe(0)
+    d.tickTo('INSPECT')
+    expect(poseOf(d.state).x).toBe(LAYOUT.inspect_x)
   })
 })

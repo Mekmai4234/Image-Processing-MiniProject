@@ -20,5 +20,6 @@
     "noUncheckedSideEffectImports": true,
     "types": ["vite/client"]
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/styles/featureCssScope.test.ts"]
 }

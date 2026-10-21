@@ -1,6 +1,8 @@
 import { Box, ImagePlus, Layers, Play, RotateCcw, Star, Trash2, Workflow } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { InspectionOverlay } from '../components/InspectionOverlay'
+import { Panel } from '../components/Panel'
+import { StatCard } from '../components/StatCard'
 import { ProductSelect, useDefaultProduct } from '../components/ProductSelect'
 import { ResultCard } from '../components/ResultCard'
 import { DemoTag, ResultBadge } from '../components/ResultBadge'
@@ -154,16 +156,7 @@ export function SimulationPage() {
 
       <div className="split">
         <div className="stack">
-          <section className="panel" aria-labelledby="scene-title">
-            <div className="panel-head">
-              <div>
-                <div className="title">
-                  <Box size={20} aria-hidden="true" />
-                  <h2 id="scene-title">ฉากสายพาน 3D</h2>
-                </div>
-                <p className="panel-sub">ส่วนนี้จะฝังฉาก Three.js ของงาน 02 ตามข้อตกลงใน pages/slots.ts</p>
-              </div>
-            </div>
+          <Panel title="ฉากสายพาน 3D" icon={<Box size={20} />} subtitle="ส่วนนี้จะฝังฉาก Three.js ของงาน 02">
             <div className="viewport scene-slot">
               <div className="empty">
                 <div>
@@ -198,15 +191,12 @@ export function SimulationPage() {
               <span className="corner bl" />
               <span className="corner br" />
             </div>
-          </section>
+          </Panel>
 
-          <section className="panel" aria-labelledby="capture-title">
-            <div className="panel-head">
-              <div>
-                <h2 id="capture-title">ภาพที่ใช้ตรวจ</h2>
-                <p className="panel-sub">{primary ? `ภาพหลัก${primary.angle !== null ? ` มุม ${primary.angle}°` : ''}` : 'ยังไม่ได้เลือกภาพ'}</p>
-              </div>
-            </div>
+          <Panel
+            title="ภาพที่ใช้ตรวจ"
+            subtitle={primary ? `ภาพหลัก${primary.angle !== null ? ` มุม ${primary.angle}°` : ''}` : 'ยังไม่ได้เลือกภาพ'}
+          >
             <div className="inspect-grid">
               <div className="stack-sm">
               <InspectionOverlay
@@ -231,16 +221,12 @@ export function SimulationPage() {
                 idleText="ผลตรวจจะแสดงหลัง Backend ตอบกลับเท่านั้น"
               />
             </div>
-          </section>
+          </Panel>
 
         </div>
 
         <div className="stack">
-          <section className="panel" aria-labelledby="controls-title">
-            <div className="panel-head">
-              <h2 id="controls-title">ตั้งค่าการตรวจ</h2>
-              {source === 'demo' && <DemoTag />}
-            </div>
+          <Panel title="ตั้งค่าการตรวจ" actions={source === 'demo' ? <DemoTag /> : undefined}>
 
             <div className="stack-sm">
               <ProductSelect
@@ -337,37 +323,15 @@ export function SimulationPage() {
                 </button>
               </div>
             </div>
-          </section>
+          </Panel>
 
-          <section className="panel" aria-labelledby="session-title">
-            <div className="panel-head">
-              <div className="title">
-                <Layers size={20} aria-hidden="true" />
-                <h2 id="session-title">สรุปรอบนี้</h2>
-              </div>
-              <span className="hint">นับเฉพาะที่ตรวจในหน้านี้ ดูทั้งหมดที่ History</span>
-            </div>
+          <Panel title="สรุปรอบนี้" icon={<Layers size={20} />} subtitle="นับเฉพาะที่ตรวจในหน้านี้ ดูทั้งหมดที่ History">
             <div className="stats" style={{ gridTemplateColumns: 'repeat(3, minmax(0,1fr))' }} data-compact>
-              <div className="stat total">
-                <div>
-                  <div className="k">ตรวจแล้ว</div>
-                  <div className="v">{session.length}</div>
-                </div>
-              </div>
-              <div className="stat pass">
-                <div>
-                  <div className="k">ผ่าน</div>
-                  <div className="v">{passed}</div>
-                </div>
-              </div>
-              <div className="stat fail">
-                <div>
-                  <div className="k">คัดออก</div>
-                  <div className="v">{rejected}</div>
-                </div>
-              </div>
+              <StatCard tone="total" label="ตรวจแล้ว" value={session.length} />
+              <StatCard tone="pass" label="ผ่าน" value={passed} />
+              <StatCard tone="fail" label="คัดออก" value={rejected} />
             </div>
-          </section>
+          </Panel>
 
         </div>
       </div>

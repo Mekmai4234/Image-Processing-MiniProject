@@ -7,7 +7,8 @@ import {
 import { ApiError, type InspectionPort, type InspectionRequest, type LocateLabelRequest } from './port'
 
 /**
- * DEMO-only backend stand-in for developing the scene before 04's API exists. Every result it
+ * DEMO-only backend stand-in for unit tests and harnesses. The app itself uses
+ * createDataSourcePort(ds) so DEMO/live follows 01's DataSource. Every result it
  * returns carries demo:true and the scene shows a DEMO badge. It does not look at pixels: the
  * scenario decides the answer. Nothing here may be presented as a real inspection.
  */
@@ -79,8 +80,8 @@ export class MockInspectionPort implements InspectionPort {
       config_version: 'demo-v0',
       simulation_defaults: { ...DEMO_SIMULATION_DEFAULTS },
       products: [
-        { product_id: 'bottle_a', display_name: 'Bottle A — รอเลือกยี่ห้อและรุ่นจริง', brand: null, size_ml: null, reference_paths: [], validated: false },
-        { product_id: 'bottle_b', display_name: 'Bottle B — รอเลือกยี่ห้อและรุ่นจริง', brand: null, size_ml: null, reference_paths: [], validated: false },
+        { product_id: 'bottle_a', display_name: 'Bottle A — รอเลือกยี่ห้อและรุ่นจริง', brand: null, size_ml: null, validated: false },
+        { product_id: 'bottle_b', display_name: 'Bottle B — รอเลือกยี่ห้อและรุ่นจริง', brand: null, size_ml: null, validated: false },
       ],
     }
   }
@@ -209,7 +210,7 @@ function blobId(blob: Blob): number {
 function signatureOf(request: InspectionRequest): string {
   return JSON.stringify({
     image: blobId(request.image),
-    supporting: request.supporting_images.map(blobId),
+    supporting: request.supporting_images.map((s) => blobId(s.blob)),
     expected_product: request.expected_product,
     source_mode: request.source_mode,
     angle_deg: request.angle_deg ?? null,

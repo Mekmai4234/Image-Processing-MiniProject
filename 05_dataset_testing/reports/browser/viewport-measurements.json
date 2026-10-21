@@ -1,0 +1,83 @@
+[
+  {
+    "page": "Simulation",
+    "documentWidth": 1571,
+    "headings": [
+      "สายพานจำลอง"
+    ],
+    "height": 992,
+    "width": 1586
+  },
+  {
+    "page": "Simulation",
+    "documentWidth": 1351,
+    "headings": [
+      "สายพานจำลอง"
+    ],
+    "height": 768,
+    "width": 1366
+  },
+  {
+    "page": "Simulation",
+    "documentWidth": 375,
+    "headings": [
+      "สายพานจำลอง"
+    ],
+    "height": 844,
+    "width": 390
+  },
+  {
+    "page": "Webcam",
+    "documentWidth": 1571,
+    "headings": [
+      "ตรวจด้วยกล้อง (Webcam)"
+    ],
+    "height": 992,
+    "width": 1586
+  },
+  {
+    "page": "Webcam",
+    "documentWidth": 1351,
+    "headings": [
+      "ตรวจด้วยกล้อง (Webcam)"
+    ],
+    "height": 768,
+    "width": 1366
+  },
+  {
+    "page": "Webcam",
+    "documentWidth": 375,
+    "headings": [
+      "ตรวจด้วยกล้อง (Webcam)"
+    ],
+    "height": 844,
+    "width": 390
+  },
+  {
+    "page": "History",
+    "documentWidth": 1571,
+    "headings": [
+      "ประวัติการตรวจ"
+    ],
+    "height": 992,
+    "width": 1586
+  },
+  {
+    "page": "History",
+    "documentWidth": 1351,
+    "headings": [
+      "ประวัติการตรวจ"
+    ],
+    "height": 768,
+    "width": 1366
+  },
+  {
+    "page": "History",
+    "documentWidth": 475,
+    "headings": [
+      "ประวัติการตรวจ"
+    ],
+    "height": 844,
+    "width": 390
+  }
+]

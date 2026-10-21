@@ -1,29 +1,38 @@
-import { Box, Camera, History, RefreshCw, WifiOff } from 'lucide-react'
+import { Box, Camera, HardDrive, History, RefreshCw, ScanSearch, WifiOff } from 'lucide-react'
+import { Brand, Logo } from './Logo'
 import { NavLink, Outlet } from 'react-router-dom'
 import { DEMO_SCENARIOS, type DemoScenario } from '../demo/demoDataSource'
 import { useAppData } from '../lib/AppData'
 import { API_BASE_URL } from '../lib/config'
-
-function Logo() {
-  return (
-    <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true">
-      <path d="M5 10V5h5M27 10V5h-5M5 22v5h5M27 22v5h-5" stroke="#22D3EE" strokeWidth="2.4" fill="none" strokeLinecap="round" />
-      <rect x="11" y="12" width="10" height="8" rx="1.5" fill="none" stroke="#34D399" strokeWidth="2.4" />
-    </svg>
-  )
-}
 
 function ConnectionPill() {
   const { connection } = useAppData()
   switch (connection.state) {
     case 'checking':
       return <span className="pill checking"><span className="dot" />กำลังเชื่อม API</span>
-    case 'online':
+    case 'online': {
+      const { detector } = connection.readiness
+      const version = connection.configVersion ? ` · ${connection.configVersion}` : ''
+      if (detector === 'not_ready') {
+        return (
+          <span className="pill warn" title={`${API_BASE_URL}${version}`}>
+            <span className="dot" />API พร้อม · ตัวตรวจยังไม่พร้อม
+          </span>
+        )
+      }
+      if (detector === 'ready') {
+        return (
+          <span className="pill online" title={`${API_BASE_URL}${version}`}>
+            <span className="dot" />API พร้อม · ตัวตรวจพร้อม
+          </span>
+        )
+      }
       return (
-        <span className="pill online" title={API_BASE_URL}>
-          <span className="dot" />API พร้อม{connection.configVersion ? ` (${connection.configVersion})` : ''}
+        <span className="pill online" title={`${API_BASE_URL}${version} · Backend ยังไม่รายงานความพร้อมของตัวตรวจ`}>
+          <span className="dot" />API พร้อม
         </span>
       )
+    }
     case 'offline':
       return <span className="pill offline" title={connection.message}><span className="dot" />API ไม่ตอบ</span>
     case 'demo':
@@ -36,13 +45,17 @@ export function AppShell() {
 
   return (
     <div className="shell">
+      <a className="skip-link" href="#main">
+        ข้ามไปเนื้อหาหลัก
+      </a>
       <header className="topbar">
-        <NavLink to="/simulation" className="brand" aria-label="Vending Vision หน้าแรก">
-          <Logo />
-          <span className="brand-name">
-            VENDING <span>VISION</span>
-          </span>
-        </NavLink>
+        <div className="brand-block">
+          <NavLink to="/simulation" className="brand" aria-label="Vending Vision หน้า Simulation">
+            <Logo />
+            <Brand />
+          </NavLink>
+          <span className="brand-sub">Thai Student Bottle Label Inspection Project</span>
+        </div>
 
         <nav className="nav" aria-label="โหมดการทำงาน">
           <NavLink to="/simulation">
@@ -99,7 +112,32 @@ export function AppShell() {
         </div>
       )}
 
-      <main className="main" id="main">
+      {source === 'live' && connection.state === 'online' && connection.readiness.detector === 'not_ready' && (
+        <div className="readiness-bar" role="status">
+          <ScanSearch size={16} aria-hidden="true" />
+          <span>
+            <strong>ตัวตรวจยังไม่พร้อม</strong> {connection.readiness.detectorReason ?? 'Backend ยังไม่มี config หรือภาพอ้างอิงของสินค้า'}
+            {' '}การตรวจจริงจะได้ ERROR จนกว่าจะพร้อม ส่วนประวัติยังเปิดดูได้
+          </span>
+          <button className="btn btn-sm" onClick={recheck}>
+            <RefreshCw size={14} aria-hidden="true" /> ตรวจสถานะใหม่
+          </button>
+          <button className="btn btn-sm btn-ghost" onClick={() => setSource('demo')}>
+            ลองหน้าจอด้วยข้อมูล DEMO
+          </button>
+        </div>
+      )}
+
+      {source === 'live' && connection.state === 'online' && connection.readiness.storage === 'not_ready' && (
+        <div className="readiness-bar" role="status">
+          <HardDrive size={16} aria-hidden="true" />
+          <span>
+            <strong>ที่เก็บไฟล์ของ Backend เขียนไม่ได้</strong> ผลตรวจยังแสดงได้ แต่จะขึ้นสถานะบันทึกไม่สำเร็จ ตรวจ STORAGE_ROOT บนเครื่องที่รัน Backend
+          </span>
+        </div>
+      )}
+
+      <main className="main" id="main" tabIndex={-1}>
         <Outlet />
       </main>
 
