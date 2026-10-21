@@ -67,3 +67,51 @@ runner คืน exit code 0 เมื่อผ่าน, 1 เมื่อ test
 unittest import errors ทำให้ run ล้มเหลวด้วย ไม่รายงานเขียวเมื่อ dependency หาย
 คำสั่งเดิมแบบ unittest discover ยังใช้ได้ tests ไม่ใช้ API/network/storage จริง
 requirements-test.txt เป็นรุ่น environment ที่ตรวจแล้วของ 03 ไม่ใช่ lock ฝั่ง Backend รวม
+
+## ใบงานใหม่ — 21 ตุลาคม 2026
+
+ผลรันจริงบน Windows / Python 3.11.16, numpy 2.4.6, OpenCV 5.0.0.93:
+
+- core unittest 86 methods ผ่าน (เดิม 56 + config/provenance/shape/annotation/locator edge cases)
+- core + HTTP integration 92 methods ผ่าน รวม 6 HTTP methods ที่มีหลาย subcases
+- pytest ของ Backend ทั้งหมด 150 tests ผ่าน และ 94 subtests ผ่าน
+- repository-check และ regression ของ repository scripts ตรวจแยกตาม workflow เดิม
+
+config tests ใช้ report fixture เพื่อทดสอบ binding เท่านั้น ไม่มี report ที่ประเมินขวดจริง
+กรณี face/hand/clear outline/reflection เป็นภาพวาดทดสอบ ไม่แทนผลบนภาพจริง
+shape tests ตรวจทรงตรง/สอบ/เว้าเอว และ fallback ไม่มี real-data accuracy/shape quality metrics
+
+### HTTP integration ในเครื่อง
+
+```powershell
+& .\apps\backend\tests\inspection\.venv\Scripts\python.exe -m pip install -r apps/backend/tests/inspection/requirements-integration.txt
+& .\apps\backend\tests\inspection\.venv\Scripts\python.exe -B apps/backend/tests/inspection/run_checks.py --integration
+& .\apps\backend\tests\inspection\.venv\Scripts\python.exe -B -m pytest apps/backend/tests -q -p no:cacheprovider
+```
+
+HTTP tests ใช้ app/routes/adapter/03 detector/DB/storage จริงและภาพสังเคราะห์ ใน temporary
+STORAGE_ROOT เท่านั้น ตั้ง config ผ่านจุด inject ที่มีอยู่ของ 04 แล้วคืนค่าหลังทุก test
+ไม่ mock run_detector_03 ไม่แทนที่ HTTP locator และไม่แก้ app ของ 04
+ครอบคลุมสองโหมด good/wrong/position/blur/hidden/unknown, EXIF/RGB/BGR/พิกัด,
+อ่านภาพ original/annotated ที่ saved, supporting images, unvalidated REVIEW และ missing config 503
+
+shared locator/score annotation bridge ทดสอบโดยเรียก 03 ตรง ๆ ร่วมกับ decoder/inspect ของ 04
+**HTTP locator เดิมและ stored annotation ของ 04 ยังไม่เปลี่ยน** ตามขอบเขตที่ผู้ใช้ยืนยัน
+ให้ 04 นำขั้นตอนใน HANDOFF ไปต่อก่อนประกาศว่าปัญหา locator รวมระบบได้รับการแก้แล้ว
+HTTP tests ไม่อ้างว่าภาพ stored ของ 04 มีคะแนนแล้ว; แยกทดสอบคะแนนบน annotate_fields ของ 03
+
+Integration environment รอบนี้ใช้ FastAPI 0.156.4 / Starlette 1.9.0 / httpx 0.28.1 /
+Pillow 13.0.0 / pytest 9.1.1 และแสดง deprecation warning จาก TestClient ของ dependencies
+หนึ่งรายการ tests ผ่าน ไม่ปรับ requirements รวมของ 04 เพื่อปิด warning ในงาน 03
+core runner ไม่บังคับ dependency HTTP; ใช้ --integration หลังติดตั้ง integration requirements
+
+### ภาพหลักฐานสังเคราะห์
+
+```powershell
+& .\apps\backend\tests\inspection\.venv\Scripts\python.exe -B apps/backend/tests/inspection/render_preview.py --output apps/backend/tests/inspection/.venv/verification-2026-10-21.png
+```
+
+ภาพรวมแสดง PASS/FAIL/REVIEW, score ที่คำนวณจริงจาก fixture, detected/expected boxes,
+contour/profile ของสามรูปทรงและ fallback มีป้าย SYNTHETIC ชัดเจน ไม่ใช่ภาพ reference ขวดจริง
+ไฟล์ภาพอยู่ใน environment ที่ ignore ไม่ส่งเข้า Git และไม่เขียน storage จริง
+ข้อกำหนดข้อมูล 04/05 และ shape transport 02 อยู่ในเอกสาร CONFIGURATION/SHAPE/HANDOFF ของ 03

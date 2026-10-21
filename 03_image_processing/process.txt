@@ -6,6 +6,16 @@ Branch เริ่มต้น: feature/03-image-processing
 
 PROCESS — หลักการ Input/Output และเกณฑ์รับงาน
 
+อัปเดต 21 ตุลาคม 2026
+- build_detector_config รับ dict/catalog/manifest/source RGB และ file hashes จาก loader ของ 04
+  ตรวจ development references, crop hash และ report ที่ตรง config/dataset version ก่อนเปิด validated
+- annotate_fields/annotate_image แสดง result/MATCH จาก similarity จริง, reason และ expected ROI เส้นประ
+- analyze_shape คืน bottle-silhouette-v1/mask/contour/radial profile แยกจาก InspectionResult
+  segmentation ใช้ implementation ร่วมกับ locator 03; failure คืน fallback ไม่เปลี่ยนผลฉลาก
+- HTTP inspection tests เรียก detector จริงแล้ว แต่ HTTP locator/stored annotation ของ 04
+  ยังต้องนำจุดเชื่อมไปใช้ ไม่แก้ไฟล์ของ 04 ในรอบนี้
+- หลักฐานทั้งหมดของ 03 ยังเป็น synthetic tests ไม่มี real-data accuracy/shape validation
+
 Input
 image, supporting images, expected_product, source_mode, evidence และ config_version
 ใช้ evidence.kind/search_status/มุมตาม API contract v0.2; งาน 04 แปลง multipart ให้ pure functions
