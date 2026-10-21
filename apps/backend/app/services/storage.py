@@ -1,7 +1,9 @@
+import io
 import json
 import os
 import shutil
 import time
+import zipfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -375,3 +377,168 @@ class StorageManager:
                 marked_failed += 1
 
         return {"total_unsettled": len(unsettled), "reconciled": reconciled, "marked_failed": marked_failed}
+
+    @classmethod
+    def get_inspection_dir(cls, inspection_id: str) -> Optional[Path]:
+        """Resolve actual storage directory for an inspection (saved or pending)."""
+        record = InspectionRepository.get_by_id(inspection_id)
+        if not record:
+            return None
+
+        if record.get("relative_folder_path"):
+            cand = (settings.STORAGE_ROOT / record["relative_folder_path"]).resolve()
+            if cand.is_dir():
+                return cand
+
+        pending_cand = cls.get_pending_dir(inspection_id).resolve()
+        if pending_cand.is_dir():
+            return pending_cand
+
+        return None
+
+    @classmethod
+    def get_inspection_files(cls, inspection_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Scan actual local disk for files belonging to inspection_id.
+        Returns metadata conforming to InspectionFilesResponse contract.
+        """
+        record = InspectionRepository.get_by_id(inspection_id)
+        if not record:
+            return None
+
+        target_dir = cls.get_inspection_dir(inspection_id)
+        storage_status = record.get("storage_status", "pending")
+
+        file_items: List[Dict[str, Any]] = []
+
+        # 1. original.jpg
+        orig_file = (target_dir / "original.jpg") if target_dir else None
+        orig_avail = bool(orig_file and orig_file.is_file() and orig_file.stat().st_size > 0)
+        file_items.append({
+            "name": "original.jpg",
+            "kind": "original",
+            "available": orig_avail,
+            "size_bytes": orig_file.stat().st_size if orig_avail else None,
+            "download_url": f"/api/inspections/{inspection_id}/images/original" if orig_avail else None,
+        })
+
+        # 2. annotated.jpg
+        annot_file = (target_dir / "annotated.jpg") if target_dir else None
+        annot_avail = bool(annot_file and annot_file.is_file() and annot_file.stat().st_size > 0)
+        file_items.append({
+            "name": "annotated.jpg",
+            "kind": "annotated",
+            "available": annot_avail,
+            "size_bytes": annot_file.stat().st_size if annot_avail else None,
+            "download_url": f"/api/inspections/{inspection_id}/images/annotated" if annot_avail else None,
+        })
+
+        # 3. result.json (immutable decision snapshot)
+        res_file = (target_dir / "result.json") if target_dir else None
+        res_avail = bool(res_file and res_file.is_file() and res_file.stat().st_size > 0)
+        file_items.append({
+            "name": "result.json",
+            "kind": "result_json",
+            "available": res_avail,
+            "size_bytes": res_file.stat().st_size if res_avail else None,
+            "download_url": f"/api/inspections/{inspection_id}/result.json" if res_avail else None,
+        })
+
+        # 4. supporting images if any
+        supporting_angles: List[Any] = []
+        if record.get("evidence_json"):
+            try:
+                ev = json.loads(record["evidence_json"])
+                supporting_angles = ev.get("supporting_angles_deg") or []
+            except Exception:
+                supporting_angles = []
+
+        all_supporting_avail = True
+        if supporting_angles:
+            sup_dir = (target_dir / "supporting") if target_dir else None
+            for idx in range(len(supporting_angles)):
+                s_name = f"{idx}.jpg"
+                s_file = (sup_dir / s_name) if sup_dir else None
+                s_avail = bool(s_file and s_file.is_file() and s_file.stat().st_size > 0)
+                if not s_avail:
+                    all_supporting_avail = False
+                file_items.append({
+                    "name": f"supporting/{s_name}",
+                    "kind": "supporting",
+                    "available": s_avail,
+                    "size_bytes": s_file.stat().st_size if s_avail else None,
+                    "download_url": f"/api/inspections/{inspection_id}/images/supporting/{idx}" if s_avail else None,
+                })
+
+        all_available = orig_avail and annot_avail and res_avail and all_supporting_avail
+
+        return {
+            "inspection_id": inspection_id,
+            "storage_status": storage_status,
+            "all_available": all_available,
+            "files": file_items,
+            "download_zip_url": f"/api/inspections/{inspection_id}/download" if (orig_avail or res_avail) else None,
+        }
+
+    @classmethod
+    def create_inspection_zip(cls, inspection_id: str) -> Optional[io.BytesIO]:
+        """
+        Bundle inspection files into an in-memory ZIP archive.
+        Includes original.jpg, annotated.jpg, immutable result.json, and supporting images.
+        If human review metadata exists, writes a separate review_metadata.json without overwriting decision snapshot.
+        """
+        record = InspectionRepository.get_by_id(inspection_id)
+        if not record:
+            return None
+
+        target_dir = cls.get_inspection_dir(inspection_id)
+        if not target_dir or not target_dir.is_dir():
+            return None
+
+        zip_buffer = io.BytesIO()
+        files_added = 0
+
+        with zipfile.ZipFile(zip_buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
+            # 1. original.jpg
+            orig_p = target_dir / "original.jpg"
+            if orig_p.is_file():
+                zf.write(orig_p, arcname="original.jpg")
+                files_added += 1
+
+            # 2. annotated.jpg
+            annot_p = target_dir / "annotated.jpg"
+            if annot_p.is_file():
+                zf.write(annot_p, arcname="annotated.jpg")
+                files_added += 1
+
+            # 3. result.json (immutable decision snapshot)
+            res_p = target_dir / "result.json"
+            if res_p.is_file():
+                zf.write(res_p, arcname="result.json")
+                files_added += 1
+
+            # 4. supporting images
+            sup_dir = target_dir / "supporting"
+            if sup_dir.is_dir():
+                for sf in sorted(sup_dir.glob("*.jpg")):
+                    if sf.is_file():
+                        zf.write(sf, arcname=f"supporting/{sf.name}")
+                        files_added += 1
+
+            # 5. review_metadata.json (if human review was recorded)
+            if record.get("reviewed_result"):
+                review_meta = {
+                    "inspection_id": inspection_id,
+                    "reviewed_result": record.get("reviewed_result"),
+                    "reviewed_reason": record.get("reviewed_reason"),
+                    "reviewer": record.get("reviewer"),
+                    "reviewed_at": record.get("reviewed_at"),
+                }
+                zf.writestr("review_metadata.json", json.dumps(review_meta, ensure_ascii=False, indent=2))
+                files_added += 1
+
+        if files_added == 0:
+            return None
+
+        zip_buffer.seek(0)
+        return zip_buffer

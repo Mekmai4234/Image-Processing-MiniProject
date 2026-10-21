@@ -142,6 +142,8 @@ describe('Webcam Source Routing Integration Tests', () => {
         createInspection: vi.fn().mockResolvedValue(mockResult),
         listInspections: vi.fn(),
         getInspection: vi.fn(),
+        getInspectionFiles: vi.fn(),
+        downloadZipUrl: vi.fn().mockReturnValue(null),
         retrySave: vi.fn(),
         review: vi.fn(),
         exportCsvUrl: vi.fn().mockReturnValue('/api/inspections/export.csv'),

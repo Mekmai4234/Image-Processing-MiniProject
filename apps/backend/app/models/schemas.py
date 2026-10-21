@@ -32,6 +32,9 @@ class HealthResponse(BaseModel):
     config_version: str = Field(..., description="Configuration and contract version", examples=["v0.2"])
     timezone: str = Field(..., description="Server configured application timezone", examples=["Asia/Bangkok"])
     storage_root_ready: bool = Field(..., description="Storage directory accessibility status", examples=[True])
+    detector_ready: bool = Field(False, description="Detector operational readiness for real inspections", examples=[True])
+    detector_status: str = Field("ready", description="Detector readiness category (ready, demo_only, unavailable)", examples=["ready"])
+    readiness_reason: Optional[str] = Field(None, description="Explanation if detector is not fully ready for production")
 
 
 class ProductItem(BaseModel):
@@ -145,3 +148,19 @@ class ReviewRequest(BaseModel):
     reviewed_result: str = Field(..., description="Review outcome: PASS, FAIL, or REVIEW")
     reviewed_reason: str = Field(..., description="Human review rationale")
     reviewer: str = Field(..., description="Reviewer name or identifier")
+
+
+class InspectionFileItem(BaseModel):
+    name: str = Field(..., description="File name (e.g. original.jpg, annotated.jpg, result.json, 0.jpg)")
+    kind: str = Field(..., description="Logical kind: original, annotated, result_json, or supporting")
+    available: bool = Field(..., description="Whether file physically exists on disk")
+    size_bytes: Optional[int] = Field(None, description="File size in bytes if available")
+    download_url: Optional[str] = Field(None, description="Backend API URL to retrieve this file")
+
+
+class InspectionFilesResponse(BaseModel):
+    inspection_id: str = Field(..., description="Inspection UUID")
+    storage_status: str = Field(..., description="Storage status from database (pending, saved, failed)")
+    all_available: bool = Field(..., description="True if all required files are intact and available")
+    files: List[InspectionFileItem] = Field(default_factory=list, description="List of files belonging to this inspection")
+    download_zip_url: Optional[str] = Field(None, description="API URL to download full inspection ZIP bundle")

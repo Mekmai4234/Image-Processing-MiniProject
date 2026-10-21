@@ -228,3 +228,110 @@ def test_demo_lifecycle_and_filters():
     csv_false = client.get("/api/exports/inspections.csv?demo=false").text
     assert insp_id not in csv_false
 
+
+def test_list_inspections_search_and_sorting(created_inspection):
+    insp_id = created_inspection["inspection_id"]
+    client_id = created_inspection["client_request_id"]
+
+    # 1. Search by inspection_id
+    resp = client.get(f"/api/inspections?q={insp_id}")
+    assert resp.status_code == 200
+    items = resp.json()["items"]
+    assert any(it["inspection_id"] == insp_id for it in items)
+
+    # 2. Search by client_request_id
+    resp = client.get(f"/api/inspections?q={client_id}")
+    assert resp.status_code == 200
+    items = resp.json()["items"]
+    assert any(it["client_request_id"] == client_id for it in items)
+
+    # 3. Search with non-existent query
+    resp = client.get(f"/api/inspections?q=completely_non_existent_token_xyz_999")
+    assert resp.status_code == 200
+    assert resp.json()["total"] == 0
+
+    # 4. Sorting by created_at asc and desc
+    resp_asc = client.get("/api/inspections?sort_by=created_at&sort_order=asc&page_size=5")
+    assert resp_asc.status_code == 200
+    resp_desc = client.get("/api/inspections?sort_by=created_at&sort_order=desc&page_size=5")
+    assert resp_desc.status_code == 200
+
+    # 5. Sorting by match_score
+    resp_score = client.get("/api/inspections?sort_by=match_score&sort_order=desc&page_size=5")
+    assert resp_score.status_code == 200
+
+    # 6. CSV with q query
+    csv_resp = client.get(f"/api/exports/inspections.csv?q={insp_id}")
+    assert csv_resp.status_code == 200
+    assert insp_id in csv_resp.text
+
+
+def test_list_inspections_invalid_sort():
+    resp_bad_field = client.get("/api/inspections?sort_by=illegal_column_injection")
+    assert resp_bad_field.status_code == 400
+    assert resp_bad_field.json()["error"]["code"] == "invalid_sort_field"
+
+    resp_bad_order = client.get("/api/inspections?sort_order=sideways")
+    assert resp_bad_order.status_code == 400
+    assert resp_bad_order.json()["error"]["code"] == "invalid_sort_order"
+
+
+def test_get_inspection_files_metadata(created_inspection):
+    insp_id = created_inspection["inspection_id"]
+
+    resp = client.get(f"/api/inspections/{insp_id}/files")
+    assert resp.status_code == 200
+    data = resp.json()
+
+    assert data["inspection_id"] == insp_id
+    assert data["storage_status"] in ("saved", "pending")
+    assert "files" in data
+    assert len(data["files"]) >= 3  # original, annotated, result.json
+
+    filenames = [f["name"] for f in data["files"]]
+    assert "original.jpg" in filenames
+    assert "annotated.jpg" in filenames
+    assert "result.json" in filenames
+
+    # Check file availability and size
+    for f in data["files"]:
+        if f["available"]:
+            assert f["size_bytes"] is not None
+            assert f["size_bytes"] > 0
+            assert f["download_url"] is not None
+
+    if data["all_available"]:
+        assert data["download_zip_url"] == f"/api/inspections/{insp_id}/download"
+
+
+def test_download_inspection_zip_bundle(created_inspection):
+    import zipfile
+    insp_id = created_inspection["inspection_id"]
+
+    resp = client.get(f"/api/inspections/{insp_id}/download")
+    assert resp.status_code == 200
+    assert resp.headers["content-type"] == "application/zip"
+    assert f'filename="inspection_{insp_id}.zip"' in resp.headers.get("content-disposition", "")
+
+    # Inspect zip contents
+    zip_bytes = io.BytesIO(resp.content)
+    with zipfile.ZipFile(zip_bytes, "r") as zf:
+        namelist = zf.namelist()
+        assert "original.jpg" in namelist
+        assert "annotated.jpg" in namelist
+        assert "result.json" in namelist
+
+        # Validate result.json inside zip
+        result_content = json.loads(zf.read("result.json").decode("utf-8"))
+        assert result_content["inspection_id"] == insp_id
+        assert result_content["result"] == created_inspection["result"]
+
+
+def test_health_readiness_fields():
+    resp = client.get("/api/health")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "detector_ready" in data
+    assert "detector_status" in data
+    assert data["detector_status"] in ("ready", "demo_ready", "unavailable")
+

@@ -13,6 +13,7 @@ from app.core.errors import APIError
 # Try importing module 03 if available in repository
 try:
     from app.inspection.pipeline import inspect_image as run_detector_03  # type: ignore
+    from app.inspection.locate import locate_label as run_locator_03  # type: ignore
     from app.inspection.types import (  # type: ignore
         Evidence as DetectorEvidence,
         Decision as DetectorDecision,
@@ -23,6 +24,7 @@ try:
     HAS_REAL_DETECTOR = True
 except ImportError:
     run_detector_03 = None
+    run_locator_03 = None
     DetectorEvidence = None
     DetectorDecision = None
     InspectionInputError = ValueError
@@ -135,8 +137,37 @@ class InspectionAdapter:
     def locate_label(cls, cv_bgr: np.ndarray, expected_product: str) -> Dict[str, Any]:
         """
         Run locator for candidate view selection without saving history.
-        Evaluates blur, face/skin rejection, bottle contour, and label contrast gates.
+        If real detector config is ready, uses module 03 locate_label with error mappings.
+        Otherwise falls back to baseline locator.
         """
+        if cls.is_detector_ready() and run_locator_03 is not None:
+            try:
+                res = run_locator_03(
+                    image=cv_bgr,
+                    expected_product=expected_product,
+                    config=cls._detector_config,
+                    color_order="BGR",
+                )
+                return res.to_dict() if hasattr(res, "to_dict") else dict(res)
+            except InspectionInputError as err:
+                raise APIError(
+                    status_code=400,
+                    code="invalid_inspection_input",
+                    message=str(err),
+                )
+            except InspectionConfigError as err:
+                raise APIError(
+                    status_code=503,
+                    code="inspection_unavailable",
+                    message=f"Detector locator configuration error: {str(err)}",
+                )
+            except Exception as err:
+                raise APIError(
+                    status_code=500,
+                    code="locator_runtime_error",
+                    message=f"Locator execution failed: {str(err)}",
+                )
+
         h, w = cv_bgr.shape[:2]
         var = cls.compute_blur_variance(cv_bgr)
 
@@ -464,6 +495,44 @@ class InspectionAdapter:
             "is_demo": demo,
         }
 
+    @staticmethod
+    def _draw_dashed_rect(
+        img: np.ndarray,
+        pt1: Tuple[int, int],
+        pt2: Tuple[int, int],
+        color: Tuple[int, int, int],
+        thickness: int = 1,
+        dash_len: int = 8,
+        gap_len: int = 6,
+    ) -> None:
+        """Draw dashed rectangle on OpenCV BGR image."""
+        x1, y1 = pt1
+        x2, y2 = pt2
+        lines = [
+            ((x1, y1), (x2, y1)),  # Top
+            ((x2, y1), (x2, y2)),  # Right
+            ((x2, y2), (x1, y2)),  # Bottom
+            ((x1, y2), (x1, y1)),  # Left
+        ]
+        for p1, p2 in lines:
+            dx = p2[0] - p1[0]
+            dy = p2[1] - p1[1]
+            dist = math.hypot(dx, dy)
+            if dist <= 0:
+                continue
+            dash_step = dash_len + gap_len
+            steps = int(dist / dash_step) + 1
+            for i in range(steps):
+                start = i * dash_step
+                end = min(start + dash_len, dist)
+                if start >= dist:
+                    break
+                sx = int(p1[0] + dx * (start / dist))
+                sy = int(p1[1] + dy * (start / dist))
+                ex = int(p1[0] + dx * (end / dist))
+                ey = int(p1[1] + dy * (end / dist))
+                cv2.line(img, (sx, sy), (ex, ey), color, thickness)
+
     @classmethod
     def create_annotated_image(
         cls,
@@ -472,13 +541,16 @@ class InspectionAdapter:
         reason: str,
         bbox: Optional[Dict[str, int]],
         expected_bbox: Optional[Dict[str, int]],
+        match_score: Optional[float] = None,
     ) -> bytes:
         """
-        Draw bounding boxes and labels on image:
+        Draw bounding boxes and labels on image according to contract 04-D:
         - PASS: Green (0, 200, 0)
         - FAIL: Red (0, 0, 230)
         - REVIEW: Yellow (0, 215, 255)
-        - missing_label: Dashed/expected bounding box
+        - expected region: Dashed line (never confused with detected label)
+        - detected label candidate: Solid line (not drawn when not found)
+        - displays MATCH score when present or '—' when absent (not uncalibrated confidence)
         """
         annot = cv_bgr.copy()
         result_upper = result.upper()
@@ -490,35 +562,47 @@ class InspectionAdapter:
         else:
             color = (0, 215, 255)
 
-        # Draw expected_bbox with thin line if present
+        # 1. Draw expected_bbox as dashed line if present
         if expected_bbox:
             ex, ey = expected_bbox["x"], expected_bbox["y"]
             ew, eh = expected_bbox["width"], expected_bbox["height"]
-            cv2.rectangle(annot, (ex, ey), (ex + ew, ey + eh), (180, 180, 180), 1)
+            cls._draw_dashed_rect(
+                annot,
+                (ex, ey),
+                (ex + ew, ey + eh),
+                color=(180, 180, 180),
+                thickness=2,
+                dash_len=8,
+                gap_len=6,
+            )
 
-        # Draw detected bbox
+        # 2. Build text label with MATCH score
+        score_text = f" MATCH: {round(match_score * 100)}%" if match_score is not None else " MATCH: —"
+        label_text = f"{result_upper}: {reason}{score_text}"
+
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        font_scale = 0.65
+        thickness = 2
+        text_size, _ = cv2.getTextSize(label_text, font, font_scale, thickness)
+        text_w, text_h = text_size
+
+        # 3. Draw detected bbox as solid line
         if bbox:
             bx, by = bbox["x"], bbox["y"]
             bw, bh = bbox["width"], bbox["height"]
             cv2.rectangle(annot, (bx, by), (bx + bw, by + bh), color, 3)
 
-            label_text = f"{result_upper}: {reason}"
-            font = cv2.FONT_HERSHEY_SIMPLEX
-            font_scale = 0.65
-            thickness = 2
-            text_size, _ = cv2.getTextSize(label_text, font, font_scale, thickness)
-            text_w, text_h = text_size
-
             # Label banner above bbox
             text_y = max(24, by - 8)
             cv2.rectangle(annot, (bx, text_y - text_h - 4), (bx + text_w + 8, text_y + 4), color, -1)
-            # Text in black or white
             text_color = (0, 0, 0) if result_upper == "REVIEW" else (255, 255, 255)
             cv2.putText(annot, label_text, (bx + 4, text_y), font, font_scale, text_color, thickness)
         else:
             # No bbox detected, draw top status banner
-            banner_text = f"{result_upper}: {reason}"
-            cv2.putText(annot, banner_text, (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
+            banner_y = 36
+            cv2.rectangle(annot, (14, banner_y - text_h - 6), (24 + text_w + 6, banner_y + 8), color, -1)
+            text_color = (0, 0, 0) if result_upper == "REVIEW" else (255, 255, 255)
+            cv2.putText(annot, label_text, (20, banner_y), font, font_scale, text_color, thickness)
 
         success, encoded = cv2.imencode(".jpg", annot, [int(cv2.IMWRITE_JPEG_QUALITY), 95])
         if not success:

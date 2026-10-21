@@ -138,6 +138,26 @@ export function createDemoDataSource(getScenario: () => DemoScenario): DataSourc
       return clone(find(id))
     },
 
+    async getInspectionFiles(id, signal) {
+      await wait(150, signal)
+      const r = find(id)
+      return {
+        inspection_id: id,
+        storage_status: r.storage_status,
+        all_available: r.storage_status === 'saved',
+        files: [
+          { name: 'original.jpg', kind: 'original', available: true, download_url: null },
+          { name: 'annotated.jpg', kind: 'annotated', available: true, download_url: null },
+          { name: 'result.json', kind: 'result_json', available: true, download_url: null },
+        ],
+        download_zip_url: null,
+      }
+    },
+
+    downloadZipUrl() {
+      return null
+    },
+
     async retrySave(id, signal) {
       await wait(LATENCY_MS, signal)
       const r = find(id)

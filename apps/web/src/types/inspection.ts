@@ -120,6 +120,9 @@ export interface HealthStatus {
   config_version?: string
   timezone?: string
   storage_root_ready?: boolean
+  detector_ready?: boolean
+  detector_status?: string
+  readiness_reason?: string | null
 }
 
 export interface InspectionFilters {
@@ -133,6 +136,25 @@ export interface InspectionFilters {
   date_from?: string
   date_to?: string
   demo?: boolean
+  q?: string
+  sort_by?: 'created_at' | 'expected_product' | 'result' | 'match_score' | string
+  sort_order?: 'asc' | 'desc'
+}
+
+export interface InspectionFileItem {
+  name: string
+  kind: 'original' | 'annotated' | 'result_json' | 'supporting' | string
+  available: boolean
+  size_bytes?: number | null
+  download_url?: string | null
+}
+
+export interface InspectionFilesResponse {
+  inspection_id: string
+  storage_status: StorageStatus
+  all_available: boolean
+  files: InspectionFileItem[]
+  download_zip_url?: string | null
 }
 
 export interface InspectionPage {

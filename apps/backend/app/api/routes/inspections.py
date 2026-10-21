@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, File, Form, UploadFile, Query
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from pydantic import ValidationError
 
 from app.core.config import settings
@@ -17,6 +17,7 @@ from app.db.repository import InspectionRepository
 from app.models.schemas import (
     InspectionResult,
     InspectionListResponse,
+    InspectionFilesResponse,
     ReviewRequest,
     EvidenceInput,
 )
@@ -323,6 +324,7 @@ async def create_inspection(
         reason=inspect_output["reason"],
         bbox=inspect_output.get("bbox"),
         expected_bbox=inspect_output.get("expected_bbox"),
+        match_score=inspect_output.get("match_score"),
     )
 
     # 10. Record pending state in SQLite
@@ -431,6 +433,9 @@ def list_inspections(
     date_from: Optional[str] = Query(None, description="Filter from YYYY-MM-DD (Asia/Bangkok)"),
     date_to: Optional[str] = Query(None, description="Filter to YYYY-MM-DD (Asia/Bangkok)"),
     demo: Optional[bool] = Query(None, description="Filter by demo mode (true/false)"),
+    q: Optional[str] = Query(None, description="Search keyword matching IDs, products, or reason"),
+    sort_by: Optional[str] = Query("created_at", description="Field to sort by: created_at, expected_product, result, match_score"),
+    sort_order: Optional[str] = Query("desc", description="Sort order: asc or desc"),
 ) -> InspectionListResponse:
     # Validate date range
     if date_from and date_to and date_from > date_to:
@@ -438,6 +443,23 @@ def list_inspections(
             status_code=400,
             code="invalid_date_range",
             message=f"date_from ({date_from}) cannot be after date_to ({date_to})",
+        )
+
+    # Validate sort field against allowlist
+    if sort_by and sort_by not in InspectionRepository.ALLOWED_SORT_FIELDS:
+        allowed = list(InspectionRepository.ALLOWED_SORT_FIELDS.keys())
+        raise APIError(
+            status_code=400,
+            code="invalid_sort_field",
+            message=f"sort_by must be one of {allowed}, got '{sort_by}'",
+        )
+
+    # Validate sort order
+    if sort_order and sort_order.lower() not in ("asc", "desc"):
+        raise APIError(
+            status_code=400,
+            code="invalid_sort_order",
+            message=f"sort_order must be 'asc' or 'desc', got '{sort_order}'",
         )
 
     rows, total = InspectionRepository.list_inspections(
@@ -449,6 +471,9 @@ def list_inspections(
         date_from=date_from,
         date_to=date_to,
         demo=demo,
+        q=q,
+        sort_by=sort_by,
+        sort_order=sort_order,
     )
 
     items = [record_to_inspection_result(r) for r in rows]
@@ -458,6 +483,62 @@ def list_inspections(
         page=page,
         page_size=page_size,
     )
+
+
+@router.get("/inspections/{inspection_id}/files", response_model=InspectionFilesResponse)
+def get_inspection_files(inspection_id: str) -> InspectionFilesResponse:
+    """Check physical status of files on disk for inspection_id."""
+    res = StorageManager.get_inspection_files(inspection_id)
+    if not res:
+        raise APIError(
+            status_code=404,
+            code="not_found",
+            message=f"Inspection '{inspection_id}' not found",
+            request_id=inspection_id,
+        )
+    return InspectionFilesResponse(**res)
+
+
+@router.get("/inspections/{inspection_id}/download")
+def download_inspection_bundle(inspection_id: str):
+    """Download ZIP bundle containing original, annotated, result.json, and supporting files."""
+    zip_buf = StorageManager.create_inspection_zip(inspection_id)
+    if not zip_buf:
+        raise APIError(
+            status_code=404,
+            code="files_not_available",
+            message=f"No stored files available for inspection '{inspection_id}' to download",
+            request_id=inspection_id,
+        )
+
+    filename = f"inspection_{inspection_id}.zip"
+    return Response(
+        content=zip_buf.getvalue(),
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/inspections/{inspection_id}/result.json")
+def get_inspection_result_json(inspection_id: str):
+    """Directly download or view the immutable decision snapshot result.json."""
+    target_dir = StorageManager.get_inspection_dir(inspection_id)
+    if not target_dir:
+        raise APIError(
+            status_code=404,
+            code="not_found",
+            message=f"Inspection '{inspection_id}' not found",
+            request_id=inspection_id,
+        )
+    json_path = target_dir / "result.json"
+    if not json_path.is_file():
+        raise APIError(
+            status_code=404,
+            code="result_json_not_found",
+            message=f"result.json for inspection '{inspection_id}' not found",
+            request_id=inspection_id,
+        )
+    return FileResponse(str(json_path), media_type="application/json")
 
 
 @router.get("/inspections/{inspection_id}", response_model=InspectionResult)
