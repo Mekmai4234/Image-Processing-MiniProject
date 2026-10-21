@@ -1,15 +1,18 @@
 """Check evidence records without converting smoke tests to real-data acceptance."""
 import argparse
 import hashlib
+import json
+from collections import Counter
 from datetime import datetime
 from pathlib import Path
 import re
 import sys
 
-from dataset_tools import local_file, read_csv
+from dataset_tools import local_file, read_csv, write_new
 
 FIELDS = ('case_id status owner test_date commit tester data_kind evidence evidence_sha256 notes').split()
 KINDS = {'synthetic', 'real', 'browser', 'hardware', 'visual'}
+ACCEPTANCE_KINDS = {'real', 'browser', 'hardware', 'visual'}
 
 
 def validate_evidence(checklist, root):
@@ -47,13 +50,37 @@ def validate_evidence(checklist, root):
     return errors
 
 
+def summarize_evidence(checklist, root):
+    rows, digest = read_csv(checklist, FIELDS)
+    errors = validate_evidence(checklist, root)
+    passed_kinds = {row['data_kind'] for row in rows if row['status'] == 'passed'}
+    pending = [row['case_id'] for row in rows if row['status'] != 'passed']
+    return {'checklist_sha256': digest, 'records_consistent': not errors,
+            'ready_for_acceptance': not errors and not pending and ACCEPTANCE_KINDS <= passed_kinds,
+            'status_counts': dict(Counter(row['status'] for row in rows)),
+            'by_data_kind': {kind: dict(Counter(row['status'] for row in rows if row['data_kind'] == kind))
+                             for kind in sorted(KINDS)},
+            'missing_passed_evidence_kinds': sorted(ACCEPTANCE_KINDS - passed_kinds),
+            'pending_case_ids': pending, 'errors': errors,
+            'note': 'Record consistency is not system acceptance. Human review is still required; '
+                    'synthetic tests cannot replace real, hardware or visual evidence.'}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--checklist', required=True)
     parser.add_argument('--root', default=str(Path(__file__).resolve().parent))
+    parser.add_argument('--summary', help='Optional NEW JSON status report; never overwrite')
+    parser.add_argument('--require-complete', action='store_true',
+                        help='Fail unless all cases pass and real/browser/hardware/visual evidence exists')
     args = parser.parse_args()
     try:
-        errors = validate_evidence(args.checklist, args.root)
+        summary = summarize_evidence(args.checklist, args.root)
+        if args.summary:
+            write_new(args.summary, summary)
+        errors = summary['errors']
+        if args.require_complete and not summary['ready_for_acceptance']:
+            errors = [*errors, 'Acceptance incomplete: pending/failed cases or missing real/browser/hardware/visual evidence']
     except (OSError, ValueError) as exc:
         errors = [str(exc)]
     print('\n'.join(errors) if errors else 'OK: evidence records consistent; untested cases remain untested')

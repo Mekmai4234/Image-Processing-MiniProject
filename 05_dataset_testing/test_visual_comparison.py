@@ -35,3 +35,10 @@ class ScreenshotComparisonTests(unittest.TestCase):
             Image.new('RGB', (20, 10)).save(b)
             with self.assertRaisesRegex(ValueError, 'Viewport'):
                 compare(a, b)
+
+    def test_screenshot_cannot_be_its_own_reference(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / 'actual.png'
+            Image.new('RGB', (10, 10)).save(path)
+            with self.assertRaisesRegex(ValueError, 'separate files'):
+                compare(path, path)

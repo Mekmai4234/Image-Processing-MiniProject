@@ -14,7 +14,9 @@ def receipt():
                 'client_request_id': '10000000-0000-4000-8000-000000000001',
                 'expected_product': 'a', 'source_mode': 'webcam', 'config_version': 'real-v1',
                 'result': 'FAIL', 'reason': 'wrong_label', 'storage_status': 'failed',
-                'evidence': {'kind': 'single_view'},
+                'evidence': {'kind': 'single_view', 'supporting_images': [],
+                             'supporting_angles_deg': [], 'verified_coverage': False,
+                             'required_view_profile': None},
                 'timing_ms': {'orientation': 0, 'inspection': 12, 'storage': 3, 'total': 15}}}
 
 
@@ -70,3 +72,23 @@ class PredictionImportTests(unittest.TestCase):
             path.write_text('')
             with self.assertRaisesRegex(ValueError, 'No HTTP receipts'):
                 import_receipts(path)
+
+    def test_inconsistent_single_view_evidence_is_rejected(self):
+        for changes in ({'supporting_images': ['supporting/0.jpg']},
+                        {'supporting_angles_deg': [90]}, {'verified_coverage': True},
+                        {'required_view_profile': 'unvalidated-profile'},
+                        {'supporting_images': None}):
+            with self.subTest(changes=changes):
+                item = receipt()
+                item['response']['evidence'].update(changes)
+                with self.assertRaisesRegex(ValueError, 'Single-view receipt'):
+                    normalize(item)
+
+    def test_missing_evidence_and_malformed_timing_fail_clearly(self):
+        for field in ('evidence', 'timing_ms'):
+            for value in (None, [], 'invalid'):
+                with self.subTest(field=field, value=value):
+                    item = receipt()
+                    item['response'][field] = value
+                    with self.assertRaises(ValueError):
+                        normalize(item)

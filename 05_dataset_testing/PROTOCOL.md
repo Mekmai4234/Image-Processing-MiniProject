@@ -36,6 +36,8 @@ misplaced_label ต้องมี label_present=yes, visible_enough=yes, positi
 
 `response` ต้องเป็น payload ของ API จริง มี demo=false, IDs, evidence.kind=single_view, result/reason และ timing_ms ที่วัดจริง ไม่ใช่ object ว่างตามโครงสร้างข้างบน Operational error ให้เก็บ error response พร้อม context ของรอบนั้น; ตัวนำเข้าไม่เติม PASS ให้รายการที่ขาด และปฏิเสธ DEMO, mode/config ปนกัน, ID ซ้ำ และ multi-view ที่ปลอมเป็น single-view
 
+สำหรับ single_view ต้องมี supporting_images=[] และ supporting_angles_deg=[] พร้อม verified_coverage=false และไม่มี required_view_profile ที่อ้างว่าครบด้าน หาก evidence หรือ timing_ms ไม่ใช่ object เครื่องมือปฏิเสธด้วย error ที่ระบุสาเหตุ ไม่ปล่อยข้อมูลขัดกันเข้าประเมิน
+
 ```powershell
 .\05_dataset_testing\.venv\Scripts\python.exe -B 05_dataset_testing/import_predictions.py --receipts datasets/manifests/webcam-http.jsonl --output datasets/manifests/webcam-predictions.csv
 ```
@@ -57,6 +59,8 @@ misplaced_label ต้องมี label_present=yes, visible_enough=yes, positi
 ```powershell
 .\05_dataset_testing\.venv\Scripts\python.exe -B 05_dataset_testing/evidence.py --checklist 05_dataset_testing/integration-checklist.csv
 ```
+
+เพิ่ม `--summary path/to/new-status.json` เพื่อบันทึกจำนวนสถานะ/ชนิดข้อมูลและ case IDs ที่ค้าง หรือใช้ `--require-complete` เพื่อให้คำสั่ง fail เมื่อยังไม่ครบทุกเคสและยังไม่มี passed evidence ครบ real/browser/hardware/visual สถานะ records_consistent แยกจาก ready_for_acceptance; ต้องมี human review ก่อนรับงานจริงแม้ metadata ครบ
 
 ภาพใน [reports/browser](reports/browser) เป็น screenshot เว็บจริงที่ใช้ DEMO ไม่ใช่ภาพขวดจริง และไม่ใช่ reference mockup แต่ละหน้าถ่ายที่ 1586×992, 1366×768 และจอเล็ก 390×844 ข้อบกพร่องที่ตรวจพบอยู่ใน [DEFECTS.md](DEFECTS.md) ต้องให้เจ้าของ 01–04 แก้และตรวจซ้ำ
 

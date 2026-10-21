@@ -44,12 +44,19 @@ def normalize(receipt):
                 raise ValueError()
         except (KeyError, TypeError, ValueError, AttributeError) as exc:
             raise ValueError(f'Response needs canonical {field}') from exc
-    if response.get('evidence', {}).get('kind') != 'single_view':
+    evidence = response.get('evidence')
+    if not isinstance(evidence, dict) or evidence.get('kind') != 'single_view':
         raise ValueError('Multi-view results must not be counted as independent single-view cases')
+    if (evidence.get('supporting_images') != [] or evidence.get('supporting_angles_deg') != []
+            or evidence.get('verified_coverage') is not False
+            or evidence.get('required_view_profile') is not None):
+        raise ValueError('Single-view receipt needs empty supporting images/angles and verified_coverage=false')
     result, reason = response.get('result'), response.get('reason')
     if reason not in REASONS.get(result, set()):
         raise ValueError('Invalid result/reason')
-    values = response.get('timing_ms', {})
+    values = response.get('timing_ms')
+    if not isinstance(values, dict):
+        raise ValueError('Timings must be an object with measured values')
     timing = [values.get(key) for key in ('orientation', 'inspection', 'storage', 'total')]
     if any(type(v) not in (int, float) or not math.isfinite(v) or v < 0 for v in timing):
         raise ValueError('Timings must be measured finite nonnegative numbers')

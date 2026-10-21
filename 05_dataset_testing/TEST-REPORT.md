@@ -2,6 +2,8 @@
 
 ฐานแอปที่ตรวจ: `2569e7ced6e1f4fc788791ab0530b10faea2ace4` จาก develop พร้อม working tree ของงาน 05 รอบนี้ รายงาน JSON บันทึก dirty flag และ SHA-256 ของ source ที่ใช้ทดสอบ จึงไม่ได้อ้างว่าเครื่องมือใหม่อยู่ใน base commit แล้ว
 
+รอบตรวจซ้ำตามใบงานทั้งสองฉบับ ใช้ฐานเครื่องมือ `fbfe73c4823539252129920200aea7d9a10c8ed3` พร้อม working tree ที่แก้เฉพาะ 05 ดู [smoke-recheck-2026-10-21.json](reports/smoke-recheck-2026-10-21.json) ซึ่งเก็บ commit/dirty flag/source hashes ตามที่รันจริง หลักฐาน browser เดิมยังคงอ้างฐานเดิม ไม่อ้างว่าถ่าย browser ใหม่ในรอบนี้
+
 ผู้ใช้ยืนยันว่าไม่มีชุดภาพจริงและ reference PNG จึงยังไม่มี accuracy/final-test metrics หรือ visual comparison ที่ผ่านการรับรอง ผลด้านล่างเป็นการทดสอบ code paths และเว็บจริงด้วย DEMO เท่านั้น
 
 ## สภาพแวดล้อมและคำสั่ง
@@ -25,7 +27,7 @@ npm ci --prefix apps/web
 
 | รายการ | ผล / ขอบเขต |
 |---|---|
-| Dataset/เครื่องมือ 05 | 38 tests ผ่าน; synthetic fixtures เท่านั้น |
+| Dataset/เครื่องมือ 05 | รอบล่าสุด 44 tests ผ่าน (ฐานเดิม 38 + เพิ่ม 6); synthetic fixtures เท่านั้น |
 | Repository regression | 12 tests ผ่าน พร้อม repository-check |
 | Backend/03 detector/04 HTTP และ storage | 150 test cases ผ่าน + 94 subtests ผ่าน; JUnit นับรวม 244 |
 | Frontend Vitest | 71 tests ผ่าน |
@@ -37,6 +39,18 @@ npm ci --prefix apps/web
 Backend ใช้ TestClient เรียก routes จริงและ detector จริงบนภาพสังเคราะห์ ผ่าน temporary DB/files ของ fixtures เดิม ไม่ใช้ runtime storage ผู้ใช้ มี deprecation warning จาก FastAPI/Starlette test client กับ httpx หนึ่งรายการ ไม่ลด assertions หรือ skip เพื่อให้ผ่าน
 
 Smoke runner ปฏิเสธ suite ที่ไม่มี tests, มี failures/errors/skips หรือ dependencies ไม่พร้อม เก็บ failure report ด้วยเมื่อคำสั่งทดสอบล้มเหลว ไม่ถือ synthetic suite เป็นหลักฐานรับรอง accuracy
+
+## การตรวจซ้ำและ acceptance gate รอบนี้
+
+- อ่านใบงานข้อตกลงร่วมและ 05-A ถึง 05-E แล้วสรุปสถานะใน [STATUS.md](STATUS.md) สิ่งที่ยังต้องใช้ข้อมูลจริง/ทีมยังไม่ถือว่าจบ
+- เพิ่ม regression ของ HTTP single-view receipts ที่มี supporting images/angles หรือ verified coverage ขัดกับ single-view และข้อมูล evidence/timing ผิดชนิด เพื่อไม่ให้ปนเข้า metrics
+- เพิ่มสรุป checklist ที่แยก records_consistent กับ ready_for_acceptance และ strict CLI gate เมื่อไม่มีหลักฐาน real/browser/hardware/visual ครบ
+- ปฏิเสธใช้ screenshot ไฟล์เดียวเป็น actual และ reference โดยตรง; การตรวจที่มาของไฟล์ reference ที่คัดลอกยังต้องให้มนุษย์ทวน
+- รัน smoke ทั้งหมดใหม่ได้ 44 dataset + 12 repository + 150 backend/94 subtests + 71 frontend และ build ผ่าน ไม่มี test skips; warning ของ TestClient เดิมหนึ่งรายการยังรายงานไว้
+- รัน evidence.py แบบตรวจ records ผ่าน แต่ `--require-complete` คืน 1 ตามที่คาด เพราะยังมีเคสค้าง/failed และข้อมูลจริง/กล้อง/visual ไม่ครบ รายละเอียดอยู่ใน [acceptance status](reports/acceptance-status-2026-10-21.json) นี่ไม่ใช่ test regression ที่ต้องซ่อนหรือแก้ expected ให้เขียว
+- ไม่รวมไฟล์เครื่องมือ/แบบถ่ายภาพส่ง 02 จากคำขอที่ยกเลิก ไฟล์เหล่านั้นถูกเก็บสำรองเฉพาะ local ignored folder และไม่อยู่ใน tests หรือ commit รอบนี้
+
+คำสั่ง smoke รอบล่าสุดใช้ `05_dataset_testing/.venv/qa311/Scripts/python.exe -B 05_dataset_testing/run_checks.py --suite all --npm-cli 05_dataset_testing/.venv/npm-tools/package/bin/npm-cli.js --report 05_dataset_testing/reports/smoke-recheck-2026-10-21.json` บน Windows ไม่มีการเปลี่ยน package/lock ของ frontend หรือโค้ด backend
 
 ## การแก้และตรวจเฉพาะ 05
 

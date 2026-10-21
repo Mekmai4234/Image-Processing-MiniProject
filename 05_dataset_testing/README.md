@@ -4,6 +4,8 @@
 
 ## เตรียมเครื่องและทดสอบ
 
+ดู [สถานะตามใบงาน 05-A ถึง 05-E](STATUS.md) และ [สรุปหลักฐานที่ยังไม่ครบ](reports/acceptance-status-2026-10-21.json) แยกจากผล smoke tests การตรวจ records ผ่านไม่ได้แปลว่าระบบผ่าน real-data/hardware/visual acceptance
+
 รันจาก repository root บน PowerShell:
 
 ```powershell

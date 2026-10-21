@@ -4,8 +4,10 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+import subprocess
+import sys
 
-from evidence import FIELDS, validate_evidence
+from evidence import FIELDS, validate_evidence, summarize_evidence
 from run_checks import junit_counts, require_counts
 
 
@@ -73,3 +75,67 @@ class QualityGateTests(unittest.TestCase):
             for row in rows:
                 self.assertEqual(split_by_id.setdefault(row[field], row['split']), row['split'])
                 self.assertEqual('not_started', row['status'])
+
+    def evidence_fixture(self, root, kinds):
+        evidence = root / 'result.json'
+        evidence.write_text('{"fixture": true}', encoding='utf-8')
+        path = root / 'cases.csv'
+        rows = []
+        for index, kind in enumerate(kinds):
+            row = dict.fromkeys(FIELDS, '')
+            row.update(case_id=f'case-{index}', status='passed', owner='05', data_kind=kind,
+                       test_date='2026-10-21T00:00:00Z', commit='a' * 40, tester='fixture only',
+                       evidence='result.json', evidence_sha256=hashlib.sha256(evidence.read_bytes()).hexdigest())
+            rows.append(row)
+        with path.open('w', newline='', encoding='utf-8') as stream:
+            writer = csv.DictWriter(stream, fieldnames=FIELDS)
+            writer.writeheader()
+            writer.writerows(rows)
+        return path
+
+    def test_consistent_synthetic_records_are_not_real_acceptance(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            path = self.evidence_fixture(root, ['synthetic'])
+            report = summarize_evidence(path, root)
+            self.assertTrue(report['records_consistent'])
+            self.assertFalse(report['ready_for_acceptance'])
+            self.assertEqual({'passed': 1}, report['status_counts'])
+            self.assertEqual(['browser', 'hardware', 'real', 'visual'], report['missing_passed_evidence_kinds'])
+
+    def test_all_kinds_and_cases_required_with_valid_hashes(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            path = self.evidence_fixture(root, ['real', 'hardware', 'browser', 'visual'])
+            self.assertTrue(summarize_evidence(path, root)['ready_for_acceptance'])
+            with path.open(encoding='utf-8', newline='') as stream:
+                rows = list(csv.DictReader(stream))
+            rows[0].update(status='blocked', notes='No real photos')
+            with path.open('w', encoding='utf-8', newline='') as stream:
+                writer = csv.DictWriter(stream, fieldnames=FIELDS)
+                writer.writeheader()
+                writer.writerows(rows)
+            report = summarize_evidence(path, root)
+            self.assertTrue(report['records_consistent'])
+            self.assertFalse(report['ready_for_acceptance'])
+            self.assertEqual(['case-0'], report['pending_case_ids'])
+            (root / 'result.json').write_text('changed', encoding='utf-8')
+            report = summarize_evidence(path, root)
+            self.assertFalse(report['records_consistent'])
+            self.assertFalse(report['ready_for_acceptance'])
+
+    def test_cli_record_check_and_strict_acceptance_are_distinct(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            path = self.evidence_fixture(root, ['synthetic'])
+            report = root / 'summary.json'
+            command = [sys.executable, '-B', str(Path(__file__).with_name('evidence.py')),
+                       '--root', str(root), '--checklist', str(path), '--summary', str(report)]
+            result = subprocess.run(command, capture_output=True, text=True)
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertFalse(json.loads(report.read_text())['ready_for_acceptance'])
+            command[-1] = str(root / 'strict-summary.json')
+            result = subprocess.run([*command, '--require-complete'], capture_output=True, text=True)
+            self.assertEqual(1, result.returncode, result.stderr)
+            self.assertIn('Acceptance incomplete', result.stdout)
+            self.assertFalse(json.loads((root / 'strict-summary.json').read_text())['ready_for_acceptance'])

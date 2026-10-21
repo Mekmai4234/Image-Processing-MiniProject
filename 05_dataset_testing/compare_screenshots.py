@@ -10,6 +10,8 @@ from dataset_tools import write_new
 
 
 def compare(actual, reference, masks=()):
+    if Path(actual).samefile(reference):
+        raise ValueError('Actual and reference must be separate files; do not compare a screenshot to itself')
     with Image.open(actual) as source, Image.open(reference) as target:
         source.load()
         target.load()
