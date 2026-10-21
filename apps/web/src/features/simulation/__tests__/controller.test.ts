@@ -69,7 +69,7 @@ describe('SimulationController with the DEMO mock', () => {
     await runUntil(controller, 'WAIT_RESULT')
     await run(controller, 15_000)
     expect(controller.getState().phase).toBe('WAIT_RESULT')
-    expect(controller.getSnapshot().current_station).toBe('camera_turntable')
+    expect(controller.getSnapshot().current_station).toBe('inspect_camera')
     await runUntil(controller, 'SORT', 10_000)
   })
 

@@ -3,17 +3,21 @@ import type { MachineState, Motion, Route } from './types'
 /**
  * Simulated geometry and timing. These numbers describe the virtual line only; they are not
  * measurements of any real machine (02_simulation_3d/env.txt).
+ *
+ * Line (x grows left → right): dispenser → infeed belt → ORIENT turntable (locator camera)
+ * → INSPECT enclosure (inspection camera) → REJECT pusher → REVIEW pusher → PASS belt.
  */
 export const LAYOUT = {
   belt_y: 0.62,
   turntable_top_y: 0.7,
-  dispenser_x: -7.2,
-  turntable_x: -3.6,
-  reject_x: 0.2,
-  review_x: 2.6,
-  pass_gate_x: 4.2,
-  pass_end_x: 6.6,
-  tray_z: 1.75,
+  dispenser_x: -8.4,
+  turntable_x: -5.0,
+  inspect_x: -1.7,
+  reject_x: 1.3,
+  review_x: 3.3,
+  pass_gate_x: 4.9,
+  pass_end_x: 7.6,
+  tray_z: 1.8,
   pusher_rest_z: -0.95,
   /** Pusher plate front at full stroke. */
   pusher_reach_z: 0.31,
@@ -53,6 +57,12 @@ export function rotateMotion(fromDeg: number, toDeg: number): Motion {
   }
 }
 
+/** Turntable → inspection enclosure. The model keeps the angle that was chosen. */
+export function toInspectMotion(): Motion {
+  const distance = Math.abs(LAYOUT.inspect_x - LAYOUT.turntable_x)
+  return { kind: 'to_inspect', elapsed: 0, duration: distance / DURATIONS.belt_units_per_s + 0.3 }
+}
+
 export function settleMotion(): Motion {
   return { kind: 'settle', elapsed: 0, duration: DURATIONS.settle }
 }
@@ -62,7 +72,7 @@ export function captureMotion(): Motion {
 }
 
 export function toDivertMotion(route: Route): Motion {
-  const distance = Math.abs(divertX(route) - LAYOUT.turntable_x)
+  const distance = Math.abs(divertX(route) - LAYOUT.inspect_x)
   return { kind: 'to_divert', elapsed: 0, duration: distance / DURATIONS.belt_units_per_s }
 }
 
@@ -85,6 +95,8 @@ const easeInOut = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2,
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t
 const clamp01 = (t: number) => Math.min(1, Math.max(0, t))
 
+export type BottleStation = 'none' | 'belt' | 'turntable' | 'inspect' | 'tray' | 'pass'
+
 export interface Pose {
   visible: boolean
   x: number
@@ -97,11 +109,12 @@ export interface Pose {
   /** Pusher extension 0..1. */
   reject_pusher: number
   review_pusher: number
-  /** Camera flash intensity 0..1. */
+  /** Inspection camera flash intensity 0..1. */
   flash: number
-  /** Whether the belt surface should appear to move. */
-  belt_moving: boolean
-  turntable_spinning: boolean
+  /** Locator camera at the turntable is waiting on a locate request. */
+  locating: boolean
+  /** Where the bottle physically is, so the renderer can move belts/rollers under it only. */
+  station: BottleStation
 }
 
 /**
@@ -119,8 +132,8 @@ export function poseOf(state: MachineState): Pose {
     reject_pusher: 0,
     review_pusher: 0,
     flash: 0,
-    belt_moving: false,
-    turntable_spinning: false,
+    locating: false,
+    station: 'turntable',
   }
   const motion = state.motion
   const t = progressOf(motion)
@@ -129,30 +142,38 @@ export function poseOf(state: MachineState): Pose {
   switch (state.phase) {
     case 'IDLE':
       pose.visible = false
+      pose.station = 'none'
       return pose
     case 'FEED': {
-      const e = easeInOut(t)
-      pose.x = lerp(LAYOUT.dispenser_x, LAYOUT.turntable_x, e)
+      pose.x = lerp(LAYOUT.dispenser_x, LAYOUT.turntable_x, easeInOut(t))
       pose.y = lerp(LAYOUT.belt_y, LAYOUT.turntable_top_y, clamp01((t - 0.85) / 0.15))
-      pose.belt_moving = t < 1
+      pose.station = t < 0.85 ? 'belt' : 'turntable'
       return pose
     }
     case 'ORIENT':
-    case 'SETTLE':
-      pose.turntable_spinning = motion?.kind === 'rotate' && t < 1
+      pose.locating = state.orient?.sub === 'locating'
       return pose
+    case 'SETTLE':
+      if (motion?.kind === 'rotate') return pose
+      if (motion?.kind === 'to_inspect') {
+        pose.x = lerp(LAYOUT.turntable_x, LAYOUT.inspect_x, easeInOut(t))
+        pose.y = lerp(LAYOUT.turntable_top_y, LAYOUT.belt_y, clamp01(t / 0.12))
+        pose.station = t < 0.12 ? 'turntable' : 'belt'
+        return pose
+      }
+      return atInspect(pose)
     case 'INSPECT':
+      atInspect(pose)
       pose.flash = motion?.kind === 'capture' ? Math.sin(Math.PI * t) : 0
       return pose
     case 'WAIT_RESULT':
-      return pose
+      return atInspect(pose)
     case 'ERROR':
-      return pose
+      return state.error_from?.phase === 'WAIT_RESULT' ? atInspect(pose) : pose
     case 'SORT': {
-      const e = easeInOut(t)
-      pose.x = lerp(LAYOUT.turntable_x, divertX(route), e)
-      pose.y = lerp(LAYOUT.turntable_top_y, LAYOUT.belt_y, clamp01(t / 0.12))
-      pose.belt_moving = t < 1
+      pose.x = lerp(LAYOUT.inspect_x, divertX(route), easeInOut(t))
+      pose.y = LAYOUT.belt_y
+      pose.station = 'belt'
       return pose
     }
     case 'OUTPUT':
@@ -162,12 +183,18 @@ export function poseOf(state: MachineState): Pose {
   }
 }
 
+function atInspect(pose: Pose): Pose {
+  pose.x = LAYOUT.inspect_x
+  pose.y = LAYOUT.belt_y
+  pose.station = 'inspect'
+  return pose
+}
+
 function outputPose(pose: Pose, route: Route, t: number): Pose {
   pose.y = LAYOUT.belt_y
   if (route === 'pass') {
     pose.x = lerp(LAYOUT.pass_gate_x, LAYOUT.pass_end_x, easeInOut(t))
-    pose.y = lerp(LAYOUT.belt_y, LAYOUT.belt_y - 0.18, clamp01((t - 0.6) / 0.4))
-    pose.belt_moving = t < 1
+    pose.station = t < 1 ? 'belt' : 'pass'
     return pose
   }
   pose.x = divertX(route)
@@ -179,8 +206,9 @@ function outputPose(pose: Pose, route: Route, t: number): Pose {
   const contactZ = Math.max(0, plateFront + LAYOUT.bottle_radius)
   const slide = easeInOut(clamp01((t - 0.4) / 0.35))
   pose.z = t < 0.4 ? contactZ : lerp(PUSHED_Z, LAYOUT.tray_z, slide)
-  pose.y = lerp(LAYOUT.belt_y, LAYOUT.belt_y - 0.3, slide)
-  pose.tilt = slide * 0.25
+  pose.y = lerp(LAYOUT.belt_y, LAYOUT.belt_y - 0.42, slide)
+  pose.tilt = slide * 0.22
+  pose.station = slide > 0 ? 'tray' : 'belt'
   if (route === 'reject') pose.reject_pusher = ext
   else pose.review_pusher = ext
   return pose

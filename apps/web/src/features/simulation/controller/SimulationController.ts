@@ -2,6 +2,7 @@ import type { InspectionResult, SearchStatus } from '../api/contract'
 import { ApiError, isApiError, type InspectionPort } from '../api/port'
 import { validateJob, type ValidationIssue } from '../machine/evidence'
 import { displayState, initialState, transition } from '../machine/machine'
+import { poseOf } from '../machine/motion'
 import type {
   DisplayState,
   Effect,
@@ -15,7 +16,7 @@ import type {
   ViewMode,
 } from '../machine/types'
 
-export type Station = 'conveyor' | 'camera_turntable' | 'pass_output' | 'reject_tray' | 'review_lane'
+export type Station = 'conveyor' | 'orient_turntable' | 'inspect_camera' | 'pass_output' | 'reject_tray' | 'review_lane'
 
 export interface SimulationSnapshot {
   state: DisplayState
@@ -344,6 +345,7 @@ export class SimulationController {
       s.buffered.length,
       this.speed,
       s.motion?.kind ?? '',
+      poseOf(s).station,
     ].join('|')
   }
 
@@ -362,7 +364,7 @@ export class SimulationController {
       job_id: job?.job_id ?? null,
       inspection_id: s.result?.inspection_id ?? null,
       mode: job?.mode ?? null,
-      current_station: stationOf(s.phase, s.route),
+      current_station: stationOf(s),
       current_angle_deg:
         job && currentViewIndex !== null ? (job.views[currentViewIndex]?.angle_deg ?? null) : null,
       orient:
@@ -388,22 +390,21 @@ export class SimulationController {
   }
 }
 
-export function stationOf(phase: Phase, route: Route | null): Station | null {
-  switch (phase) {
-    case 'IDLE':
+/** Where the bottle is, derived from the same pose the renderer draws (single source of truth). */
+export function stationOf(state: MachineState): Station | null {
+  switch (poseOf(state).station) {
+    case 'none':
       return null
-    case 'FEED':
-    case 'SORT':
+    case 'belt':
       return 'conveyor'
-    case 'ORIENT':
-    case 'SETTLE':
-    case 'INSPECT':
-    case 'WAIT_RESULT':
-    case 'ERROR':
-      return 'camera_turntable'
-    case 'OUTPUT':
-    case 'COMPLETE':
-      return route === 'reject' ? 'reject_tray' : route === 'review' ? 'review_lane' : 'pass_output'
+    case 'turntable':
+      return 'orient_turntable'
+    case 'inspect':
+      return 'inspect_camera'
+    case 'tray':
+      return state.route === 'review' ? 'review_lane' : 'reject_tray'
+    case 'pass':
+      return 'pass_output'
   }
 }
 

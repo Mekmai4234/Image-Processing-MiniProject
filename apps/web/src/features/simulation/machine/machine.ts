@@ -7,6 +7,7 @@ import {
   rotateMotion,
   settleMotion,
   toDivertMotion,
+  toInspectMotion,
 } from './motion'
 import {
   PAUSABLE_PHASES,
@@ -138,7 +139,7 @@ function onSegmentDone(state: MachineState, now: number): Transition {
       if (job.mode === 'single_view') {
         // Single photo: skip the search entirely; nothing on the far side is invented.
         const plan = planInspection(job, 'not_requested', [], null)
-        return same({ ...state, phase: 'SETTLE', motion: settleMotion(), plan, request: buildInspectionRequest(job, plan) })
+        return same({ ...state, phase: 'SETTLE', motion: toInspectMotion(), plan, request: buildInspectionRequest(job, plan) })
       }
       const orient: OrientProgress = {
         cursor: 0,
@@ -158,7 +159,9 @@ function onSegmentDone(state: MachineState, now: number): Transition {
       return issueLocate({ ...state, motion: null, angle_deg: angleOfCursor(state, state.orient.cursor) })
     }
     case 'SETTLE': {
-      if (kind === 'rotate') return same({ ...state, motion: settleMotion() })
+      // rotate back to the chosen photo's angle → travel to the inspection enclosure → settle
+      if (kind === 'rotate') return same({ ...state, motion: toInspectMotion() })
+      if (kind === 'to_inspect') return same({ ...state, motion: settleMotion() })
       return same({ ...state, phase: 'INSPECT', motion: captureMotion() })
     }
     case 'INSPECT': {
@@ -279,7 +282,7 @@ function finishOrient(state: MachineState, orient: OrientProgress, status: Searc
   const request = buildInspectionRequest(job, plan)
   const primaryAngle = job.views[plan.primary_view_index]?.angle_deg ?? state.angle_deg
   // Turn back to the photo that will actually be sent, so the model shows the angle used.
-  const motion = primaryAngle !== state.angle_deg ? rotateMotion(state.angle_deg, primaryAngle) : settleMotion()
+  const motion = primaryAngle !== state.angle_deg ? rotateMotion(state.angle_deg, primaryAngle) : toInspectMotion()
   return same({
     ...state,
     phase: 'SETTLE',
