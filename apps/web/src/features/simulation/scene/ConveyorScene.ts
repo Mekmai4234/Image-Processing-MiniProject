@@ -55,7 +55,7 @@ const VIEW_TARGET = new THREE.Vector3(-1.0, 0.7, 0.1)
 const VIEW_DIRECTION = new THREE.Vector3(-0.5, 0.45, 0.74).normalize()
 /**
  * Points that must stay in frame. Like the reference, the view is close: the far-left dispenser
- * and the tail of the PASS belt may be cropped, but every station and destination stays visible.
+ * may be cropped, but every station, destination and the finished bottle's verdict tag stay visible.
  */
 const FIT_POINTS = [
   new THREE.Vector3(LAYOUT.turntable_x - LAYOUT.turntable_radius, 0.7, 0),
@@ -63,6 +63,8 @@ const FIT_POINTS = [
   new THREE.Vector3(LAYOUT.turntable_x, 2.6, -1.2),
   new THREE.Vector3(LAYOUT.inspect_x, 3.3, -0.9),
   new THREE.Vector3(LAYOUT.pass_end_x, 1.9, 0.3),
+  // Verdict tag above the bottle when it stops at the end of the PASS belt (sprite half-width ≈ 0.65).
+  new THREE.Vector3(LAYOUT.pass_end_x + 0.7, 2.25, 0.25),
   new THREE.Vector3(LAYOUT.pass_end_x, 0.6, -0.5),
   new THREE.Vector3(LAYOUT.review_x + 0.6, 0.1, LAYOUT.tray_z + 0.5),
   new THREE.Vector3(LAYOUT.reject_x - 0.6, 0.1, LAYOUT.tray_z + 0.5),

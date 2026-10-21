@@ -50,7 +50,7 @@
 .vv-sim__monitor img { display: block; width: 100%; height: 150px; object-fit: contain; background: #020617; }
 .vv-sim__monitor-empty { height: 150px; display: grid; place-items: center; color: #64748b; background: #020617; }
 .vv-sim__monitor figcaption { padding: 5px 8px; font-size: 12px; }
-.vv-sim__footnote { position: absolute; left: 12px; right: 12px; bottom: 6px; margin: 0; font-size: 11px; color: #94a3b8; }
+.vv-sim__footnote { position: absolute; left: 12px; bottom: 6px; max-width: calc(100% - 24px); margin: 0; padding: 3px 8px; border-radius: 6px; background: rgba(4, 19, 38, 0.82); font-size: 11px; color: #cbd5e1; }
 .vv-sim__fallback { position: absolute; inset: 0; display: grid; place-content: center; gap: 12px; padding: 24px; text-align: center; }
 .vv-sim__fallback ol { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; list-style: none; padding: 0; margin: 0; }
 .vv-sim__fallback li { position: relative; padding: 14px 16px; border-radius: 10px; background: #13263d; border: 1px solid #1e3a5f; }
