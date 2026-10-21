@@ -1,6 +1,6 @@
 # features/simulation — งาน 02 (Three.js conveyor)
 
-สถานะ: **ใช้ได้กับ mock (DEMO) เท่านั้น** ยังไม่ได้ต่อ API จริง เพราะ app shell ของ 01 และ endpoint ของ 04 ยังไม่มี
+สถานะ: ต่อ DataSource ของ 01 ได้แล้ว (DEMO และ API จริง) แต่ยังไม่ได้ฝังในหน้า Simulation (รอ 01 อนุญาตแก้ SimulationPage)
 อ้างอิง [API contract v0.2](../../../../../docs/api-contract.md) และ [architecture](../../../../../docs/architecture.md)
 
 ## โครงสร้าง
@@ -10,27 +10,29 @@
 | `machine/` | state machine แบบ pure function (`transition`) + การคำนวณ evidence + ตำแหน่ง (`poseOf`) ไม่มี timer/fetch/Three.js |
 | `controller/` | `SimulationController` รัน effect: เรียก API พร้อม AbortController และ timeout เวลาจริง, simulation clock, กันนับซ้ำ |
 | `scene/` | `ConveyorScene` วาดจาก state อย่างเดียว + `FallbackDiagram` เมื่อไม่มี WebGL |
-| `api/` | `InspectionPort`, mock (DEMO), adapter HTTP ชั่วคราว, type ของ contract |
+| `api/` | `InspectionPort`, `createDataSourcePort(ds)` ต่อ DataSource ของ 01, mock สำหรับ test, type จาก `src/types/inspection.ts` |
 | `SimulationScene.tsx` | React component ให้ 01 ฝัง |
 
 ## วิธีฝังในหน้า Simulation (สำหรับ 01)
 
 ```tsx
-import { SimulationScene, machineConfigFrom, parseSimulationDefaults } from '@/features/simulation'
+import { SimulationScene, createDataSourcePort, machineConfigFrom, parseSimulationDefaults, toJobInput } from '../features/simulation'
 
+const { ds, catalog } = useAppData()
+const port = useMemo(() => createDataSourcePort(ds), [ds])          // สลับ DEMO/API จริงตาม ds
 // defaults มาจาก GET /api/products → simulation_defaults (ไม่อ่าน .env จาก browser)
-const config = machineConfigFrom(parseSimulationDefaults(products) ?? undefined)
+const config = useMemo(() => machineConfigFrom(parseSimulationDefaults(catalog) ?? undefined), [catalog])
 
 <SimulationScene
   ref={sceneRef}                // start(job) / pause / resume / reset / retry / replay / setSpeed
-  port={port}                   // adapter ของ client ร่วม หรือ MockInspectionPort (แสดงป้าย DEMO)
-  config={config}               // เปลี่ยนค่า → เปลี่ยน key เพื่อ remount
+  port={port}                   // port/config ใหม่ = ทิ้งงานเดิมแล้วสร้างฉากใหม่ (ต้อง useMemo)
+  config={config}
   onSnapshot={setSnapshot}      // สถานะ/มุม/สถานี/ผล/error (ไม่ยิงทุกเฟรม)
   onCompleted={countAndRefresh} // ครั้งเดียวต่อ inspection_id เมื่อขวดถึงปลายทาง → ใช้นับสถิติ
 />
 ```
 
-`sceneRef.current.start({ expected_product, views: [{ angle_deg, image }] })` คืนรายการปัญหาของ input (ว่าง = เริ่มแล้ว)
+`sceneRef.current.start(toJobInput(product, views))` คืนรายการปัญหาของ input (ว่าง = เริ่มแล้ว) — `views` คือ `{ blob, name, angle }` แบบเดียวกับ `lib/views`
 Three.js มีขนาดใหญ่ แนะนำให้ 01 โหลดหน้า Simulation ด้วย `React.lazy`
 
 ## ข้อตกลงที่โค้ดบังคับ
@@ -59,15 +61,14 @@ Three.js มีขนาดใหญ่ แนะนำให้ 01 โหลด
 
 ## การทดสอบ
 
-ยังไม่มี package.json ใน `apps/web` จึงทดสอบด้วย harness นอก repo (Vite + Vitest + Playwright)
-หลัง 01 ตั้ง app แล้วให้ย้ายคำสั่งเข้า `apps/web/package.json`:
+รันใน `apps/web`: `npm test` และ `npm run build`
 
-- unit: `vitest run` ครอบ `__tests__/*.test.ts` (44 กรณี: transition ทุกสถานะ, pause/reset/retry/replay, evidence, controller + mock)
-- e2e (harness): PASS/FAIL/REVIEW, ERROR→retry, pause ระหว่างดัน, replay ไม่นับ, remount 15 รอบไม่มี loop ค้าง, WebGL fallback
+- unit: `__tests__/*.test.ts` 52 กรณี — transition ทุกสถานะ, pause/reset/retry/replay, evidence, controller + mock
+  และ controller + `createDataSourcePort` กับ DEMO DataSource ของ 01 (PASS, หันหนีทุกมุม → REVIEW, 503 → retry, storage failed)
+- e2e (harness นอก repo รอบ M1): PASS/FAIL/REVIEW, ERROR→retry, pause ระหว่างดัน, replay ไม่นับ, remount 15 รอบไม่มี loop ค้าง, WebGL fallback
 
 ## ข้อจำกัดที่รู้อยู่
 
 - ยังไม่ได้ทดสอบกับ API จริงหรือภาพขวดจริงจาก 05
-- `api/contract.ts` เป็นสำเนา type ชั่วคราว ต้องเปลี่ยนไปใช้ `src/types/inspection.ts` เมื่อ 01 สร้าง
-- `api/httpPort.ts` เป็น adapter ชั่วคราว ต้องเปลี่ยนไปใช้ client ร่วมของ 01
+- ยังไม่ได้ฝังในหน้า Simulation จริง (รอ 01)
 - frame rate วัดได้แค่บน software renderer ในเครื่องทดสอบ ต้องวัดซ้ำบน notebook ของทีม
