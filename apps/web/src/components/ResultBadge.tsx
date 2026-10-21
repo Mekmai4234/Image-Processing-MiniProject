@@ -7,13 +7,19 @@ type Tone = InspectionResultValue | 'ERROR'
 const ICON = { PASS: CheckCircle2, FAIL: XCircle, REVIEW: Clock3, ERROR: AlertOctagon }
 
 /** สีอย่างเดียวไม่พอ: มีไอคอน + รหัสผล + คำไทยเสมอ */
-export function ResultBadge({ result, size }: { result: Tone; size?: 'lg' }) {
+export function ResultBadge({ result, size, detail }: { result: Tone; size?: 'lg'; detail?: string }) {
   const Icon = ICON[result]
   const text = result === 'ERROR' ? 'ระบบขัดข้อง' : RESULT_LABEL[result]
   return (
     <span className={`badge ${result} ${size ?? ''}`}>
       <Icon size={size === 'lg' ? 18 : 14} aria-hidden="true" />
       {result}
+      {detail && (
+        <>
+          <span className="badge-sep" aria-hidden="true">|</span>
+          <span className="badge-detail">{detail}</span>
+        </>
+      )}
       <span className="visually-hidden"> {text}</span>
     </span>
   )

@@ -289,6 +289,8 @@ input[type='date']::-webkit-calendar-picker-indicator { filter: invert(0.8); }
 .badge.REVIEW { color: var(--review); background: var(--review-soft); }
 .badge.ERROR { color: var(--error); background: var(--error-soft); }
 .badge.lg { font-size: 1rem; padding: 6px 14px; }
+.badge-sep { opacity: 0.55; font-weight: 400; }
+.badge-detail { text-transform: uppercase; letter-spacing: 0.02em; }
 
 .demo-tag {
   display: inline-flex; align-items: center;
