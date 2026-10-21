@@ -722,6 +722,8 @@ export class ConveyorScene {
     const texture = new THREE.CanvasTexture(canvas)
     texture.colorSpace = THREE.SRGBColorSpace
     const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, depthWrite: false, transparent: true }))
+    // Draw labels after the other transparent parts (floor grid, glass) so no line crosses the text.
+    sprite.renderOrder = 10
     sprite.scale.set(width, width / 4, 1)
     this.drawSprite(sprite, text, color, background)
     return sprite
