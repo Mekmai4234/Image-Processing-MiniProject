@@ -1,0 +1,62 @@
+{
+  "commit": "f4872637d3ca769fce2aef3ae0eab8711fc39d20",
+  "scope": "actual HTTP readiness probe; not detector accuracy or accepted dataset",
+  "backend_config_version": "v0.2",
+  "detector_ready": false,
+  "catalog": {
+    "config_version": "v0.2",
+    "products": [
+      {
+        "product_id": "bottle_a",
+        "display_name": "Bottle A — รอเลือกยี่ห้อและรุ่นจริง",
+        "brand": null,
+        "size_ml": null,
+        "reference_paths": [],
+        "validated": false
+      },
+      {
+        "product_id": "bottle_b",
+        "display_name": "Bottle B — รอเลือกยี่ห้อและรุ่นจริง",
+        "brand": null,
+        "size_ml": null,
+        "reference_paths": [],
+        "validated": false
+      }
+    ],
+    "simulation_defaults": {
+      "max_rotation_deg": 360,
+      "rotation_step_deg": 30
+    }
+  },
+  "attempts": 7,
+  "http_statuses": [
+    503,
+    503,
+    503,
+    503,
+    503,
+    503,
+    503
+  ],
+  "history_total": 0,
+  "temporary_storage": true,
+  "physical_webcam_used": false,
+  "ground_truth_available": false,
+  "final_evaluation_performed": false,
+  "receipt_sha256": "f8342bf42bd51240b8ba103193d6bfec7c50dc299e686efeea5f527569dd7733",
+  "prediction_csv_sha256": "cf6d913f1eabc704cf54f2d7d871b964b728e76c45fc2be076e3c7306d50f057",
+  "imported_cases": 7,
+  "error_codes": [
+    "inspection_unavailable",
+    "inspection_unavailable",
+    "inspection_unavailable",
+    "inspection_unavailable",
+    "inspection_unavailable",
+    "inspection_unavailable",
+    "inspection_unavailable"
+  ],
+  "source_files_sha256": {
+    "05_dataset_testing/probe_backend.py": "2c8d30f1f4f68bb7d49c867e2350d524c7d961f6915c8e7511f739d06d312f38",
+    "05_dataset_testing/import_predictions.py": "1224b44a11c3c441cd50adaab85bdb216cff789b1f8789c4ab2d3247afd60dc9"
+  }
+}

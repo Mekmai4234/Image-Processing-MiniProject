@@ -1,5 +1,7 @@
 # งาน 05 — Dataset และ Testing
 
+รอบดำเนินการต่อ 22 ตุลาคม 2026: เพิ่ม [HTTP readiness probe และ component browser harness](EXECUTION-2026-10-22.md) โดยไม่แก้แอปของ 01–04 เรียก Backend จริงโดยไม่ใช้ DEMO ได้ 7 operational errors เพราะ config ยังไม่พร้อม; harness WebGL ของ 02 ทำงานด้วยข้อมูลจำลองและแยกจาก integrated route สิ่งที่ต้องใช้ approved dataset/config กล้องจริง และ reference/ผู้ตรวจยังไม่ถือว่าเสร็จ
+
 สถานะ 21 ตุลาคม 2026: มีเครื่องมือ offline, smoke gates และ browser evidence ของแอปจริงด้วยข้อมูล DEMO แล้ว ยังไม่มีภาพขวดจริง/สินค้าและ tolerance ที่ทีมยืนยัน หรือภาพต้นแบบสำหรับ visual comparison งานรอบนี้อยู่ในโฟลเดอร์ 05 และ workflow ใหม่ของ 05 โดยไม่แก้แอป 01–04 ดู [protocol และสถานะงาน](PROTOCOL.md), [ผลทดสอบ](TEST-REPORT.md) และ [defects ที่ต้องส่งต่อเจ้าของ](DEFECTS.md)
 
 ## เตรียมเครื่องและทดสอบ

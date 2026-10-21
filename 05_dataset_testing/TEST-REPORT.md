@@ -1,5 +1,7 @@
 # ผลตรวจงาน 05 — 21 ตุลาคม 2026
 
+รอบใหม่ 22 ตุลาคม 2026: dataset tools 47 tests (เพิ่ม input-safety ของ readiness probe 3 กรณี), repository 12 และ frontend 109/build ผ่าน Backend ยังล้ม 3/150 cases ตามวัน UTC/Bangkok โดย 94 subtests ผ่าน ทดสอบ browser harness ของ 05 ที่ mount 02 component ได้จริง: canvas=1 ใน WebGL, PASS/FAIL/REVIEW ไป pass/reject/review, replay ไม่เพิ่มคำขอหรือ count, pause คงสถานะแล้ว resume ได้, forced fallback มี canvas=0 และ reset คืน IDLE ทั้งหมดเป็น synthetic component smoke ไม่ใช่ integrated/hardware acceptance ดู [รายงานดำเนินการ](EXECUTION-2026-10-22.md) และ [ผล browser](reports/execution-2026-10-22/component-observations.json)
+
 ฐานแอปที่ตรวจ: `2569e7ced6e1f4fc788791ab0530b10faea2ace4` จาก develop พร้อม working tree ของงาน 05 รอบนี้ รายงาน JSON บันทึก dirty flag และ SHA-256 ของ source ที่ใช้ทดสอบ จึงไม่ได้อ้างว่าเครื่องมือใหม่อยู่ใน base commit แล้ว
 
 รอบตรวจซ้ำตามใบงานทั้งสองฉบับ ใช้ฐานเครื่องมือ `fbfe73c4823539252129920200aea7d9a10c8ed3` พร้อม working tree ที่แก้เฉพาะ 05 ดู [smoke-recheck-2026-10-21.json](reports/smoke-recheck-2026-10-21.json) ซึ่งเก็บ commit/dirty flag/source hashes ตามที่รันจริง หลักฐาน browser เดิมยังคงอ้างฐานเดิม ไม่อ้างว่าถ่าย browser ใหม่ในรอบนี้

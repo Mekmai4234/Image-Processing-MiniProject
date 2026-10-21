@@ -1,0 +1,40 @@
+Browser tab: 2, Title: "05 component smoke — DEMO only", URL: "http://127.0.0.1:5187/".
+1 AXWebArea 05 component smoke — DEMO only, URL: 127.0.0.1:5187/
+	2 container
+		3 heading 05 component smoke — DEMO only, Value: 1
+			4 text 05 component smoke — DEMO only
+		5 text Isolated 02 component, not integrated Simulation route. Synthetic results; no real detector, webcam or visual approval.
+		6 button Run PASS DEMO
+		7 button Run FAIL DEMO
+		8 button Run REVIEW DEMO
+		9 button Pause
+		10 button Resume
+		11 button Replay
+		12 button Reset
+		13 button Force 2D fallback
+		16 container
+			27 text เสร็จสิ้น
+			18 text DEMO · ข้อมูลจำลอง 3 x
+			21 text ภาพเดียวเห็นเฉพาะด้านที่ถ่าย ระบบจึงไม่หมุนค้นหารอบขวด และไม่ได้ตรวจครบ 360° — เพิ่มภาพหลายมุมเพื่อค้นหาฉลาก
+			28 container
+				29 text FAIL ฉลากผิดสินค้า →  ถาดคัดออก (REJECT)
+			22 container
+				23 image ภาพจริงมุม ไม่ทราบ
+				24 text ภาพจริงที่ใช้ส่งตรวจ
+			19 container
+				20 text ใช้รูปทรงขวดสำรอง (no_silhouette)  ·  ภาพที่ส่งตรวจคือภาพจริงในจอกล้องเท่านั้น ไม่ใช่ภาพจากฉาก
+		14 container Description: Observed component state, ID: observed-state
+			15 text {
+  "state": "COMPLETE",
+  "phase": "COMPLETE",
+  "result": "FAIL",
+  "route": "reject",
+  "inspection_id": "00000000-0000-4000-8000-100000000002",
+  "completed": 2,
+  "replayed": 1,
+  "inspect_requests": 2,
+  "force_fallback": false,
+  "evidence_kind": "synthetic_component_browser"
+}
+
+The focused UI element is 9 button Pause

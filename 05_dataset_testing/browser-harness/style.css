@@ -1,0 +1,7 @@
+html { color-scheme:dark; background:#041326; color:#e0edf5; font-family:system-ui,sans-serif; }
+body { margin:0; } main { padding:16px; max-width:1450px; margin:auto; }
+h1 { font-size:22px; margin:0 0 8px; } p { font-size:14px; }
+nav { display:flex; flex-wrap:wrap; gap:8px; } button { padding:10px; cursor:pointer; }
+.stage { height:580px; margin-top:12px; } .stage>.vv-sim { height:100%; }
+pre { background:#102a3e; padding:12px; white-space:pre-wrap; }
+@media(max-width:600px) { .stage { height:430px; } main { padding:8px; } }
