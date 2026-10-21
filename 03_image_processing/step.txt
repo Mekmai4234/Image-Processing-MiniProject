@@ -6,6 +6,13 @@ Branch เริ่มต้น: feature/03-image-processing
 
 STEP — ลำดับลงมือทำและจุดส่งงาน
 
+อัปเดต 21 ตุลาคม 2026: โค้ด baseline และจุดเชื่อมใหม่มีแล้วใน apps/backend/app/inspection/
+อ่าน CONFIGURATION.md สำหรับ document/provenance/report binding, SHAPE.md สำหรับ 02
+และ HANDOFF.md ก่อนเชื่อม 04; วิธีรัน core/HTTP tests อยู่ apps/backend/tests/inspection/README.md
+ยังไม่มีขวดจริง/templates/validation จริง ห้ามใช้ fixtures ไปเปิดตรวจจริง
+HTTP locator และ stored annotation ของ 04 ยังรอรับจุดเชื่อมใหม่ตามขอบเขตที่ทีมตกลง
+รายการต่อไปนี้เป็นลำดับพัฒนาและการประเมินต่อ ไม่ได้หมายความว่าทุกส่วนยังไม่มีโค้ด
+
 1. อ่าน docs/dataset-guide.md และ docs/api-contract.md
    เริ่ม branch งานย่อยใหม่จาก develop ล่าสุด เช่น feature/03-issue-3-label-locator
    ทำตัวตรวจเป็น pure functions ก่อนเชื่อม HTTP เพื่อทดสอบและใช้ซ้ำได้

@@ -4,6 +4,49 @@
 สถานะ: เตรียมและทดสอบฝั่ง 03 แล้ว ยังไม่ได้ยืนยันแทนผู้รับผิดชอบ 04/05
 เอกสารนี้ไม่ใช่การประกาศว่า HTTP adapter, CI รวม หรือ real-data validation เสร็จแล้ว
 
+## อัปเดต 21 ตุลาคม 2026 — ขอบเขตตามที่ผู้ใช้ยืนยัน
+
+รอบนี้คงขอบเขตเฉพาะ 03 ไม่แก้ services/inspection_adapter.py หรือ routes ของ 04
+ฐาน develop 9fb8fd7 มี HTTP inspection เรียก 03 แล้ว แต่ HTTP locator ยังเป็น heuristic
+อีกชุด และ stored annotation ยังไม่รับ score ข้อบกพร่องสองจุดนี้จึงยังรอ 04 ต่อจริง
+
+พร้อมส่งต่อแล้ว:
+
+- [build_detector_config และ schema/provenance/validation binding](CONFIGURATION.md)
+- [analyze_shape และ interface ให้ 02](SHAPE.md) แยกจาก InspectionResult
+- `annotate_fields(...)` รับ result/reason/bbox/expected_bbox/match_score จริง แล้วคืน RGB copy
+- HTTP integration tests ผ่าน routes/DB/storage จริงใน temporary directory ด้วย detector
+  03 จริง ไม่ได้ mock run_detector_03 หรือแทนที่ HTTP locator ของ 04 ให้ดูเหมือนแก้แล้ว
+
+จุดที่ 04 ต้องนำไปใช้ภายหลัง:
+
+```python
+# ใน adapter ของ 04: config คือชุดเดียวกับที่ส่ง inspect_image
+locator_payload = locate_label(cv_bgr, expected_product, config, color_order="BGR").to_dict()
+
+# เพิ่ม match_score จาก inspect_output ในจุดเรียก annotation ของ HTTP route ก่อน encode/store
+annotated_rgb = annotate_fields(
+    cv_bgr, result=inspect_output["result"], reason=inspect_output["reason"],
+    bbox=inspect_output.get("bbox"), expected_bbox=inspect_output.get("expected_bbox"),
+    match_score=inspect_output.get("match_score"), color_order="BGR",
+)
+```
+
+04 ต้องแก้จุดเรียกจริงทั้ง adapter และ route ที่ส่ง score แล้ว encode RGB → BGR/JPG
+ไม่ใช้ global monkeypatch หรือ state ของคำขอก่อนหน้าเพื่อส่ง score ข้าม request
+เมื่อ config ไม่พร้อม HTTP locator จริงควรคืน 503 หรือ readiness ที่ตกลงร่วมกัน
+ไม่ fallback ใช้ heuristic ของ DEMO ในโหมดจริงโดยไม่บอกผู้ใช้
+
+quality semantics ของ locator 03: sharp_enough วัดบน label candidate (หรือ bottle crop
+เมื่อไม่มี candidate); bottle_visible หมายถึง silhouette ทั้งขวดผ่าน geometry gate
+บนฉากเรียบ ไม่ใช่ semantic object recognition; label_visible หมายถึงพบ candidate
+ไม่ใช่รู้ชนิดสินค้า; usable_view รวมฉลาก/คุณภาพ/บริเวณขวดที่พอประเมินตำแหน่ง
+known wrong label ยัง usable; identity/product match ทราบหลัง inspect เท่านั้น
+01/04 ใช้ false sharpness แนะนำถือนิ่ง, false label visibility แนะนำหมุน/ถ่ายใหม่ตาม reason
+อย่าแสดง product match/position correct ล่วงหน้าจาก locator
+
+ตารางเก่าด้านล่างเป็นข้อเสนอเริ่มต้น ข้อมูลอัปเดตนี้ให้ใช้ประกอบก่อนต่อระบบจริง
+
 ## 1. ฟังก์ชันที่ให้ 04 เรียก
 
 ```python
