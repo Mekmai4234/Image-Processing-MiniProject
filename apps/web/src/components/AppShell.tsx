@@ -1,17 +1,9 @@
 import { Box, Camera, History, RefreshCw, WifiOff } from 'lucide-react'
+import { Brand, Logo } from './Logo'
 import { NavLink, Outlet } from 'react-router-dom'
 import { DEMO_SCENARIOS, type DemoScenario } from '../demo/demoDataSource'
 import { useAppData } from '../lib/AppData'
 import { API_BASE_URL } from '../lib/config'
-
-function Logo() {
-  return (
-    <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true">
-      <path d="M5 10V5h5M27 10V5h-5M5 22v5h5M27 22v5h-5" stroke="#22D3EE" strokeWidth="2.4" fill="none" strokeLinecap="round" />
-      <rect x="11" y="12" width="10" height="8" rx="1.5" fill="none" stroke="#34D399" strokeWidth="2.4" />
-    </svg>
-  )
-}
 
 function ConnectionPill() {
   const { connection } = useAppData()
@@ -36,13 +28,17 @@ export function AppShell() {
 
   return (
     <div className="shell">
+      <a className="skip-link" href="#main">
+        ข้ามไปเนื้อหาหลัก
+      </a>
       <header className="topbar">
-        <NavLink to="/simulation" className="brand" aria-label="Vending Vision หน้าแรก">
-          <Logo />
-          <span className="brand-name">
-            VENDING <span>VISION</span>
-          </span>
-        </NavLink>
+        <div className="brand-block">
+          <NavLink to="/simulation" className="brand" aria-label="Vending Vision หน้า Simulation">
+            <Logo />
+            <Brand />
+          </NavLink>
+          <span className="brand-sub">Thai Student Bottle Label Inspection Project</span>
+        </div>
 
         <nav className="nav" aria-label="โหมดการทำงาน">
           <NavLink to="/simulation">
@@ -99,7 +95,7 @@ export function AppShell() {
         </div>
       )}
 
-      <main className="main" id="main">
+      <main className="main" id="main" tabIndex={-1}>
         <Outlet />
       </main>
 
