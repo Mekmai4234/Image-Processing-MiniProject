@@ -2,7 +2,7 @@
 เจ้าของงาน: คนที่ 2 (รอกรอกชื่อจริงใน docs/team.md)
 ความยาก: ยาก (4/5)
 Branch เริ่มต้น: feature/02-simulation-3d
-สถานะ: M1 มี state machine + ฉาก Three.js ทดสอบกับ mock DEMO แล้ว (ยังไม่ต่อ API จริง); ดู apps/web/src/features/simulation/README.md
+สถานะ: M3 — component + ตัวต่อ DataSource (#23), ฉากเครื่องจักรแยก ORIENT/INSPECT (#25), รูปทรงขวดจาก bottle-silhouette-v1 (#27) เข้า develop แล้ว; ฉากแบบสมจริง (#31) รอ review; ทดสอบกับ DEMO และภาพทดสอบเท่านั้น ยังไม่ต่อ backend จริง; ดู apps/web/src/features/simulation/README.md
 
 STEP — ลำดับลงมือทำและจุดส่งงาน
 
@@ -48,6 +48,16 @@ STEP — ลำดับลงมือทำและจุดส่งงา�
 12. ส่ง PR เข้า develop พร้อมวิดีโอ/ภาพสาธิตและ checklist
     คนที่ 1 ฝัง component ได้ และคนที่ 5 ตรวจการคัดแยกกับผลที่ API ตอบตรงกัน
 
-ความคืบหน้า M1 (ทดสอบกับ mock DEMO เท่านั้น)
-ทำแล้ว: ข้อ 2–11 ใน features/simulation พร้อม unit test 44 กรณี และ e2e บน harness
-ยังไม่ทำ: ฝังในหน้า Simulation ของ 01, ต่อ API จริงของ 04, ทดสอบกับชุดภาพจริงของ 05, วัด fps บน notebook ทีม
+ความคืบหน้า M3 (22 ต.ค. 2026)
+ทำแล้ว (เข้า develop):
+- 02-A #23: createDataSourcePort(ds) ต่อ DataSource ของ 01, toJobInput, snapshot มีภาพที่ส่งตรวจ, README วิธีประกอบหน้า
+- 02-B/C #25: ฉากสายการผลิต ORIENT (แท่นหมุน + กล้อง locator) แยกจาก INSPECT (ซุ้มกล้องตรวจ), ปลายทาง PASS/REJECT/REVIEW
+- 02-D #27: prop bottleShape รับผล POST /api/bottle-shape ตรง ๆ, fallback เป็นทรงมาตรฐาน
+- unit test 74 กรณีใน features/simulation (ทั้งเว็บ 109) + typecheck + build ผ่าน
+รอ review: 02-E #31 ฉากแบบสมจริง (prop quality เป็น optional)
+ทดสอบเพิ่ม: หน้า Simulation ของ 01 (#29) ใช้ฉากถูกตามที่ตกลง; ลองภาพทดสอบหลายชุดในฉาก DEMO ทำงานครบทุกขั้น
+ยังไม่ทำ / รอ:
+- ต่อ /api/bottle-shape จริง (รอ #17 ของ 04 และฟังก์ชันใน DataSource ของ 01)
+- ตัวอ่านรูปทรงของ 03 ยังได้ fallback กับภาพทดสอบทุกภาพ ฉากจึงใช้ทรงมาตรฐาน
+- วิดีโอตรวจรับกับ backend จริง (รอทีมเลือกสินค้าจริงและแบบฉลากของ 03)
+- วัด fps บน notebook ที่มีการ์ดจอ, ให้ 05 ตรวจการคัดแยกกับผลจาก API

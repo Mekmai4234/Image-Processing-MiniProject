@@ -2,7 +2,7 @@
 เจ้าของงาน: คนที่ 2 (รอกรอกชื่อจริงใน docs/team.md)
 ความยาก: ยาก (4/5)
 Branch เริ่มต้น: feature/02-simulation-3d
-สถานะ: M1 มี state machine + ฉาก Three.js ทดสอบกับ mock DEMO แล้ว (ยังไม่ต่อ API จริง); ดู apps/web/src/features/simulation/README.md
+สถานะ: M3 — component + ตัวต่อ DataSource (#23), ฉากเครื่องจักรแยก ORIENT/INSPECT (#25), รูปทรงขวดจาก bottle-silhouette-v1 (#27) เข้า develop แล้ว; ฉากแบบสมจริง (#31) รอ review; ทดสอบกับ DEMO และภาพทดสอบเท่านั้น ยังไม่ต่อ backend จริง; ดู apps/web/src/features/simulation/README.md
 
 PROCESS — หลักการ Input/Output และเกณฑ์รับงาน
 
@@ -47,3 +47,13 @@ pause/reset ไม่เกิดผลซ้ำ, delayed response ไม่เ�
 ภาพตัวแทนเลือกจาก quality ของ locator (bottle_visible > sharp/label) เสมอกันใช้มุมน้อยสุด
 REVIEW มีช่อง "รอถ่ายใหม่" สีเหลืองแยกจากถาด REJECT ของ FAIL ฉากจึงมี 3 ปลายทาง
 การเคลื่อนที่ทุกช่วงเป็น segment เวลาจำลองใน state machine; scene วาดตาม state อย่างเดียว
+
+ข้อตกลงที่เพิ่มใน M3 (21–22 ต.ค. 2026)
+02 แก้เฉพาะ apps/web/src/features/simulation; 01 ประกอบหน้า SimulationPage และ slots (ตกลงกับ 01)
+ฉากเรียก API ผ่าน DataSource ของ 01 เท่านั้น (createDataSourcePort) ไม่มี client ซ้ำ
+ไม่เปลี่ยนชื่อ/ความหมาย props และ field ใน SimulationSnapshot โดยไม่แจ้ง 01; prop ใหม่ต้องเป็น optional
+ORIENT หาฉลากที่แท่นหมุน แล้วขวดคงมุมที่เลือกไว้และเลื่อนไป INSPECT (to_inspect) ก่อนถ่าย
+current_station: conveyor / orient_turntable / inspect_camera / reject_tray / review_lane / pass_output คำนวณจากตำแหน่งที่วาดจริง
+snapshot.captured_image คือ Blob เดียวกับที่ส่ง POST /api/inspections ใช้แสดงคู่กับกรอบจากผลตรวจ
+รูปทรงขวดจาก /api/bottle-shape ใช้แสดงผลอย่างเดียว ไม่มีผลต่อผลตรวจ
+null / status fallback / ข้อมูลผิดรูปแบบ → ทรงมาตรฐาน และบอกบนฉากว่าเป็นรูปทรงโดยประมาณ
