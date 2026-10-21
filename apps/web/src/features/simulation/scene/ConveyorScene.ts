@@ -4,6 +4,7 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import type { InspectionVerdict } from '../api/contract'
 import { LAYOUT, poseOf, type Pose } from '../machine/motion'
 import type { MachineState } from '../machine/types'
+import { shapeFromSilhouette, type BottleShapeSpec } from '../shape/bottleShape'
 
 export interface ConveyorSceneOptions {
   reducedMotion?: boolean
@@ -76,8 +77,11 @@ export class ConveyorScene {
   private readonly bottle = new THREE.Group()
   /** Inner group spun by the turntable angle; the outer group carries position and tilt. */
   private readonly bottleSpin = new THREE.Group()
-  private readonly labelBand: THREE.Mesh<THREE.CylinderGeometry, THREE.MeshStandardMaterial>
-  private readonly activeRing: THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>
+  private labelBand!: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>
+  private activeRing!: THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial>
+  private bodyMat!: THREE.MeshPhysicalMaterial
+  private capMat!: THREE.MeshStandardMaterial
+  private shape!: BottleShapeSpec
   private readonly turntableTop = new THREE.Group()
   private readonly rejectPlate = new THREE.Group()
   private readonly reviewPlate = new THREE.Group()
@@ -142,9 +146,15 @@ export class ConveyorScene {
     this.buildChuteAndTray(LAYOUT.review_x, COLORS.review)
     this.buildPassEnd()
     this.buildSigns()
-    const { band, ring } = this.buildBottle()
-    this.labelBand = band
-    this.activeRing = ring
+    const r = LAYOUT.bottle_radius
+    this.activeRing = new THREE.Mesh(
+      new THREE.RingGeometry(r + 0.06, r + 0.11, 40),
+      new THREE.MeshBasicMaterial({ color: COLORS.accent, transparent: true, opacity: 0.7, side: THREE.DoubleSide, depthWrite: false }),
+    )
+    this.activeRing.rotation.x = -Math.PI / 2
+    this.activeRing.visible = false
+    this.scene.add(this.activeRing)
+    this.buildBottle()
     this.tag = this.makeSprite(' ', '#ffffff', 'rgba(4,19,38,0.85)', 1.4)
     this.tag.visible = false
     this.scene.add(this.tag)
@@ -182,8 +192,11 @@ export class ConveyorScene {
     }
     this.lastPose = pose
 
-    this.rejectPlate.position.z = THREE.MathUtils.lerp(LAYOUT.pusher_rest_z, LAYOUT.pusher_reach_z, pose.reject_pusher)
-    this.reviewPlate.position.z = THREE.MathUtils.lerp(LAYOUT.pusher_rest_z, LAYOUT.pusher_reach_z, pose.review_pusher)
+    // The motion model assumes LAYOUT.bottle_radius; a slimmer silhouette shifts the plate
+    // forward by the difference so it still touches the bottle exactly when the bottle moves.
+    const plateOffset = LAYOUT.bottle_radius - this.shape.maxRadius
+    this.rejectPlate.position.z = THREE.MathUtils.lerp(LAYOUT.pusher_rest_z, LAYOUT.pusher_reach_z, pose.reject_pusher) + plateOffset
+    this.reviewPlate.position.z = THREE.MathUtils.lerp(LAYOUT.pusher_rest_z, LAYOUT.pusher_reach_z, pose.review_pusher) + plateOffset
 
     const flash = animate ? pose.flash : Math.min(pose.flash, 0.5)
     for (const m of this.inspectLights) m.emissiveIntensity = 1.4 + flash * 5
@@ -617,44 +630,48 @@ export class ConveyorScene {
     }
   }
 
+  /** Generic bottle geometry for decorative bottles (never the inspected one). */
   private bottleGeometry(): THREE.LatheGeometry {
-    const r = LAYOUT.bottle_radius
-    const profile = [
-      [0, 0], [r * 0.82, 0], [r, 0.04], [r, 0.62], [r * 0.96, 0.7], [r * 0.55, 0.86],
-      [r * 0.4, 0.93], [r * 0.4, 0.97], [0, 0.97],
-    ].map(([px, py]) => new THREE.Vector2(px ?? 0, (py ?? 0) * BOTTLE_HEIGHT))
-    return new THREE.LatheGeometry(profile, 40)
+    return latheFrom(shapeFromSilhouette(null).points)
   }
 
-  private buildBottle(): { band: THREE.Mesh<THREE.CylinderGeometry, THREE.MeshStandardMaterial>; ring: THREE.Mesh<THREE.RingGeometry, THREE.MeshBasicMaterial> } {
-    // Generic lathe bottle: a representation, not a reconstruction of the photographed bottle.
-    const r = LAYOUT.bottle_radius
-    const body = new THREE.Mesh(
-      this.bottleGeometry(),
-      new THREE.MeshPhysicalMaterial({ color: 0xd6ecff, roughness: 0.06, metalness: 0, transparent: true, opacity: 0.55, clearcoat: 1 }),
-    )
-    body.castShadow = true
-    const cap = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.45, r * 0.45, 0.12, 24), this.plastic(0x1d4ed8, 0.4))
-    cap.position.y = BOTTLE_HEIGHT * 0.97 + 0.06
-    cap.castShadow = true
-    const band = new THREE.Mesh(
-      new THREE.CylinderGeometry(r * 1.01, r * 1.01, 0.3, 40, 1, true),
-      new THREE.MeshStandardMaterial({ map: this.labelTexture(), roughness: 0.6, side: THREE.DoubleSide }),
-    )
-    band.position.y = BOTTLE_HEIGHT * 0.36
-    this.bottleSpin.add(body, cap, band)
+  private buildBottle(): void {
+    this.bodyMat = new THREE.MeshPhysicalMaterial({ color: 0xd6ecff, roughness: 0.06, metalness: 0, transparent: true, opacity: 0.55, clearcoat: 1 })
+    this.capMat = this.plastic(0x1d4ed8, 0.4)
+    const labelMat = new THREE.MeshStandardMaterial({ map: this.labelTexture(), roughness: 0.6, side: THREE.DoubleSide })
+    this.labelBand = new THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>(new THREE.BufferGeometry(), labelMat)
     this.bottle.add(this.bottleSpin)
     this.bottle.visible = false
     this.scene.add(this.bottle)
 
-    const ring = new THREE.Mesh(
-      new THREE.RingGeometry(r + 0.06, r + 0.11, 40),
-      new THREE.MeshBasicMaterial({ color: COLORS.accent, transparent: true, opacity: 0.7, side: THREE.DoubleSide, depthWrite: false }),
-    )
-    ring.rotation.x = -Math.PI / 2
-    ring.visible = false
-    this.scene.add(ring)
-    return { band, ring }
+    this.applyShape(shapeFromSilhouette(null))
+  }
+
+  /**
+   * Rebuilds the inspected bottle from a shape spec (silhouette or generic fallback). The label
+   * band follows the body outline on its straightest section. Old geometry is disposed.
+   */
+  setBottleShape(spec: BottleShapeSpec): void {
+    if (this.disposed || spec === this.shape) return
+    this.applyShape(spec)
+  }
+
+  private applyShape(spec: BottleShapeSpec): void {
+    this.shape = spec
+    for (const child of [...this.bottleSpin.children]) {
+      this.bottleSpin.remove(child)
+      ;(child as THREE.Mesh).geometry?.dispose()
+    }
+    const body = new THREE.Mesh(latheFrom(spec.points.filter((p) => p.y <= spec.capStartY + 1e-6).concat([{ r: 0, y: spec.capStartY }])), this.bodyMat)
+    body.castShadow = true
+    const capPoints = [{ r: 0, y: spec.capStartY }, ...spec.points.filter((p) => p.y >= spec.capStartY - 1e-6)].map((p) => ({ r: p.r * 1.004, y: p.y }))
+    const cap = new THREE.Mesh(latheFrom(capPoints), this.capMat)
+    cap.castShadow = true
+    const bandPoints = sliceProfile(spec.points, spec.label.y0, spec.label.y1).map((p) => ({ r: p.r * 1.012 + 0.002, y: p.y }))
+    this.labelBand.geometry.dispose()
+    this.labelBand.geometry = latheFrom(bandPoints)
+    this.bottleSpin.add(body, cap, this.labelBand)
+    this.activeRing.scale.setScalar(Math.max(0.6, spec.maxRadius / LAYOUT.bottle_radius))
   }
 
   /** Neutral wrap-around label with one marked "front" panel so rotation is visible. */
@@ -712,7 +729,7 @@ export class ConveyorScene {
       this.drawSprite(this.tag, verdict, '#041326', VERDICT_COLORS[verdict])
     }
     // Low over the bottle and slightly forward, below the station signs behind the line.
-    this.tag.position.set(pose.x, pose.y + BOTTLE_HEIGHT + 0.35, pose.z + 0.25)
+    this.tag.position.set(pose.x, pose.y + this.shape.height + 0.35, pose.z + 0.25)
   }
 
   private makeSprite(text: string, color: string, background: string, width: number): THREE.Sprite {
@@ -765,6 +782,24 @@ function hex(color: number, alpha: number): string {
   const g = (color >> 8) & 255
   const b = color & 255
   return `rgba(${r},${g},${b},${alpha})`
+}
+
+function latheFrom(points: Array<{ r: number; y: number }>): THREE.LatheGeometry {
+  return new THREE.LatheGeometry(points.map((p) => new THREE.Vector2(Math.max(0, p.r), p.y)), 40)
+}
+
+/** Outline between y0 and y1 (bottom → top), with interpolated end points. */
+function sliceProfile(points: Array<{ r: number; y: number }>, y0: number, y1: number): Array<{ r: number; y: number }> {
+  const body = points.filter((p) => p.r > 0)
+  const at = (y: number) => {
+    for (let i = 1; i < body.length; i++) {
+      const a = body[i - 1]
+      const b = body[i]
+      if (a && b && y >= a.y && y <= b.y) return a.r + ((b.r - a.r) * (y - a.y)) / Math.max(1e-9, b.y - a.y)
+    }
+    return body[0]?.r ?? 0
+  }
+  return [{ r: at(y0), y: y0 }, ...body.filter((p) => p.y > y0 && p.y < y1), { r: at(y1), y: y1 }]
 }
 
 /** True when a WebGL context can be created; otherwise the host shows the 2D fallback. */
