@@ -1,5 +1,6 @@
-import { CheckCircle2, ChevronLeft, ChevronRight, Clock3, Download, FileText, Inbox, RefreshCw, UserCheck, XCircle } from 'lucide-react'
+import { CheckCircle2, ChevronLeft, ChevronRight, Clock3, Download, FileText, Inbox, RefreshCw, XCircle } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
+import { ReviewPanel } from '../components/history/ReviewPanel'
 import { InspectionOverlay } from '../components/InspectionOverlay'
 import { StatCard } from '../components/StatCard'
 import { ResultDetails } from '../components/ResultCard'
@@ -8,9 +9,7 @@ import { describeApiError, isAbort } from '../lib/api'
 import { useAppData } from '../lib/AppData'
 import { formatSimilarity, formatThaiDateTime, MODE_LABEL, productShortName, REASON_LABEL, shortId, STORAGE_LABEL } from '../lib/format'
 import {
-  REASONS,
   type InspectionPage,
-  type InspectionReason,
   type InspectionResult,
   type InspectionResultValue,
   type SourceMode,
@@ -343,100 +342,7 @@ function Detail({ r, onUpdate }: { r: InspectionResult; onUpdate(r: InspectionRe
       )}
 
       <ResultDetails result={r} onResultUpdate={onUpdate} />
-      <ReviewBox r={r} onUpdate={onUpdate} />
-    </div>
-  )
-}
-
-function ReviewBox({ r, onUpdate }: { r: InspectionResult; onUpdate(r: InspectionResult): void }) {
-  const { ds } = useAppData()
-  const [open, setOpen] = useState(false)
-  const [result, setResult] = useState<InspectionResultValue>(r.result)
-  const [reason, setReason] = useState<InspectionReason>(r.reason)
-  const [reviewer, setReviewer] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [err, setErr] = useState<string | null>(null)
-
-  if (r.reviewed_result) {
-    return (
-      <div className="notice info">
-        <UserCheck size={16} aria-hidden="true" />
-        <span>
-          ตรวจทานแล้วโดย {r.reviewer}: {r.reviewed_result} ({r.reviewed_reason ? REASON_LABEL[r.reviewed_reason] : '—'}) ผลของระบบเดิมยังเก็บไว้
-        </span>
-      </div>
-    )
-  }
-
-  async function submit() {
-    setBusy(true)
-    setErr(null)
-    try {
-      onUpdate(await ds.review(r.inspection_id, { reviewed_result: result, reviewed_reason: reason, reviewer: reviewer.trim() }))
-      setOpen(false)
-    } catch (e) {
-      setErr(describeApiError(e))
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  return (
-    <div className={`notice ${r.result === 'REVIEW' ? 'review' : ''}`} style={{ display: 'grid' }}>
-      <div className="row-between">
-        <span className="row">
-          <Clock3 size={16} aria-hidden="true" /> {r.result === 'REVIEW' ? 'รอคนตรวจทาน' : 'ยังไม่มีคนตรวจทาน'}
-        </span>
-        {!open && (
-          <button className="btn btn-sm" onClick={() => setOpen(true)}>
-            ตรวจทาน
-          </button>
-        )}
-      </div>
-      {open && (
-        <div className="stack-sm" style={{ marginTop: 10 }}>
-          <div className="row">
-            <label className="field" style={{ flex: 1 }}>
-              ผลที่คนตรวจ
-              <select
-                value={result}
-                onChange={(e) => {
-                  const v = e.target.value as InspectionResultValue
-                  setResult(v)
-                  setReason(REASONS[v][0])
-                }}
-              >
-                <option value="PASS">PASS</option>
-                <option value="FAIL">FAIL</option>
-                <option value="REVIEW">REVIEW</option>
-              </select>
-            </label>
-            <label className="field" style={{ flex: 2 }}>
-              เหตุผล
-              <select value={reason} onChange={(e) => setReason(e.target.value as InspectionReason)}>
-                {REASONS[result].map((x) => (
-                  <option key={x} value={x}>
-                    {REASON_LABEL[x]}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-          <label className="field">
-            ชื่อผู้ตรวจทาน
-            <input type="text" value={reviewer} onChange={(e) => setReviewer(e.target.value)} />
-          </label>
-          <div className="row">
-            <button className="btn btn-primary btn-sm" onClick={submit} disabled={busy || !reviewer.trim()}>
-              บันทึกการตรวจทาน
-            </button>
-            <button className="btn btn-sm btn-ghost" onClick={() => setOpen(false)}>
-              ยกเลิก
-            </button>
-          </div>
-          {err && <p className="hint" role="alert">{err}</p>}
-        </div>
-      )}
+      <ReviewPanel r={r} onUpdate={onUpdate} />
     </div>
   )
 }

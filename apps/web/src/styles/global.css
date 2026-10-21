@@ -463,6 +463,19 @@ td .rowbtn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 4px; 
 .notice.info { background: var(--cyan-soft); border-color: rgba(18, 213, 245, 0.35); }
 .notice svg { flex: none; margin-top: 2px; }
 
+.review-callout {
+  display: flex; align-items: flex-start; gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--line-strong); border-radius: var(--r-control);
+  background: var(--bg-raise);
+}
+.review-callout > svg { flex: none; margin-top: 2px; color: var(--muted); }
+.review-callout .review-body { flex: 1; min-width: 0; }
+.review-callout.awaiting { border-color: rgba(251, 191, 36, 0.6); background: var(--review-soft); }
+.review-callout.awaiting > svg, .review-callout.awaiting strong { color: var(--review); }
+.review-callout.done { border-color: rgba(18, 213, 245, 0.4); background: var(--cyan-soft); }
+.review-callout.done > svg { color: var(--cyan); }
+
 .empty-state { display: grid; justify-items: center; gap: var(--s-3); text-align: center; padding: var(--s-6) var(--s-4); color: var(--text-2); }
 .empty-state svg { color: var(--muted); }
 
