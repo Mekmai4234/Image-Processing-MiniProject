@@ -1,27 +1,40 @@
-case_id,area,scenario,expected,evidence,status,owner
-05-INT-01,detector,real normal bottles for both products,PASS good with correct label bbox,,not_tested,03
-05-INT-02,detector,clear wrong label including high similarity,FAIL wrong_label,,not_tested,03
-05-INT-03,detector,label displaced beyond agreed tolerance,FAIL misplaced_label,,not_tested,03
-05-INT-04,detector,single rear image,REVIEW label_not_visible without invented bbox,,not_tested,03
-05-INT-05,detector,blurred occluded or unknown product,REVIEW with appropriate canonical reason,,not_tested,03
-05-INT-06,detector,missing label without validated coverage,REVIEW rather than unsupported missing_label,,not_tested,03
-05-INT-07,detector,missing label with validated profile and pixel evidence,FAIL missing_label only with verified evidence preserved,,not_tested,03/04
-05-INT-08,UI,null score and bbox,display unavailable score and no invented label box,,not_tested,01
-05-INT-09,UI,narrow screen resize letterbox mirror and EXIF,overlay aligns with inspected original coordinates,,not_tested,01
-05-INT-10,simulation,slow API response,wait for matching inspection before sorting,,not_tested,02
-05-INT-11,simulation,pause reset replay and old response,no stale job update or duplicate count and log,,not_tested,02
-05-INT-12,simulation,orientation exhausted or timed out,send main plus evidence and preserve backend result,,not_tested,02/04
-05-INT-13,webcam,permission denied no device or device loss,actionable ERROR and reopening works,,not_tested,04
-05-INT-14,webcam,navigate away during stream,media tracks stop and pending response discarded,,not_tested,04
-05-INT-15,webcam,manual capture and optional auto capture cooldown,no repeated inspection of same bottle without new round,,not_tested,04
-05-INT-16,API,invalid MIME corrupt file and unknown expected product,400 or 422 without product result,,not_tested,04
-05-INT-17,API,byte pixel view-count and total-body limits,413 without product record,,not_tested,04
-05-INT-18,API,same request ID with same payload including concurrency,same inspection ID and one history record,,not_tested,04
-05-INT-19,API,same request ID with changed image order or evidence,409 conflict,,not_tested,04
-05-INT-20,storage,partial image or supporting write failure,failed status with recoverable error and unchanged prediction,,not_tested,04
-05-INT-21,storage,retry after failure or restart,original decision and ID preserved with files matching DB,,not_tested,04
-05-INT-22,storage,retry after source missing,source_unavailable and retryable false never saved,,not_tested,04
-05-INT-23,history,filters pagination and CSV including Thai date boundary,same matching rows with full filtered CSV and stable sort,,not_tested,01/04
-05-INT-24,history,human review followed by GET and export,review fields updated and original prediction immutable,,not_tested,04
-05-INT-25,history,supporting image partially missing,404 or null at original index and never saved while incomplete,,not_tested,04
-05-INT-26,end_to_end,real PASS FAIL REVIEW in Simulation and Webcam,correct sorting storage and history with captured evidence,,not_tested,05
+case_id,area,scenario,expected,evidence,status,owner,test_date,commit,tester,data_kind,evidence_sha256,notes
+05-INT-01,detector,real normal bottles for both products,PASS good with correct label bbox,,not_tested,03,,,,real,,Requires recorded execution evidence for this scenario; smoke tests alone do not mark it passed
+05-INT-02,detector,clear wrong label including high similarity,FAIL wrong_label,,not_tested,03,,,,real,,Requires recorded execution evidence for this scenario; smoke tests alone do not mark it passed
+05-INT-03,detector,label displaced beyond agreed tolerance,FAIL misplaced_label,,not_tested,03,,,,real,,Requires recorded execution evidence for this scenario; smoke tests alone do not mark it passed
+05-INT-04,detector,single rear image,REVIEW label_not_visible without invented bbox,,not_tested,03,,,,real,,Requires recorded execution evidence for this scenario; smoke tests alone do not mark it passed
+05-INT-05,detector,blurred occluded or unknown product,REVIEW with appropriate canonical reason,,not_tested,03,,,,real,,Requires recorded execution evidence for this scenario; smoke tests alone do not mark it passed
+05-INT-06,detector,missing label without validated coverage,REVIEW rather than unsupported missing_label,,not_tested,03,,,,real,,Requires recorded execution evidence for this scenario; smoke tests alone do not mark it passed
+05-INT-07,detector,missing label with validated profile and pixel evidence,FAIL missing_label only with verified evidence preserved,,blocked,03/04,,,,real,,No validated required-view profile; do not enable real GT missing_label
+05-INT-08,UI,null score and bbox,display unavailable score and no invented label box,,not_tested,01,,,,browser,,Requires recorded execution evidence for this scenario; smoke tests alone do not mark it passed
+05-INT-09,UI,narrow screen resize letterbox mirror and EXIF,overlay aligns with inspected original coordinates,,not_tested,01,,,,browser,,Requires recorded execution evidence for this scenario; smoke tests alone do not mark it passed
+05-INT-10,simulation,slow API response,wait for matching inspection before sorting,,not_tested,02,,,,browser,,Requires recorded execution evidence for this scenario; smoke tests alone do not mark it passed
+05-INT-11,simulation,pause reset replay and old response,no stale job update or duplicate count and log,,not_tested,02,,,,browser,,Requires recorded execution evidence for this scenario; smoke tests alone do not mark it passed
+05-INT-12,simulation,orientation exhausted or timed out,send main plus evidence and preserve backend result,,not_tested,02/04,,,,browser,,Requires recorded execution evidence for this scenario; smoke tests alone do not mark it passed
+05-INT-13,webcam,permission denied no device or device loss,actionable ERROR and reopening works,,not_tested,04,,,,hardware,,Requires recorded execution evidence for this scenario; smoke tests alone do not mark it passed
+05-INT-14,webcam,navigate away during stream,media tracks stop and pending response discarded,,not_tested,04,,,,hardware,,Requires recorded execution evidence for this scenario; smoke tests alone do not mark it passed
+05-INT-15,webcam,manual capture and optional auto capture cooldown,no repeated inspection of same bottle without new round,,not_tested,04,,,,hardware,,Requires recorded execution evidence for this scenario; smoke tests alone do not mark it passed
+05-INT-16,API,invalid MIME corrupt file and unknown expected product,400 or 422 without product result,,not_tested,04,,,,synthetic,,Requires recorded execution evidence for this scenario; smoke tests alone do not mark it passed
+05-INT-17,API,byte pixel view-count and total-body limits,413 without product record,,not_tested,04,,,,synthetic,,Requires recorded execution evidence for this scenario; smoke tests alone do not mark it passed
+05-INT-18,API,same request ID with same payload including concurrency,same inspection ID and one history record,,not_tested,04,,,,synthetic,,Requires recorded execution evidence for this scenario; smoke tests alone do not mark it passed
+05-INT-19,API,same request ID with changed image order or evidence,409 conflict,,not_tested,04,,,,synthetic,,Requires recorded execution evidence for this scenario; smoke tests alone do not mark it passed
+05-INT-20,storage,partial image or supporting write failure,failed status with recoverable error and unchanged prediction,,not_tested,04,,,,synthetic,,Requires recorded execution evidence for this scenario; smoke tests alone do not mark it passed
+05-INT-21,storage,retry after failure or restart,original decision and ID preserved with files matching DB,,not_tested,04,,,,synthetic,,Requires recorded execution evidence for this scenario; smoke tests alone do not mark it passed
+05-INT-22,storage,retry after source missing,source_unavailable and retryable false never saved,,not_tested,04,,,,synthetic,,Requires recorded execution evidence for this scenario; smoke tests alone do not mark it passed
+05-INT-23,history,filters pagination and CSV including Thai date boundary,same matching rows with full filtered CSV and stable sort,,not_tested,01/04,,,,browser,,Requires recorded execution evidence for this scenario; smoke tests alone do not mark it passed
+05-INT-24,history,human review followed by GET and export,review fields updated and original prediction immutable,,not_tested,04,,,,browser,,Requires recorded execution evidence for this scenario; smoke tests alone do not mark it passed
+05-INT-25,history,supporting image partially missing,404 or null at original index and never saved while incomplete,,not_tested,04,,,,browser,,Requires recorded execution evidence for this scenario; smoke tests alone do not mark it passed
+05-INT-26,end_to_end,real PASS FAIL REVIEW in Simulation and Webcam,correct sorting storage and history with captured evidence,,not_tested,05,,,,real,,Requires recorded execution evidence for this scenario; smoke tests alone do not mark it passed
+05-INT-27,simulation,missing detector config,503 or REVIEW readiness; never fabricated PASS,,not_tested,02/04,,,,browser,,Requires recorded execution evidence
+05-INT-28,simulation,shape profiles and unsupported shape,matching mesh with explicit fallback,,not_tested,02/03,,,,browser,,Requires recorded execution evidence
+05-INT-29,webcam,switch camera and native capture dimensions,native pixels and correct stream cleanup,,not_tested,04,,,,hardware,,Requires recorded execution evidence
+05-INT-30,webcam,switch source or product while pending,stale result ignored and capture not repeated,,not_tested,01/04,,,,hardware,,Requires recorded execution evidence
+05-INT-31,UI,DEMO navigation and shared History store,no live endpoints in DEMO and same store across pages,,not_tested,01/04,,,,browser,,Requires recorded execution evidence
+05-INT-32,history,search sort counts selected row and downloads,all derived from same filter and inspection IDs,,not_tested,01/04,,,,browser,,Requires recorded execution evidence
+05-SMOKE-DATASET,dataset,offline dataset and evidence tool behavior,tests run with zero failures or skips,reports/smoke-2026-10-21.json,passed,05,2026-10-21T06:22:02.449071+00:00,2569e7ced6e1f4fc788791ab0530b10faea2ace4,Codex 05 smoke/browser,synthetic,dc9ff183e27ec11c21227fc448d341c4aabe66bc961d65b3e9f0c612bba70457,38 tests; not real-data metrics
+05-SMOKE-BACKEND,API,backend detector and HTTP persistence smoke,150 cases plus 94 subtests pass against temporary storage,reports/smoke-2026-10-21.json,passed,05,2026-10-21T06:22:02.449071+00:00,2569e7ced6e1f4fc788791ab0530b10faea2ace4,Codex 05 smoke/browser,synthetic,dc9ff183e27ec11c21227fc448d341c4aabe66bc961d65b3e9f0c612bba70457,Real routes and detector on synthetic images; not camera or real-bottle acceptance
+05-SMOKE-WEB,UI,frontend tests and production build,71 tests and build pass,reports/smoke-2026-10-21.json,passed,05,2026-10-21T06:22:02.449071+00:00,2569e7ced6e1f4fc788791ab0530b10faea2ace4,Codex 05 smoke/browser,synthetic,dc9ff183e27ec11c21227fc448d341c4aabe66bc961d65b3e9f0c612bba70457,Build is not browser visual approval
+05-BR-STORE,history,Simulation DEMO inspection retained on History navigation,new Simulation PASS entry visible in same DEMO store,reports/browser/history-state.txt,passed,05,2026-10-21T06:22:02.449071+00:00,2569e7ced6e1f4fc788791ab0530b10faea2ace4,Codex 05 smoke/browser,browser,4dac43ed821fe3dae6b25122eb7e7b6be649545ff69c22399da7b794929c5a49,4 initial entries became 5 after DEMO inspection; no live backend claim
+05-BR-01,simulation,interactive 3D scene mounted on Simulation page,working scene instead of placeholder,reports/browser/simulation-state.txt,failed,01/02,2026-10-21T06:22:02.449071+00:00,2569e7ced6e1f4fc788791ab0530b10faea2ace4,Codex 05 smoke/browser,browser,89636157135bac9c023c1728235c54afe231e3839b406f113f819afc23ad8038,Owner 01/02: page still says waiting for scene component
+05-BR-02,webcam,product labels use shared catalog,same product names as shell catalog,reports/browser/webcam-state.txt,failed,01/04,2026-10-21T06:22:02.449071+00:00,2569e7ced6e1f4fc788791ab0530b10faea2ace4,Codex 05 smoke/browser,browser,173e40d57947f2f5cbff709099be2474d3d8f6a8ca09fdf20d11a104032cf6c3,Owner 01/04: hardcoded brand and size differ from placeholder catalog
+05-BR-03,history,document width at mobile viewport,table scrolls in its container without page overflow,reports/browser/viewport-measurements.json,failed,01,2026-10-21T06:22:02.449071+00:00,2569e7ced6e1f4fc788791ab0530b10faea2ace4,Codex 05 smoke/browser,browser,d71af04d1abcdf70beb5d59b86ddfdf8b749ca8fcb2774b9c058e26d0e3e40e7,Owner 01: document 475px at viewport 390px

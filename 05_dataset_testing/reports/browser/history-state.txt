@@ -1,0 +1,191 @@
+- banner:
+  - link "Vending Vision หน้าแรก":
+    - /url: /simulation
+    - generic: VENDING VISION
+  - navigation "โหมดการทำงาน":
+    - link "Simulation":
+      - /url: /simulation
+      - text: Simulation
+    - link "Webcam":
+      - /url: /webcam
+      - text: Webcam
+    - link "History" [active]:
+      - /url: /history
+      - text: History
+  - group "แหล่งข้อมูล":
+    - button "API จริง"
+    - button "DEMO" [pressed]
+- status:
+  - strong: โหมด DEMO
+  - generic: ข้อมูลสังเคราะห์จาก examples/ ไม่ได้ตรวจภาพจริง ใช้ทดสอบหน้าจอเท่านั้น
+  - text: ผลที่จะจำลอง
+  - combobox "ผลที่จะจำลอง":
+    - option "PASS ฉลากถูกต้อง" [selected]
+    - option "FAIL ฉลากผิดสินค้า"
+    - option "REVIEW ภาพเบลอ"
+    - option "REVIEW หามุมไม่สำเร็จ"
+    - option "PASS แต่บันทึกไม่สำเร็จ"
+    - option "ERROR ระบบตรวจไม่พร้อม (503)"
+- main:
+  - heading "ประวัติการตรวจ" [level=1]
+  - paragraph: ภาพ ผลตรวจ และสถานะบันทึกจากเครื่องที่รัน Backend
+  - generic "ข้อมูลสังเคราะห์ ไม่ใช่ผลตรวจจริง": DEMO
+  - generic: ทั้งหมด
+  - generic: "5"
+  - generic: ผ่าน
+  - generic: "2"
+  - generic: ไม่ผ่าน
+  - generic: "1"
+  - generic: รอตรวจทาน
+  - generic: "2"
+  - region "ตัวกรอง":
+    - text: ตั้งแต่วันที่
+    - textbox "ตั้งแต่วันที่"
+    - text: ถึงวันที่
+    - textbox "ถึงวันที่"
+    - text: โหมด
+    - combobox "โหมด":
+      - option "ทุกโหมด" [selected]
+      - option "Simulation"
+      - option "Webcam"
+    - text: ผลตรวจ
+    - combobox "ผลตรวจ":
+      - option "ทุกผล" [selected]
+      - option "PASS"
+      - option "FAIL"
+      - option "REVIEW"
+    - text: สินค้าที่คาดหวัง
+    - combobox "สินค้าที่คาดหวัง":
+      - option "ทุกสินค้า" [selected]
+      - option "Bottle A"
+      - option "Bottle B"
+    - text: ประเภท
+    - combobox "ประเภท":
+      - option "ทั้งหมด (จริงและ DEMO)" [selected]
+      - option "เฉพาะผลตรวจจริง"
+      - option "เฉพาะโหมด DEMO"
+    - button "ส่งออก CSV" [disabled]:
+      - text: ส่งออก CSV
+  - table "รายการตรวจ เรียงจากใหม่ไปเก่า":
+    - caption: รายการตรวจ เรียงจากใหม่ไปเก่า
+    - rowgroup:
+      - row "เวลา (ไทย) โหมด สินค้าที่คาด ผล เหตุผล ความคล้าย บันทึก":
+        - columnheader "เวลา (ไทย)"
+        - columnheader "โหมด"
+        - columnheader "สินค้าที่คาด"
+        - columnheader "ผล"
+        - columnheader "เหตุผล"
+        - columnheader "ความคล้าย"
+        - columnheader "บันทึก"
+    - rowgroup:
+      - row "ดูรายละเอียด 21 ต.ค. 2026 13:10:10 Simulation DEMO Bottle A PASS ผ่าน ฉลากถูกต้องและอยู่ตำแหน่ง 94% บันทึกแล้ว" [selected]:
+        - cell "ดูรายละเอียด 21 ต.ค. 2026 13:10:10":
+          - button "ดูรายละเอียด 21 ต.ค. 2026 13:10:10": 21 ต.ค. 2026 13:10:10
+        - cell "Simulation DEMO":
+          - text: Simulation
+          - generic "ข้อมูลสังเคราะห์ ไม่ใช่ผลตรวจจริง": DEMO
+        - cell "Bottle A"
+        - cell "PASS ผ่าน":
+          - text: PASS
+          - generic: ผ่าน
+        - cell "ฉลากถูกต้องและอยู่ตำแหน่ง"
+        - cell "94%"
+        - cell "บันทึกแล้ว":
+          - generic: บันทึกแล้ว
+      - row "ดูรายละเอียด 18 ต.ค. 2026 14:28:01 Simulation DEMO Bottle A REVIEW รอตรวจทาน หามุมฉลากไม่สำเร็จ — บันทึกแล้ว":
+        - cell "ดูรายละเอียด 18 ต.ค. 2026 14:28:01":
+          - button "ดูรายละเอียด 18 ต.ค. 2026 14:28:01": 18 ต.ค. 2026 14:28:01
+        - cell "Simulation DEMO":
+          - text: Simulation
+          - generic "ข้อมูลสังเคราะห์ ไม่ใช่ผลตรวจจริง": DEMO
+        - cell "Bottle A"
+        - cell "REVIEW รอตรวจทาน":
+          - text: REVIEW
+          - generic: รอตรวจทาน
+        - cell "หามุมฉลากไม่สำเร็จ"
+        - cell "—"
+        - cell "บันทึกแล้ว":
+          - generic: บันทึกแล้ว
+      - row "ดูรายละเอียด 18 ต.ค. 2026 14:28:01 Webcam DEMO Bottle A REVIEW รอตรวจทาน ภาพเบลอ — บันทึกแล้ว":
+        - cell "ดูรายละเอียด 18 ต.ค. 2026 14:28:01":
+          - button "ดูรายละเอียด 18 ต.ค. 2026 14:28:01": 18 ต.ค. 2026 14:28:01
+        - cell "Webcam DEMO":
+          - text: Webcam
+          - generic "ข้อมูลสังเคราะห์ ไม่ใช่ผลตรวจจริง": DEMO
+        - cell "Bottle A"
+        - cell "REVIEW รอตรวจทาน":
+          - text: REVIEW
+          - generic: รอตรวจทาน
+        - cell "ภาพเบลอ"
+        - cell "—"
+        - cell "บันทึกแล้ว":
+          - generic: บันทึกแล้ว
+      - row "ดูรายละเอียด 18 ต.ค. 2026 14:28:01 Webcam DEMO Bottle A FAIL ไม่ผ่าน ฉลากผิดสินค้า 96% บันทึกแล้ว":
+        - cell "ดูรายละเอียด 18 ต.ค. 2026 14:28:01":
+          - button "ดูรายละเอียด 18 ต.ค. 2026 14:28:01": 18 ต.ค. 2026 14:28:01
+        - cell "Webcam DEMO":
+          - text: Webcam
+          - generic "ข้อมูลสังเคราะห์ ไม่ใช่ผลตรวจจริง": DEMO
+        - cell "Bottle A"
+        - cell "FAIL ไม่ผ่าน":
+          - text: FAIL
+          - generic: ไม่ผ่าน
+        - cell "ฉลากผิดสินค้า"
+        - cell "96%"
+        - cell "บันทึกแล้ว":
+          - generic: บันทึกแล้ว
+      - row "ดูรายละเอียด 18 ต.ค. 2026 14:28:01 Webcam DEMO Bottle A PASS ผ่าน ฉลากถูกต้องและอยู่ตำแหน่ง 94% บันทึกแล้ว":
+        - cell "ดูรายละเอียด 18 ต.ค. 2026 14:28:01":
+          - button "ดูรายละเอียด 18 ต.ค. 2026 14:28:01": 18 ต.ค. 2026 14:28:01
+        - cell "Webcam DEMO":
+          - text: Webcam
+          - generic "ข้อมูลสังเคราะห์ ไม่ใช่ผลตรวจจริง": DEMO
+        - cell "Bottle A"
+        - cell "PASS ผ่าน":
+          - text: PASS
+          - generic: ผ่าน
+        - cell "ฉลากถูกต้องและอยู่ตำแหน่ง"
+        - cell "94%"
+        - cell "บันทึกแล้ว":
+          - generic: บันทึกแล้ว
+  - generic: 5 รายการ หน้า 1/1
+  - button "ก่อนหน้า" [disabled]:
+    - text: ก่อนหน้า
+  - button "ถัดไป" [disabled]:
+    - text: ถัดไป
+  - complementary "รายละเอียดการตรวจ":
+    - heading "การตรวจ 24d5d3fe" [level=2]
+    - text: PASS
+    - generic: ผ่าน
+    - paragraph: 21 ต.ค. 2026 13:10:10
+    - tablist "รูปแบบภาพ":
+      - tab "ต้นฉบับ + กรอบ" [selected]
+      - tab "ภาพ annotated"
+    - img "ภาพต้นฉบับพร้อมกรอบ"
+    - generic "ขนาดภาพต้นฉบับ และอัตราย่อที่ใช้วาดกรอบ": 400×500px · ×0.82
+    - text: PASS
+    - generic: ผ่าน
+    - generic: ฉลากถูกต้องและอยู่ตำแหน่ง
+    - text: good
+    - generic "ข้อมูลสังเคราะห์ ไม่ใช่ผลตรวจจริง": DEMO
+    - term: สินค้าที่คาดหวัง
+    - definition: Bottle A — รอเลือกยี่ห้อและรุ่นจริง
+    - term: สินค้าที่ตรวจพบ
+    - definition: Bottle A — รอเลือกยี่ห้อและรุ่นจริง
+    - term:
+      - text: ความคล้าย
+      - generic "template similarity (OpenCV TM_CCOEFF_NORMED ที่ตัดค่าติดลบเป็น 0) ไม่ใช่โอกาสที่คำตอบถูก":
+        - img "วิธีคำนวณ"
+    - definition: 94%
+    - term: โหมด
+    - definition: Simulation
+    - term: เวลาตรวจ
+    - definition: 420 ms
+    - term: config
+    - definition: demo-v0
+    - generic: PASS / บันทึกแล้ว
+    - text: ยังไม่มีคนตรวจทาน
+    - button "ตรวจทาน"
+- contentinfo:
+  - generic: Vending Vision ระบบตรวจฉลากขวดน้ำด้วย Image Processing
+  - generic: กำลังแสดงข้อมูลสังเคราะห์ (DEMO)

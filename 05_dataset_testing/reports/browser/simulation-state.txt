@@ -1,0 +1,184 @@
+- banner:
+  - link "Vending Vision หน้าแรก":
+    - /url: /simulation
+    - generic: VENDING VISION
+  - navigation "โหมดการทำงาน":
+    - link "Simulation":
+      - /url: /simulation
+      - text: Simulation
+    - link "Webcam":
+      - /url: /webcam
+      - text: Webcam
+    - link "History":
+      - /url: /history
+      - text: History
+  - group "แหล่งข้อมูล":
+    - button "API จริง"
+    - button "DEMO" [pressed]
+- status:
+  - strong: โหมด DEMO
+  - generic: ข้อมูลสังเคราะห์จาก examples/ ไม่ได้ตรวจภาพจริง ใช้ทดสอบหน้าจอเท่านั้น
+  - text: ผลที่จะจำลอง
+  - combobox "ผลที่จะจำลอง":
+    - option "PASS ฉลากถูกต้อง" [selected]
+    - option "FAIL ฉลากผิดสินค้า"
+    - option "REVIEW ภาพเบลอ"
+    - option "REVIEW หามุมไม่สำเร็จ"
+    - option "PASS แต่บันทึกไม่สำเร็จ"
+    - option "ERROR ระบบตรวจไม่พร้อม (503)"
+- main:
+  - heading "สายพานจำลอง" [level=1]
+  - paragraph: อัปโหลดภาพขวดหลายมุม แล้วส่งให้ Backend ตรวจ ผลจริงเป็นตัวกำหนดทางคัดแยก
+  - region "ฉากสายพาน 3D":
+    - heading "ฉากสายพาน 3D" [level=2]
+    - paragraph: ส่วนนี้จะฝังฉาก Three.js ของงาน 02 ตามข้อตกลงใน pages/slots.ts
+    - strong: รอคอมโพเนนต์ฉากจากงาน 02
+    - generic: ระหว่างนี้หน้าเว็บส่งชุดภาพตรวจได้เลย ผลจะแสดงด้านล่างและในประวัติ
+    - text: PASS
+    - generic: ผ่าน
+    - generic: ส่งเข้าสายหลัก
+    - list "ขั้นตอนบนสายพาน":
+      - listitem "ขวดเข้าสายพาน":
+        - generic: "1"
+        - text: Feed
+      - listitem "หมุนหามุมฉลาก":
+        - generic: "2"
+        - text: Orient
+      - listitem "ส่งภาพให้ Backend ตรวจ":
+        - generic: "3"
+        - text: Inspect
+      - listitem "แยกตามผลจริง":
+        - generic: "4"
+        - text: Sort
+      - listitem "ผ่านไปสายหลัก":
+        - generic: "5"
+        - text: Output
+  - region "ภาพที่ใช้ตรวจ":
+    - heading "ภาพที่ใช้ตรวจ" [level=2]
+    - paragraph: ภาพหลัก มุม 0°
+    - img "ภาพขวดที่ส่งตรวจ"
+    - generic "ขนาดภาพต้นฉบับ และอัตราย่อที่ใช้วาดกรอบ": 400×500px · ×0.61
+    - paragraph: DEMO แสดงภาพสังเคราะห์ที่ตรงพิกัดตัวอย่าง ไม่ได้ตรวจภาพที่คุณเลือก
+    - text: PASS
+    - generic: ผ่าน
+    - generic: ฉลากถูกต้องและอยู่ตำแหน่ง
+    - text: good
+    - generic "ข้อมูลสังเคราะห์ ไม่ใช่ผลตรวจจริง": DEMO
+    - term: สินค้าที่คาดหวัง
+    - definition: Bottle A — รอเลือกยี่ห้อและรุ่นจริง
+    - term: สินค้าที่ตรวจพบ
+    - definition: Bottle A — รอเลือกยี่ห้อและรุ่นจริง
+    - term:
+      - text: ความคล้าย
+      - generic "template similarity (OpenCV TM_CCOEFF_NORMED ที่ตัดค่าติดลบเป็น 0) ไม่ใช่โอกาสที่คำตอบถูก":
+        - img "วิธีคำนวณ"
+    - definition: 94%
+    - term: โหมด
+    - definition: Simulation
+    - term: เวลาตรวจ
+    - definition: 420 ms
+    - term: config
+    - definition: demo-v0
+    - generic: PASS / บันทึกแล้ว
+  - region "ตั้งค่าการตรวจ":
+    - heading "ตั้งค่าการตรวจ" [level=2]
+    - generic "ข้อมูลสังเคราะห์ ไม่ใช่ผลตรวจจริง": DEMO
+    - text: สินค้าที่คาดหวัง
+    - combobox "สินค้าที่คาดหวัง":
+      - option "Bottle A — รอเลือกยี่ห้อและรุ่นจริง" [selected]
+      - option "Bottle B — รอเลือกยี่ห้อและรุ่นจริง"
+    - heading "ภาพขวด (4/12)" [level=3]
+    - button "ใช้ชุดภาพตัวอย่าง"
+    - img "ภาพขวด demo-0.svg"
+    - combobox "มุมของ demo-0.svg":
+      - option "ไม่ทราบมุม"
+      - option "0°" [selected]
+      - option "30°"
+      - option "60°"
+      - option "90°"
+      - option "120°"
+      - option "150°"
+      - option "180°"
+      - option "210°"
+      - option "240°"
+      - option "270°"
+      - option "300°"
+      - option "330°"
+    - button "ภาพหลัก" [pressed]:
+      - text: ภาพหลัก
+    - button "ลบ demo-0.svg":
+    - img "ภาพขวด demo-90.svg"
+    - combobox "มุมของ demo-90.svg":
+      - option "ไม่ทราบมุม"
+      - option "0°"
+      - option "30°"
+      - option "60°"
+      - option "90°" [selected]
+      - option "120°"
+      - option "150°"
+      - option "180°"
+      - option "210°"
+      - option "240°"
+      - option "270°"
+      - option "300°"
+      - option "330°"
+    - button "ตั้งเป็นหลัก":
+      - text: ตั้งเป็นหลัก
+    - button "ลบ demo-90.svg":
+    - img "ภาพขวด demo-180.svg"
+    - combobox "มุมของ demo-180.svg":
+      - option "ไม่ทราบมุม"
+      - option "0°"
+      - option "30°"
+      - option "60°"
+      - option "90°"
+      - option "120°"
+      - option "150°"
+      - option "180°" [selected]
+      - option "210°"
+      - option "240°"
+      - option "270°"
+      - option "300°"
+      - option "330°"
+    - button "ตั้งเป็นหลัก":
+      - text: ตั้งเป็นหลัก
+    - button "ลบ demo-180.svg":
+    - img "ภาพขวด demo-270.svg"
+    - combobox "มุมของ demo-270.svg":
+      - option "ไม่ทราบมุม"
+      - option "0°"
+      - option "30°"
+      - option "60°"
+      - option "90°"
+      - option "120°"
+      - option "150°"
+      - option "180°"
+      - option "210°"
+      - option "240°"
+      - option "270°" [selected]
+      - option "300°"
+      - option "330°"
+    - button "ตั้งเป็นหลัก":
+      - text: ตั้งเป็นหลัก
+    - button "ลบ demo-270.svg":
+    - generic: เลือกภาพขวด (หลายภาพได้)
+    - generic: JPG/PNG ไม่เกิน 10 MB ต่อภาพ ภาพเดียว = ตรวจมุมเดียว
+    - button "เลือกภาพขวด (หลายภาพได้) JPG/PNG ไม่เกิน 10 MB ต่อภาพ ภาพเดียว = ตรวจมุมเดียว"
+    - checkbox "ทุกภาพเป็นขวดใบเดียวกัน (ต้องยืนยันก่อนส่งหลายมุม)" [checked]
+    - text: ทุกภาพเป็นขวดใบเดียวกัน (ต้องยืนยันก่อนส่งหลายมุม)
+    - button "ตรวจชุดภาพนี้":
+      - text: ตรวจชุดภาพนี้
+    - button "รีเซ็ต":
+      - text: รีเซ็ต
+  - region "สรุปรอบนี้":
+    - heading "สรุปรอบนี้" [level=2]
+    - generic: นับเฉพาะที่ตรวจในหน้านี้ ดูทั้งหมดที่ History
+    - generic: ตรวจแล้ว
+    - generic: "1"
+    - generic: ผ่าน
+    - generic: "1"
+    - generic: คัดออก
+    - generic: "0"
+- contentinfo:
+  - generic: Vending Vision ระบบตรวจฉลากขวดน้ำด้วย Image Processing
+  - generic: กำลังแสดงข้อมูลสังเคราะห์ (DEMO)
