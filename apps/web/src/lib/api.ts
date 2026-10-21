@@ -172,7 +172,9 @@ export const api = {
     }),
 
   /** ลิงก์ CSV จาก Backend (ทุกแถวที่ตรง filter ไม่ตัดตาม page) */
-  exportCsvUrl(filters: Omit<InspectionFilters, 'page' | 'page_size'>): string {
+  exportCsvUrl(filters: Omit<InspectionFilters, 'page' | 'page_size'>): string | null {
+    // ยังไม่ตั้ง VITE_API_BASE_URL = ไม่มีปลายทางจริง ปิดปุ่มแทนการให้ลิงก์ที่ใช้ไม่ได้
+    if (!API_BASE_URL) return null
     return `${API_BASE_URL}/api/exports/inspections.csv${query(filters)}`
   },
 }
