@@ -1,0 +1,225 @@
+Browser tab: 1, Title: "Vending Vision", URL: "http://127.0.0.1:5185/history".
+0 AXWebArea Vending Vision, URL: 127.0.0.1:5185/history
+	1 container root
+		2 link Description: ข้ามไปเนื้อหาหลัก, Value: 127.0.0.1:5185/history#main
+		3 container
+			4 link Description: Vending Vision หน้า Simulation, Value: 127.0.0.1:5185/simulation
+			5 container โหมดการทำงาน
+				6 link Description: Simulation, Value: 127.0.0.1:5185/simulation
+				7 link Description: Webcam, Value: 127.0.0.1:5185/webcam
+				8 link Description: History, Value: 127.0.0.1:5185/history
+			9 container แหล่งข้อมูล
+				10 checkbox API จริง, Value: 0
+				11 checkbox DEMO, Value: 1
+		71 container
+			72 text โหมด DEMO ข้อมูลสังเคราะห์จาก examples/ ไม่ได้ตรวจภาพจริง ใช้ทดสอบหน้าจอเท่านั้น ผลที่จะจำลอง
+			73 pop up button (collapsed, settable) ผลที่จะจำลอง, Value: PASS ฉลากถูกต้อง, Secondary Actions: Expand
+				74 menu
+					75 (selected) PASS ฉลากถูกต้อง
+					76 FAIL ฉลากผิดสินค้า
+					77 REVIEW ภาพเบลอ
+					78 REVIEW หามุมไม่สำเร็จ
+					79 PASS แต่บันทึกไม่สำเร็จ
+					80 ERROR ระบบตรวจไม่พร้อม (503)
+		16 container main
+			211 heading ประวัติการตรวจ, Value: 1
+				212 text ประวัติการตรวจ
+			213 text ภาพ ผลตรวจ และสถานะบันทึกจากเครื่องที่รัน Backend
+			214 text DEMO
+			215 text ทั้งหมด
+			216 text 5
+			217 text ผ่าน
+			218 text 2
+			219 text ไม่ผ่าน
+			220 text 1
+			221 text รอตรวจทาน
+			222 text 2
+			223 container ตัวกรอง
+				224 container
+					225 text ตั้งแต่วันที่
+					226 date field (settable) ตั้งแต่วันที่
+						227 container
+							228 stepper
+							229 stepper
+							230 stepper
+						231 pop up button Show date picker Show date picker
+				232 container
+					233 text ถึงวันที่
+					234 date field (settable) ถึงวันที่
+						235 container
+							236 stepper
+							237 stepper
+							238 stepper
+						239 pop up button Show date picker Show date picker
+				240 container
+					241 text โหมด
+					242 pop up button (collapsed, settable) โหมด, Value: ทุกโหมด, Secondary Actions: Expand
+						243 menu
+							244 (selected) ทุกโหมด
+							245 Simulation
+							246 Webcam
+				247 container
+					248 text ผลตรวจ
+					249 pop up button (collapsed, settable) ผลตรวจ, Value: ทุกผล, Secondary Actions: Expand
+						250 menu
+							251 (selected) ทุกผล
+							252 PASS
+							253 FAIL
+							254 REVIEW
+				255 container
+					256 text สินค้าที่คาดหวัง
+					257 pop up button (collapsed, settable) สินค้าที่คาดหวัง, Value: ทุกสินค้า, Secondary Actions: Expand
+						258 menu
+							259 (selected) ทุกสินค้า
+							260 Bottle A
+							261 Bottle B
+				262 container
+					263 text ประเภท
+					264 pop up button (collapsed, settable) ประเภท, Value: ทั้งหมด (จริงและ DEMO), Secondary Actions: Expand
+						265 menu
+							266 (selected) ทั้งหมด (จริงและ DEMO)
+							267 เฉพาะผลตรวจจริง
+							268 เฉพาะโหมด DEMO
+				269 button (disabled) ส่งออก CSV, Help: CSV ต้องมาจาก Backend จริง ใช้ไม่ได้ในโหมด DEMO
+			270 table รายการตรวจ เรียงจากใหม่ไปเก่า
+				271 text รายการตรวจ เรียงจากใหม่ไปเก่า
+				272 row
+					273 cell
+						274 text เวลา (ไทย)
+					275 cell
+						276 text โหมด
+					277 cell
+						278 text สินค้าที่คาด
+					279 cell
+						280 text ผล
+					281 cell
+						282 text เหตุผล
+					283 cell
+						284 text ความคล้าย
+					285 cell
+						286 text บันทึก
+				291 row
+					292 cell
+						293 button ดูรายละเอียด 22 ต.ค. 2026 05:33:03
+					294 cell
+						295 text Simulation
+						296 text DEMO
+					297 cell
+						298 text Bottle A
+					299 cell
+						300 text PASS ผ่าน
+					301 cell
+						302 text ฉลากถูกต้องและอยู่ตำแหน่ง
+					303 cell
+						304 text 94%
+					305 cell
+						306 text บันทึกแล้ว
+				307 row
+					308 cell
+						309 button ดูรายละเอียด 18 ต.ค. 2026 14:28:01
+					310 cell
+						311 text Simulation
+						312 text DEMO
+					313 cell
+						314 text Bottle A
+					315 cell
+						316 text REVIEW รอตรวจทาน
+					317 cell
+						318 text หามุมฉลากไม่สำเร็จ
+					319 cell
+						320 text —
+					321 cell
+						322 text บันทึกแล้ว
+				323 row
+					324 cell
+						325 button ดูรายละเอียด 18 ต.ค. 2026 14:28:01
+					326 cell
+						327 text Webcam
+						328 text DEMO
+					329 cell
+						330 text Bottle A
+					331 cell
+						332 text REVIEW รอตรวจทาน
+					333 cell
+						334 text ภาพเบลอ
+					335 cell
+						336 text —
+					337 cell
+						338 text บันทึกแล้ว
+				339 row
+					340 cell
+						341 button ดูรายละเอียด 18 ต.ค. 2026 14:28:01
+					342 cell
+						343 text Webcam
+						344 text DEMO
+					345 cell
+						346 text Bottle A
+					347 cell
+						348 text FAIL ไม่ผ่าน
+					349 cell
+						350 text ฉลากผิดสินค้า
+					351 cell
+						352 text 96%
+					353 cell
+						354 text บันทึกแล้ว
+				355 row
+					356 cell
+						357 button ดูรายละเอียด 18 ต.ค. 2026 14:28:01
+					358 cell
+						359 text Webcam
+						360 text DEMO
+					361 cell
+						362 text Bottle A
+					363 cell
+						364 text PASS ผ่าน
+					365 cell
+						366 text ฉลากถูกต้องและอยู่ตำแหน่ง
+					367 cell
+						368 text 94%
+					369 cell
+						370 text บันทึกแล้ว
+			287 text 5 รายการ หน้า 1/1
+			288 button (disabled) ก่อนหน้า
+			289 button (disabled) ถัดไป
+			290 container รายละเอียดการตรวจ
+				371 heading การตรวจ eedee690, Value: 2
+					372 text การตรวจ  eedee690
+				373 text PASS ผ่าน
+				374 text 22 ต.ค. 2026 05:33:03
+				375 tab group รูปแบบภาพ
+					376 tab (selected, settable, boolean) ต้นฉบับ + กรอบ, Value: 1
+					377 tab (selectable, settable, boolean) ภาพ annotated, Value: 0
+				378 container
+					379 image ภาพต้นฉบับพร้อมกรอบ
+					380 container ขนาดภาพต้นฉบับ และอัตราย่อที่ใช้วาดกรอบ
+						381 text 400 × 500 px · × 0.49
+				382 container
+					383 text PASS ผ่าน ฉลากถูกต้องและอยู่ตำแหน่ง good
+					384 text DEMO
+					385 definition list
+						386 container สินค้าที่คาดหวัง
+							387 text สินค้าที่คาดหวัง
+						388 text Bottle A — รอเลือกยี่ห้อและรุ่นจริง
+						389 container สินค้าที่ตรวจพบ
+							390 text สินค้าที่ตรวจพบ
+						391 text Bottle A — รอเลือกยี่ห้อและรุ่นจริง
+						392 container ความคล้ายวิธีคำนวณ
+							393 text ความคล้าย
+							394 image วิธีคำนวณ
+						395 text 94%
+						396 container โหมด
+							397 text โหมด
+						398 text Simulation
+						399 container เวลาตรวจ
+							400 text เวลาตรวจ
+						401 text 420 ms
+						402 container config
+							403 text config
+						404 text demo-v0
+					405 text PASS  /  บันทึกแล้ว
+				406 text ยังไม่มีคนตรวจทาน
+				407 button ตรวจทาน
+		69 container
+			70 text Vending Vision ระบบตรวจฉลากขวดน้ำด้วย Image Processing กำลังแสดงข้อมูลสังเคราะห์ (DEMO)
+
+The focused UI element is 8 link Description: History, URL: 127.0.0.1:5185/history

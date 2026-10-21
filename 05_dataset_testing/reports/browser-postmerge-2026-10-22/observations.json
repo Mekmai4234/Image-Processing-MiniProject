@@ -1,0 +1,209 @@
+{
+  "commit": "f4872637d3ca769fce2aef3ae0eab8711fc39d20",
+  "tested_at": "2026-10-21T22:36:17.757Z",
+  "data_kind": "browser",
+  "source": "local frontend DEMO; no backend real images or webcam permission",
+  "reference_available": false,
+  "visual_acceptance": "blocked_missing_agreed_reference",
+  "captures": [
+    {
+      "page": "simulation",
+      "requested_css_viewport": [
+        1366,
+        768
+      ],
+      "measurement": {
+        "canvasCount": 0,
+        "cssViewport": [
+          1366,
+          768
+        ],
+        "documentWidth": 1351,
+        "visibleText": "ข้ามไปเนื้อหาหลัก\nVENDING VISION\nSimulation\nWebcam\nHistory\nAPI จริง\nDEMO\nโหมด DEMO\nข้อมูลสังเคราะห์จาก examples/ ไม่ได้ตรวจภาพจริง ใช้ทดสอบหน้าจอเท่านั้น\nผลที่จะจำลอง\nPASS ฉลากถูกต้อง\nFAIL ฉลากผิดสินค้า\nREVIEW ภาพเบลอ\nREVIEW หามุมไม่สำเร็จ\nPASS แต่บันทึกไม่สำเร็จ\nERROR ระบบตรวจไม่พร้อม (503)\nสายพานจำลอง\n\nอัปโหลดภาพขวดหลายมุม แล้วส่งให้ Backend ตรวจ ผลจริงเป็นตัวกำหนดทางคัดแยก\n\nฉากสายพาน 3D\n\nส่วนนี้จะฝังฉาก Three.js ของงาน 02\n\nรอคอมโพเนนต์ฉากจากงาน 02\nระหว่างนี้หน้าเว็บส่งชุดภาพตรวจได้เลย ผลจะแสดงด้านล่างและในประวัติ\nPASS\nผ่าน\nส่งเข้าสายหลัก\n1\nFeed\n2\nOrient\n3\nInspect\n4\nSort\n5\nOutput\nภาพที่ใช้ตรวจ\n\nภาพหลัก มุม 0°\n\nPASS | คล้าย 94%\n400×500px · ×0.58\n\nDEMO แสดงภาพสังเคราะห์ที่ตรงพิกัดตัวอย่าง ไม่ได้ตรวจภาพที่คุณเลือก\n\nPASS\nผ่าน\nฉลากถูกต้องและอยู่ตำแหน่ง\ngood DEMO\nสินค้าที่คาดหวัง\nBottle A — รอเลือกยี่ห้อและรุ่นจริง\nสินค้าที่ตรวจพบ\nBottle A — รอเลือกยี่ห้อและรุ่นจริง\nความคล้าย \n94%\nโหมด\nSimulation\nเวลาตรวจ\n420 ms\nconfig\ndemo-v0\nPASS / บันทึกแล้ว\nตั้งค่าการตรวจ\nDEMO\nสินค้าที่คาดหวัง\nBottle A — รอเลือกยี่ห้อและรุ่นจริง\nBottle B — รอเลือกยี่ห้อและรุ่นจริง\nภาพขวด (4/12)\nใช้ชุดภาพตัวอย่าง\nไม่ทราบมุม\n0°\n30°\n60°\n90°\n120°\n150°\n180°\n210°\n240°\n270°\n300°\n330°\nภาพหลัก\nไม่ทราบมุม\n0°\n30°\n60°\n90°\n120°\n150°\n180°\n210°\n240°\n270°\n300°\n330°\nตั้งเป็นหลัก\nไม่ทราบมุม\n0°\n30°\n60°\n90°\n120°\n150°\n180°\n210°\n240°\n270°\n300°\n330°\nตั้งเป็นหลัก\nไม่ทราบมุม\n0°\n30°\n60°\n90°\n120°\n150°\n180°\n210°\n240°\n270°\n300°\n330°\nตั้งเป็นหลัก\nเลือกภาพขวด (หลายภาพได้)\nJPG/PNG ไม่เกิน 10 MB ต่อภาพ ภาพเดียว = ตรวจมุมเดียว\nทุกภาพเป็นขวดใบเดียวกัน (ต้องยืนยันก่อนส่งหลายมุม)\nตรวจชุดภาพนี้\nรีเซ็ต\nสรุปรอบนี้\n\nนับเฉพาะที่ตรวจในหน้านี้ ดูทั้งหมดที่ History\n\nตรวจแล้ว\n1\nผ่าน\n1\nคัดออก\n0\nVending Vision ระบบตรวจฉลากขวดน้ำด้วย Image Processing\nกำลังแสดงข้อมูลสังเคราะห์ (DEMO)"
+      },
+      "path": "reports/browser-postmerge-2026-10-22/simulation-1366x768.png",
+      "sha256": "a11814525a559945b0de099c9cb84a06bb53f33ece36339ce320305e296891d7",
+      "png_dimensions": [
+        1351,
+        759
+      ]
+    },
+    {
+      "page": "simulation",
+      "requested_css_viewport": [
+        390,
+        844
+      ],
+      "measurement": {
+        "canvasCount": 0,
+        "cssViewport": [
+          390,
+          844
+        ],
+        "documentWidth": 375,
+        "visibleText": "ข้ามไปเนื้อหาหลัก\nVENDING VISION\nSimulation\nWebcam\nHistory\nAPI จริง\nDEMO\nโหมด DEMO\nข้อมูลสังเคราะห์จาก examples/ ไม่ได้ตรวจภาพจริง ใช้ทดสอบหน้าจอเท่านั้น\nผลที่จะจำลอง\nPASS ฉลากถูกต้อง\nFAIL ฉลากผิดสินค้า\nREVIEW ภาพเบลอ\nREVIEW หามุมไม่สำเร็จ\nPASS แต่บันทึกไม่สำเร็จ\nERROR ระบบตรวจไม่พร้อม (503)\nสายพานจำลอง\n\nอัปโหลดภาพขวดหลายมุม แล้วส่งให้ Backend ตรวจ ผลจริงเป็นตัวกำหนดทางคัดแยก\n\nฉากสายพาน 3D\n\nส่วนนี้จะฝังฉาก Three.js ของงาน 02\n\nรอคอมโพเนนต์ฉากจากงาน 02\nระหว่างนี้หน้าเว็บส่งชุดภาพตรวจได้เลย ผลจะแสดงด้านล่างและในประวัติ\nPASS\nผ่าน\nส่งเข้าสายหลัก\n1\nFeed\n2\nOrient\n3\nInspect\n4\nSort\n5\nOutput\nภาพที่ใช้ตรวจ\n\nภาพหลัก มุม 0°\n\nPASS | คล้าย 94%\n400×500px · ×0.46\n\nDEMO แสดงภาพสังเคราะห์ที่ตรงพิกัดตัวอย่าง ไม่ได้ตรวจภาพที่คุณเลือก\n\nPASS\nผ่าน\nฉลากถูกต้องและอยู่ตำแหน่ง\ngood DEMO\nสินค้าที่คาดหวัง\nBottle A — รอเลือกยี่ห้อและรุ่นจริง\nสินค้าที่ตรวจพบ\nBottle A — รอเลือกยี่ห้อและรุ่นจริง\nความคล้าย \n94%\nโหมด\nSimulation\nเวลาตรวจ\n420 ms\nconfig\ndemo-v0\nPASS / บันทึกแล้ว\nตั้งค่าการตรวจ\nDEMO\nสินค้าที่คาดหวัง\nBottle A — รอเลือกยี่ห้อและรุ่นจริง\nBottle B — รอเลือกยี่ห้อและรุ่นจริง\nภาพขวด (4/12)\nใช้ชุดภาพตัวอย่าง\nไม่ทราบมุม\n0°\n30°\n60°\n90°\n120°\n150°\n180°\n210°\n240°\n270°\n300°\n330°\nภาพหลัก\nไม่ทราบมุม\n0°\n30°\n60°\n90°\n120°\n150°\n180°\n210°\n240°\n270°\n300°\n330°\nตั้งเป็นหลัก\nไม่ทราบมุม\n0°\n30°\n60°\n90°\n120°\n150°\n180°\n210°\n240°\n270°\n300°\n330°\nตั้งเป็นหลัก\nไม่ทราบมุม\n0°\n30°\n60°\n90°\n120°\n150°\n180°\n210°\n240°\n270°\n300°\n330°\nตั้งเป็นหลัก\nเลือกภาพขวด (หลายภาพได้)\nJPG/PNG ไม่เกิน 10 MB ต่อภาพ ภาพเดียว = ตรวจมุมเดียว\nทุกภาพเป็นขวดใบเดียวกัน (ต้องยืนยันก่อนส่งหลายมุม)\nตรวจชุดภาพนี้\nรีเซ็ต\nสรุปรอบนี้\n\nนับเฉพาะที่ตรวจในหน้านี้ ดูทั้งหมดที่ History\n\nตรวจแล้ว\n1\nผ่าน\n1\nคัดออก\n0\nVending Vision ระบบตรวจฉลากขวดน้ำด้วย Image Processing\nกำลังแสดงข้อมูลสังเคราะห์ (DEMO)"
+      },
+      "path": "reports/browser-postmerge-2026-10-22/simulation-390x844.png",
+      "sha256": "eff83be7c83354fd5fff22adfc7e1a0ff376df54629ae6b86c7a640b3de6b5fe",
+      "png_dimensions": [
+        375,
+        811
+      ]
+    },
+    {
+      "page": "simulation",
+      "requested_css_viewport": [
+        1586,
+        992
+      ],
+      "measurement": {
+        "canvasCount": 0,
+        "cssViewport": [
+          1586,
+          992
+        ],
+        "documentWidth": 1571,
+        "visibleText": "ข้ามไปเนื้อหาหลัก\nVENDING VISION\nThai Student Bottle Label Inspection Project\nSimulation\nWebcam\nHistory\nAPI จริง\nDEMO\nโหมด DEMO\nข้อมูลสังเคราะห์จาก examples/ ไม่ได้ตรวจภาพจริง ใช้ทดสอบหน้าจอเท่านั้น\nผลที่จะจำลอง\nPASS ฉลากถูกต้อง\nFAIL ฉลากผิดสินค้า\nREVIEW ภาพเบลอ\nREVIEW หามุมไม่สำเร็จ\nPASS แต่บันทึกไม่สำเร็จ\nERROR ระบบตรวจไม่พร้อม (503)\nสายพานจำลอง\n\nอัปโหลดภาพขวดหลายมุม แล้วส่งให้ Backend ตรวจ ผลจริงเป็นตัวกำหนดทางคัดแยก\n\nฉากสายพาน 3D\n\nส่วนนี้จะฝังฉาก Three.js ของงาน 02\n\nรอคอมโพเนนต์ฉากจากงาน 02\nระหว่างนี้หน้าเว็บส่งชุดภาพตรวจได้เลย ผลจะแสดงด้านล่างและในประวัติ\nPASS\nผ่าน\nส่งเข้าสายหลัก\n1\nFeed\n2\nOrient\n3\nInspect\n4\nSort\n5\nOutput\nภาพที่ใช้ตรวจ\n\nภาพหลัก มุม 0°\n\nPASS | คล้าย 94%\n400×500px · ×0.69\n\nDEMO แสดงภาพสังเคราะห์ที่ตรงพิกัดตัวอย่าง ไม่ได้ตรวจภาพที่คุณเลือก\n\nPASS\nผ่าน\nฉลากถูกต้องและอยู่ตำแหน่ง\ngood DEMO\nสินค้าที่คาดหวัง\nBottle A — รอเลือกยี่ห้อและรุ่นจริง\nสินค้าที่ตรวจพบ\nBottle A — รอเลือกยี่ห้อและรุ่นจริง\nความคล้าย \n94%\nโหมด\nSimulation\nเวลาตรวจ\n420 ms\nconfig\ndemo-v0\nPASS / บันทึกแล้ว\nตั้งค่าการตรวจ\nDEMO\nสินค้าที่คาดหวัง\nBottle A — รอเลือกยี่ห้อและรุ่นจริง\nBottle B — รอเลือกยี่ห้อและรุ่นจริง\nภาพขวด (4/12)\nใช้ชุดภาพตัวอย่าง\nไม่ทราบมุม\n0°\n30°\n60°\n90°\n120°\n150°\n180°\n210°\n240°\n270°\n300°\n330°\nภาพหลัก\nไม่ทราบมุม\n0°\n30°\n60°\n90°\n120°\n150°\n180°\n210°\n240°\n270°\n300°\n330°\nตั้งเป็นหลัก\nไม่ทราบมุม\n0°\n30°\n60°\n90°\n120°\n150°\n180°\n210°\n240°\n270°\n300°\n330°\nตั้งเป็นหลัก\nไม่ทราบมุม\n0°\n30°\n60°\n90°\n120°\n150°\n180°\n210°\n240°\n270°\n300°\n330°\nตั้งเป็นหลัก\nเลือกภาพขวด (หลายภาพได้)\nJPG/PNG ไม่เกิน 10 MB ต่อภาพ ภาพเดียว = ตรวจมุมเดียว\nทุกภาพเป็นขวดใบเดียวกัน (ต้องยืนยันก่อนส่งหลายมุม)\nตรวจชุดภาพนี้\nรีเซ็ต\nสรุปรอบนี้\n\nนับเฉพาะที่ตรวจในหน้านี้ ดูทั้งหมดที่ History\n\nตรวจแล้ว\n1\nผ่าน\n1\nคัดออก\n0\nVending Vision ระบบตรวจฉลากขวดน้ำด้วย Image Processing\nกำลังแสดงข้อมูลสังเคราะห์ (DEMO)"
+      },
+      "path": "reports/browser-postmerge-2026-10-22/simulation-1586x992.png",
+      "sha256": "0de35854fcf44ccf4b03f308dad0b3a361409d9073cb7f37d8eb4981ccaa11c9",
+      "png_dimensions": [
+        1571,
+        982
+      ]
+    },
+    {
+      "page": "webcam",
+      "requested_css_viewport": [
+        1366,
+        768
+      ],
+      "measurement": {
+        "canvasCount": 0,
+        "cssViewport": [
+          1366,
+          768
+        ],
+        "documentWidth": 1351,
+        "visibleText": "ข้ามไปเนื้อหาหลัก\nVENDING VISION\nSimulation\nWebcam\nHistory\nAPI จริง\nDEMO\nโหมด DEMO\nข้อมูลสังเคราะห์จาก examples/ ไม่ได้ตรวจภาพจริง ใช้ทดสอบหน้าจอเท่านั้น\nผลที่จะจำลอง\nPASS ฉลากถูกต้อง\nFAIL ฉลากผิดสินค้า\nREVIEW ภาพเบลอ\nREVIEW หามุมไม่สำเร็จ\nPASS แต่บันทึกไม่สำเร็จ\nERROR ระบบตรวจไม่พร้อม (503)\nตรวจด้วยกล้อง (Webcam)\n\nหมุนขวดหน้ากล้องจนเห็นฉลาก ถือนิ่ง แล้วถ่ายให้ Backend ตรวจ\n\nกล้องสด (Live Camera)\nเลือกไฟล์ภาพ (File)\nWebcam Live Inspection\nปิดกล้อง\nเปิดกล้อง\nกล้องปิดอยู่\nกดปุ่ม \"เปิดกล้อง\" เพื่อขอสิทธิ์เข้าถึงเว็บแคมและเริ่มระบบตรวจสอบฉลาก\nเปิดกล้องเว็บแคม\nสินค้าที่ต้องการตรวจ:\nน้ำดื่มขวด A (สิงห์ 600ml)\nน้ำดื่มขวด B (คริสตัล 600ml)\nถ่ายภาพเพื่อตรวจ (Capture)\nVending Vision ระบบตรวจฉลากขวดน้ำด้วย Image Processing\nกำลังแสดงข้อมูลสังเคราะห์ (DEMO)"
+      },
+      "path": "reports/browser-postmerge-2026-10-22/webcam-1366x768.png",
+      "sha256": "9952fe2f524e242ef8bb73b4f472b117e71b7bcee8fb1ca89ac7153df3b3242d",
+      "png_dimensions": [
+        1351,
+        759
+      ]
+    },
+    {
+      "page": "webcam",
+      "requested_css_viewport": [
+        390,
+        844
+      ],
+      "measurement": {
+        "canvasCount": 0,
+        "cssViewport": [
+          390,
+          844
+        ],
+        "documentWidth": 375,
+        "visibleText": "ข้ามไปเนื้อหาหลัก\nVENDING VISION\nSimulation\nWebcam\nHistory\nAPI จริง\nDEMO\nโหมด DEMO\nข้อมูลสังเคราะห์จาก examples/ ไม่ได้ตรวจภาพจริง ใช้ทดสอบหน้าจอเท่านั้น\nผลที่จะจำลอง\nPASS ฉลากถูกต้อง\nFAIL ฉลากผิดสินค้า\nREVIEW ภาพเบลอ\nREVIEW หามุมไม่สำเร็จ\nPASS แต่บันทึกไม่สำเร็จ\nERROR ระบบตรวจไม่พร้อม (503)\nตรวจด้วยกล้อง (Webcam)\n\nหมุนขวดหน้ากล้องจนเห็นฉลาก ถือนิ่ง แล้วถ่ายให้ Backend ตรวจ\n\nกล้องสด (Live Camera)\nเลือกไฟล์ภาพ (File)\nWebcam Live Inspection\nปิดกล้อง\nเปิดกล้อง\nกล้องปิดอยู่\nกดปุ่ม \"เปิดกล้อง\" เพื่อขอสิทธิ์เข้าถึงเว็บแคมและเริ่มระบบตรวจสอบฉลาก\nเปิดกล้องเว็บแคม\nสินค้าที่ต้องการตรวจ:\nน้ำดื่มขวด A (สิงห์ 600ml)\nน้ำดื่มขวด B (คริสตัล 600ml)\nถ่ายภาพเพื่อตรวจ (Capture)\nVending Vision ระบบตรวจฉลากขวดน้ำด้วย Image Processing\nกำลังแสดงข้อมูลสังเคราะห์ (DEMO)"
+      },
+      "path": "reports/browser-postmerge-2026-10-22/webcam-390x844.png",
+      "sha256": "0ffe31bd64832f24d72647a6b58cac3f9513a39ed04e1c16b06235377878eb8e",
+      "png_dimensions": [
+        375,
+        811
+      ]
+    },
+    {
+      "page": "webcam",
+      "requested_css_viewport": [
+        1586,
+        992
+      ],
+      "measurement": {
+        "canvasCount": 0,
+        "cssViewport": [
+          1586,
+          992
+        ],
+        "documentWidth": 1571,
+        "visibleText": "ข้ามไปเนื้อหาหลัก\nVENDING VISION\nThai Student Bottle Label Inspection Project\nSimulation\nWebcam\nHistory\nAPI จริง\nDEMO\nโหมด DEMO\nข้อมูลสังเคราะห์จาก examples/ ไม่ได้ตรวจภาพจริง ใช้ทดสอบหน้าจอเท่านั้น\nผลที่จะจำลอง\nPASS ฉลากถูกต้อง\nFAIL ฉลากผิดสินค้า\nREVIEW ภาพเบลอ\nREVIEW หามุมไม่สำเร็จ\nPASS แต่บันทึกไม่สำเร็จ\nERROR ระบบตรวจไม่พร้อม (503)\nตรวจด้วยกล้อง (Webcam)\n\nหมุนขวดหน้ากล้องจนเห็นฉลาก ถือนิ่ง แล้วถ่ายให้ Backend ตรวจ\n\nกล้องสด (Live Camera)\nเลือกไฟล์ภาพ (File)\nWebcam Live Inspection\nปิดกล้อง\nเปิดกล้อง\nกล้องปิดอยู่\nกดปุ่ม \"เปิดกล้อง\" เพื่อขอสิทธิ์เข้าถึงเว็บแคมและเริ่มระบบตรวจสอบฉลาก\nเปิดกล้องเว็บแคม\nสินค้าที่ต้องการตรวจ:\nน้ำดื่มขวด A (สิงห์ 600ml)\nน้ำดื่มขวด B (คริสตัล 600ml)\nถ่ายภาพเพื่อตรวจ (Capture)\nVending Vision ระบบตรวจฉลากขวดน้ำด้วย Image Processing\nกำลังแสดงข้อมูลสังเคราะห์ (DEMO)"
+      },
+      "path": "reports/browser-postmerge-2026-10-22/webcam-1586x992.png",
+      "sha256": "ffde019e3da337d42ade3e44b83716edb2895b2f4cb5310a539a9d6bba6d862c",
+      "png_dimensions": [
+        1571,
+        982
+      ]
+    },
+    {
+      "page": "history",
+      "requested_css_viewport": [
+        1366,
+        768
+      ],
+      "measurement": {
+        "canvasCount": 0,
+        "cssViewport": [
+          1366,
+          768
+        ],
+        "documentWidth": 1351,
+        "visibleText": "ข้ามไปเนื้อหาหลัก\nVENDING VISION\nSimulation\nWebcam\nHistory\nAPI จริง\nDEMO\nโหมด DEMO\nข้อมูลสังเคราะห์จาก examples/ ไม่ได้ตรวจภาพจริง ใช้ทดสอบหน้าจอเท่านั้น\nผลที่จะจำลอง\nPASS ฉลากถูกต้อง\nFAIL ฉลากผิดสินค้า\nREVIEW ภาพเบลอ\nREVIEW หามุมไม่สำเร็จ\nPASS แต่บันทึกไม่สำเร็จ\nERROR ระบบตรวจไม่พร้อม (503)\nประวัติการตรวจ\n\nภาพ ผลตรวจ และสถานะบันทึกจากเครื่องที่รัน Backend\n\nDEMO\nทั้งหมด\n5\nผ่าน\n2\nไม่ผ่าน\n1\nรอตรวจทาน\n2\nตั้งแต่วันที่\nถึงวันที่\nโหมด\nทุกโหมด\nSimulation\nWebcam\nผลตรวจ\nทุกผล\nPASS\nFAIL\nREVIEW\nสินค้าที่คาดหวัง\nทุกสินค้า\nBottle A\nBottle B\nประเภท\nทั้งหมด (จริงและ DEMO)\nเฉพาะผลตรวจจริง\nเฉพาะโหมด DEMO\nส่งออก CSV\nรายการตรวจ เรียงจากใหม่ไปเก่า\nเวลา (ไทย)\tโหมด\tสินค้าที่คาด\tผล\tเหตุผล\tความคล้าย\tบันทึก\n22 ต.ค. 2026 05:33:03\tSimulation\nDEMO\n\tBottle A\t\nPASS\nผ่าน\n\tฉลากถูกต้องและอยู่ตำแหน่ง\t94%\t\nบันทึกแล้ว\n\n18 ต.ค. 2026 14:28:01\tSimulation\nDEMO\n\tBottle A\t\nREVIEW\nรอตรวจทาน\n\tหามุมฉลากไม่สำเร็จ\t—\t\nบันทึกแล้ว\n\n18 ต.ค. 2026 14:28:01\tWebcam\nDEMO\n\tBottle A\t\nREVIEW\nรอตรวจทาน\n\tภาพเบลอ\t—\t\nบันทึกแล้ว\n\n18 ต.ค. 2026 14:28:01\tWebcam\nDEMO\n\tBottle A\t\nFAIL\nไม่ผ่าน\n\tฉลากผิดสินค้า\t96%\t\nบันทึกแล้ว\n\n18 ต.ค. 2026 14:28:01\tWebcam\nDEMO\n\tBottle A\t\nPASS\nผ่าน\n\tฉลากถูกต้องและอยู่ตำแหน่ง\t94%\t\nบันทึกแล้ว\n5 รายการ หน้า 1/1\nก่อนหน้า\nถัดไป\nการตรวจ eedee690\nPASS\nผ่าน\n\n22 ต.ค. 2026 05:33:03\n\nต้นฉบับ + กรอบ\nภาพ annotated\nPASS | คล้าย 94%\n400×500px · ×0.60\nPASS\nผ่าน\nฉลากถูกต้องและอยู่ตำแหน่ง\ngood DEMO\nสินค้าที่คาดหวัง\nBottle A — รอเลือกยี่ห้อและรุ่นจริง\nสินค้าที่ตรวจพบ\nBottle A — รอเลือกยี่ห้อและรุ่นจริง\nความคล้าย \n94%\nโหมด\nSimulation\nเวลาตรวจ\n420 ms\nconfig\ndemo-v0\nPASS / บันทึกแล้ว\nยังไม่มีคนตรวจทาน\nตรวจทาน\nVending Vision ระบบตรวจฉลากขวดน้ำด้วย Image Processing\nกำลังแสดงข้อมูลสังเคราะห์ (DEMO)"
+      },
+      "path": "reports/browser-postmerge-2026-10-22/history-1366x768.png",
+      "sha256": "e6d6afe7271bbeaae3b5c416503812471331f59c979e1fb5baa3a33c55d69a4d",
+      "png_dimensions": [
+        1351,
+        759
+      ]
+    },
+    {
+      "page": "history",
+      "requested_css_viewport": [
+        390,
+        844
+      ],
+      "measurement": {
+        "canvasCount": 0,
+        "cssViewport": [
+          390,
+          844
+        ],
+        "documentWidth": 475,
+        "visibleText": "ข้ามไปเนื้อหาหลัก\nVENDING VISION\nSimulation\nWebcam\nHistory\nAPI จริง\nDEMO\nโหมด DEMO\nข้อมูลสังเคราะห์จาก examples/ ไม่ได้ตรวจภาพจริง ใช้ทดสอบหน้าจอเท่านั้น\nผลที่จะจำลอง\nPASS ฉลากถูกต้อง\nFAIL ฉลากผิดสินค้า\nREVIEW ภาพเบลอ\nREVIEW หามุมไม่สำเร็จ\nPASS แต่บันทึกไม่สำเร็จ\nERROR ระบบตรวจไม่พร้อม (503)\nประวัติการตรวจ\n\nภาพ ผลตรวจ และสถานะบันทึกจากเครื่องที่รัน Backend\n\nDEMO\nทั้งหมด\n5\nผ่าน\n2\nไม่ผ่าน\n1\nรอตรวจทาน\n2\nตั้งแต่วันที่\nถึงวันที่\nโหมด\nทุกโหมด\nSimulation\nWebcam\nผลตรวจ\nทุกผล\nPASS\nFAIL\nREVIEW\nสินค้าที่คาดหวัง\nทุกสินค้า\nBottle A\nBottle B\nประเภท\nทั้งหมด (จริงและ DEMO)\nเฉพาะผลตรวจจริง\nเฉพาะโหมด DEMO\nส่งออก CSV\nรายการตรวจ เรียงจากใหม่ไปเก่า\nเวลา (ไทย)\tโหมด\tสินค้าที่คาด\tผล\tเหตุผล\tความคล้าย\tบันทึก\n22 ต.ค. 2026 05:33:03\tSimulation\nDEMO\n\tBottle A\t\nPASS\nผ่าน\n\tฉลากถูกต้องและอยู่ตำแหน่ง\t94%\t\nบันทึกแล้ว\n\n18 ต.ค. 2026 14:28:01\tSimulation\nDEMO\n\tBottle A\t\nREVIEW\nรอตรวจทาน\n\tหามุมฉลากไม่สำเร็จ\t—\t\nบันทึกแล้ว\n\n18 ต.ค. 2026 14:28:01\tWebcam\nDEMO\n\tBottle A\t\nREVIEW\nรอตรวจทาน\n\tภาพเบลอ\t—\t\nบันทึกแล้ว\n\n18 ต.ค. 2026 14:28:01\tWebcam\nDEMO\n\tBottle A\t\nFAIL\nไม่ผ่าน\n\tฉลากผิดสินค้า\t96%\t\nบันทึกแล้ว\n\n18 ต.ค. 2026 14:28:01\tWebcam\nDEMO\n\tBottle A\t\nPASS\nผ่าน\n\tฉลากถูกต้องและอยู่ตำแหน่ง\t94%\t\nบันทึกแล้ว\n5 รายการ หน้า 1/1\nก่อนหน้า\nถัดไป\nการตรวจ eedee690\nPASS\nผ่าน\n\n22 ต.ค. 2026 05:33:03\n\nต้นฉบับ + กรอบ\nภาพ annotated\nPASS | คล้าย 94%\n400×500px · ×0.49\nPASS\nผ่าน\nฉลากถูกต้องและอยู่ตำแหน่ง\ngood DEMO\nสินค้าที่คาดหวัง\nBottle A — รอเลือกยี่ห้อและรุ่นจริง\nสินค้าที่ตรวจพบ\nBottle A — รอเลือกยี่ห้อและรุ่นจริง\nความคล้าย \n94%\nโหมด\nSimulation\nเวลาตรวจ\n420 ms\nconfig\ndemo-v0\nPASS / บันทึกแล้ว\nยังไม่มีคนตรวจทาน\nตรวจทาน\nVending Vision ระบบตรวจฉลากขวดน้ำด้วย Image Processing\nกำลังแสดงข้อมูลสังเคราะห์ (DEMO)"
+      },
+      "path": "reports/browser-postmerge-2026-10-22/history-390x844.png",
+      "sha256": "dce6e31bb044d6cc02180d33fe8b0feb4b7064813e42747a1facbef0364694c1",
+      "png_dimensions": [
+        375,
+        811
+      ]
+    },
+    {
+      "page": "history",
+      "requested_css_viewport": [
+        1586,
+        992
+      ],
+      "measurement": {
+        "canvasCount": 0,
+        "cssViewport": [
+          1586,
+          992
+        ],
+        "documentWidth": 1571,
+        "visibleText": "ข้ามไปเนื้อหาหลัก\nVENDING VISION\nThai Student Bottle Label Inspection Project\nSimulation\nWebcam\nHistory\nAPI จริง\nDEMO\nโหมด DEMO\nข้อมูลสังเคราะห์จาก examples/ ไม่ได้ตรวจภาพจริง ใช้ทดสอบหน้าจอเท่านั้น\nผลที่จะจำลอง\nPASS ฉลากถูกต้อง\nFAIL ฉลากผิดสินค้า\nREVIEW ภาพเบลอ\nREVIEW หามุมไม่สำเร็จ\nPASS แต่บันทึกไม่สำเร็จ\nERROR ระบบตรวจไม่พร้อม (503)\nประวัติการตรวจ\n\nภาพ ผลตรวจ และสถานะบันทึกจากเครื่องที่รัน Backend\n\nDEMO\nทั้งหมด\n5\nผ่าน\n2\nไม่ผ่าน\n1\nรอตรวจทาน\n2\nตั้งแต่วันที่\nถึงวันที่\nโหมด\nทุกโหมด\nSimulation\nWebcam\nผลตรวจ\nทุกผล\nPASS\nFAIL\nREVIEW\nสินค้าที่คาดหวัง\nทุกสินค้า\nBottle A\nBottle B\nประเภท\nทั้งหมด (จริงและ DEMO)\nเฉพาะผลตรวจจริง\nเฉพาะโหมด DEMO\nส่งออก CSV\nรายการตรวจ เรียงจากใหม่ไปเก่า\nเวลา (ไทย)\tโหมด\tสินค้าที่คาด\tผล\tเหตุผล\tความคล้าย\tบันทึก\n22 ต.ค. 2026 05:33:03\tSimulation\nDEMO\n\tBottle A\t\nPASS\nผ่าน\n\tฉลากถูกต้องและอยู่ตำแหน่ง\t94%\t\nบันทึกแล้ว\n\n18 ต.ค. 2026 14:28:01\tSimulation\nDEMO\n\tBottle A\t\nREVIEW\nรอตรวจทาน\n\tหามุมฉลากไม่สำเร็จ\t—\t\nบันทึกแล้ว\n\n18 ต.ค. 2026 14:28:01\tWebcam\nDEMO\n\tBottle A\t\nREVIEW\nรอตรวจทาน\n\tภาพเบลอ\t—\t\nบันทึกแล้ว\n\n18 ต.ค. 2026 14:28:01\tWebcam\nDEMO\n\tBottle A\t\nFAIL\nไม่ผ่าน\n\tฉลากผิดสินค้า\t96%\t\nบันทึกแล้ว\n\n18 ต.ค. 2026 14:28:01\tWebcam\nDEMO\n\tBottle A\t\nPASS\nผ่าน\n\tฉลากถูกต้องและอยู่ตำแหน่ง\t94%\t\nบันทึกแล้ว\n5 รายการ หน้า 1/1\nก่อนหน้า\nถัดไป\nการตรวจ eedee690\nPASS\nผ่าน\n\n22 ต.ค. 2026 05:33:03\n\nต้นฉบับ + กรอบ\nภาพ annotated\nPASS | คล้าย 94%\n400×500px · ×0.72\nPASS\nผ่าน\nฉลากถูกต้องและอยู่ตำแหน่ง\ngood DEMO\nสินค้าที่คาดหวัง\nBottle A — รอเลือกยี่ห้อและรุ่นจริง\nสินค้าที่ตรวจพบ\nBottle A — รอเลือกยี่ห้อและรุ่นจริง\nความคล้าย \n94%\nโหมด\nSimulation\nเวลาตรวจ\n420 ms\nconfig\ndemo-v0\nPASS / บันทึกแล้ว\nยังไม่มีคนตรวจทาน\nตรวจทาน\nVending Vision ระบบตรวจฉลากขวดน้ำด้วย Image Processing\nกำลังแสดงข้อมูลสังเคราะห์ (DEMO)"
+      },
+      "path": "reports/browser-postmerge-2026-10-22/history-1586x992.png",
+      "sha256": "ac67bb7f254555506469fdf4f67f583f342dad29021c30cd05153db09dda6da0",
+      "png_dimensions": [
+        1571,
+        982
+      ]
+    }
+  ],
+  "capture_note": "PNG dimensions differ from requested CSS viewport; no resizing or reference comparison performed. No mounted canvas was found on Simulation."
+}

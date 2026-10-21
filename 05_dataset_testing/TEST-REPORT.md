@@ -1,5 +1,7 @@
 # ผลตรวจงาน 05 — 21 ตุลาคม 2026
 
+**ผลใหม่ 22 ตุลาคม 2026:** ตรวจ commit รวม `f4872637d3ca769fce2aef3ae0eab8711fc39d20` หลัง PR #20 merge ได้ dataset tools 44/repository 12/frontend 109 tests และ build ผ่าน แต่ Backend ผ่าน 147/150 cases + 94 subtests มี 3 failure เรื่อง UTC/Bangkok storage date assertions ไม่มี skips เก็บ screenshot ใหม่ 9 ภาพและทวน defects เดิมแล้ว ยังไม่ผ่าน real-data/hardware/visual acceptance รายละเอียด [รายงานหลัง merge](POSTMERGE-2026-10-22.md) ผลวันที่ 21 ด้านล่างเป็นประวัติของ commit เก่า ไม่ใช้ยืนยันว่า gate ปัจจุบันผ่าน
+
 ฐานแอปที่ตรวจ: `2569e7ced6e1f4fc788791ab0530b10faea2ace4` จาก develop พร้อม working tree ของงาน 05 รอบนี้ รายงาน JSON บันทึก dirty flag และ SHA-256 ของ source ที่ใช้ทดสอบ จึงไม่ได้อ้างว่าเครื่องมือใหม่อยู่ใน base commit แล้ว
 
 รอบตรวจซ้ำตามใบงานทั้งสองฉบับ ใช้ฐานเครื่องมือ `fbfe73c4823539252129920200aea7d9a10c8ed3` พร้อม working tree ที่แก้เฉพาะ 05 ดู [smoke-recheck-2026-10-21.json](reports/smoke-recheck-2026-10-21.json) ซึ่งเก็บ commit/dirty flag/source hashes ตามที่รันจริง หลักฐาน browser เดิมยังคงอ้างฐานเดิม ไม่อ้างว่าถ่าย browser ใหม่ในรอบนี้

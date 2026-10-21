@@ -1,0 +1,84 @@
+{
+  "checklist_sha256": "f52fcd9f659f6973f948b7f68493a2657bd023efc8b593c5ae8f268181ed03e4",
+  "records_consistent": true,
+  "ready_for_acceptance": false,
+  "status_counts": {
+    "not_tested": 31,
+    "blocked": 5,
+    "passed": 3,
+    "failed": 4
+  },
+  "by_data_kind": {
+    "browser": {
+      "not_tested": 12,
+      "passed": 1,
+      "failed": 3,
+      "blocked": 1
+    },
+    "hardware": {
+      "not_tested": 5,
+      "blocked": 1
+    },
+    "real": {
+      "not_tested": 7,
+      "blocked": 2
+    },
+    "synthetic": {
+      "not_tested": 7,
+      "passed": 2,
+      "failed": 1
+    },
+    "visual": {
+      "blocked": 1
+    }
+  },
+  "missing_passed_evidence_kinds": [
+    "hardware",
+    "real",
+    "visual"
+  ],
+  "pending_case_ids": [
+    "05-INT-01",
+    "05-INT-02",
+    "05-INT-03",
+    "05-INT-04",
+    "05-INT-05",
+    "05-INT-06",
+    "05-INT-07",
+    "05-INT-08",
+    "05-INT-09",
+    "05-INT-10",
+    "05-INT-11",
+    "05-INT-12",
+    "05-INT-13",
+    "05-INT-14",
+    "05-INT-15",
+    "05-INT-16",
+    "05-INT-17",
+    "05-INT-18",
+    "05-INT-19",
+    "05-INT-20",
+    "05-INT-21",
+    "05-INT-22",
+    "05-INT-23",
+    "05-INT-24",
+    "05-INT-25",
+    "05-INT-26",
+    "05-INT-27",
+    "05-INT-28",
+    "05-INT-29",
+    "05-INT-30",
+    "05-INT-31",
+    "05-INT-32",
+    "05-SMOKE-BACKEND",
+    "05-BR-01",
+    "05-BR-02",
+    "05-BR-03",
+    "05-POSTMERGE-WEBGL",
+    "05-POSTMERGE-VISUAL",
+    "05-POSTMERGE-REAL",
+    "05-POSTMERGE-CAMERA"
+  ],
+  "errors": [],
+  "note": "Record consistency is not system acceptance. Human review is still required; synthetic tests cannot replace real, hardware or visual evidence."
+}
