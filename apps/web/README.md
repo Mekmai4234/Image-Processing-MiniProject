@@ -8,7 +8,8 @@
 ```text
 src/pages/                 SimulationPage, WebcamPage, HistoryPage (01)
 src/pages/slots.ts         ร่าง props ที่ 02/04 จะฝังเข้ามา (ตกลงก่อนเชื่อม)
-src/components/            InspectionOverlay, ResultCard, AppShell (01)
+src/components/            InspectionOverlay, ResultCard, AppShell, Panel, StatCard (01)
+src/components/history/    HistoryFilters, HistoryTable, InspectionDetail, ReviewPanel (01)
 src/features/simulation/   Three.js scene/state (02)
 src/features/webcam/       CameraPanel/capture/cleanup (04)
 src/lib/api.ts             API client กลาง (01/04)
