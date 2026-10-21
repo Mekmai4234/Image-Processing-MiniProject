@@ -1,5 +1,5 @@
 // กันไม่ให้ CSS ของ feature (02 simulation, 04 webcam) เปลี่ยนหน้าตา component กลางของ 01
-// กติกา: feature CSS ใช้ได้เฉพาะ class ของตัวเอง ห้าม :root, ห้าม selector ของ element เปล่า,
+// กติกา: feature CSS ใช้ได้เฉพาะ class ของตัวเอง ห้าม :root, ทุก selector ต้องมี class ของ feature,
 // และทุกส่วนของ selector ต้องผูกกับ class ของ feature ไม่ใช่ class กลางใน styles/global.css อย่างเดียว
 // ไฟล์นี้รันใน Node และ type-check ด้วย tsconfig.node.json (ไม่ใช่ tsconfig.app.json ของ browser)
 import { readFileSync, readdirSync, statSync } from 'node:fs'
@@ -53,7 +53,9 @@ describe('feature CSS ไม่กระทบ component กลาง', () => {
     const problems: string[] = []
     for (const sel of list) {
       if (sel.includes(':root')) problems.push(`${sel}: ห้ามประกาศ :root (ใช้ token ใน global.css)`)
-      if (/^(html|body|\*|[a-z][a-z0-9]*)(?![\w-])/i.test(sel)) problems.push(`${sel}: ห้ามขึ้นต้นด้วย element เปล่า ให้ครอบด้วย class ของ feature`)
+      // selector ต้องผูกกับ class ของ feature อย่างน้อยหนึ่งตัว: body / button / input:checked เปล่า ๆ ไม่ได้
+      // แต่ input:checked + .toggle-slider ได้ เพราะเป้าหมายคือ .toggle-slider ของ feature เอง
+      if (!classesIn(sel).some((c) => !sharedClasses.has(c))) problems.push(`${sel}: ต้องมี class ของ feature อย่างน้อยหนึ่งตัว`)
       // แต่ละส่วนของ selector (คั่นด้วย space > + ~) ต้องมี class ของ feature อย่างน้อยหนึ่งตัว
       // .btn-tool.active ใช้ได้ (ผูกกับ .btn-tool) แต่ .camera-card .panel ไม่ได้ (ไปแต่ง .panel กลาง)
       for (const part of sel.split(/\s*[\s>+~]\s*/).filter(Boolean)) {
