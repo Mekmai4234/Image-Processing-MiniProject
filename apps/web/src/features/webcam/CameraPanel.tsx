@@ -21,7 +21,7 @@ import {
 import type { DataSource } from '../../lib/dataSource'
 import { liveDataSource } from '../../lib/dataSource'
 import { useAppData } from '../../lib/AppData'
-import type { InspectionResult, Product } from '../../types/inspection'
+import type { InspectionRequest, InspectionResult, Product } from '../../types/inspection'
 import { captureVideoFrame, generateClientRequestId } from './captureUtils'
 import { useLabelLocator } from './useLabelLocator'
 import { useWebcamStream } from './useWebcamStream'
@@ -88,6 +88,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
   const captureAbortRef = useRef<AbortController | null>(null)
   const frozenObjectUrlRef = useRef<string | null>(null)
   const bottleAbsentCountRef = useRef<number>(0)
+  const lastFailedRequestRef = useRef<InspectionRequest | null>(null)
 
   // Dwell timer controller with generation token invalidation (17-1 & 17-2)
   const handleCaptureRef = useRef<((token?: number) => Promise<void>) | null>(null)
@@ -108,6 +109,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
   useEffect(() => {
     dwellTimerRef.current?.invalidate()
     bottleAbsentCountRef.current = 0
+    lastFailedRequestRef.current = null
     captureSeqRef.current++
     captureAbortRef.current?.abort()
     captureAbortRef.current = null
@@ -142,6 +144,8 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
 
   const handleProductSelect = (prodId: string) => {
     setSelectedProduct(prodId)
+    lastFailedRequestRef.current = null
+    setCaptureError(null)
     dwellTimerRef.current?.invalidate()
     if (autoCaptureEnabled && autoPhase === 'holding') {
       setAutoPhase('waiting_bottle')
@@ -172,6 +176,8 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
       // Trigger visual shutter flash
       setIsFlashActive(true)
       setTimeout(() => setIsFlashActive(false), 220)
+
+      let currentReq: InspectionRequest | null = null
 
       try {
         // Capture at real video dimensions
@@ -204,17 +210,17 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
           return
         }
 
-        const result = await effectiveDs.createInspection(
-          {
-            image: frame.blob,
-            imageName: 'webcam-capture.jpg',
-            expected_product: selectedProduct,
-            source_mode: 'webcam',
-            client_request_id: clientRequestId,
-            demo: sourceKind === 'demo',
-          },
-          abortCtrl.signal,
-        )
+        const inspectionReq: InspectionRequest = {
+          image: frame.blob,
+          imageName: 'webcam-capture.jpg',
+          expected_product: selectedProduct,
+          source_mode: 'webcam',
+          client_request_id: clientRequestId,
+          demo: sourceKind === 'demo',
+        }
+        currentReq = inspectionReq
+
+        const result = await effectiveDs.createInspection(inspectionReq, abortCtrl.signal)
 
         if (
           (dwell && !dwell.isTokenValid(sessionTokenSnapshot)) ||
@@ -224,6 +230,8 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
           return
         }
 
+        lastFailedRequestRef.current = null
+        setCaptureError(null)
         setInspectionResult(result)
         onInspectionComplete?.(result)
 
@@ -239,6 +247,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
           return
         }
         console.error('Inspection error:', err)
+        lastFailedRequestRef.current = currentReq
         setCaptureError(err?.message || 'เกิดข้อผิดพลาดในการตรวจสอบภาพ')
         if (autoCaptureEnabled) {
           setAutoPhase('waiting_bottle')
@@ -251,6 +260,50 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
     },
     [autoCaptureEnabled, effectiveDs, isCapturing, isStreaming, onInspectionComplete, selectedProduct, sourceKind, videoRef],
   )
+
+  // Retry last failed inspection reusing the identical client_request_id and payload
+  const handleRetryLastInspection = useCallback(async () => {
+    const failedReq = lastFailedRequestRef.current
+    if (!failedReq || isCapturing) return
+
+    const seq = ++captureSeqRef.current
+    captureAbortRef.current?.abort()
+    const abortCtrl = new AbortController()
+    captureAbortRef.current = abortCtrl
+
+    setIsCapturing(true)
+    setCaptureError(null)
+
+    try {
+      const result = await effectiveDs.createInspection(failedReq, abortCtrl.signal)
+
+      if (seq !== captureSeqRef.current || abortCtrl.signal.aborted) {
+        return
+      }
+
+      lastFailedRequestRef.current = null
+      setCaptureError(null)
+      setInspectionResult(result)
+      onInspectionComplete?.(result)
+
+      if (autoCaptureEnabled) {
+        setAutoPhase('awaiting_removal')
+      }
+    } catch (err: any) {
+      if (seq !== captureSeqRef.current || abortCtrl.signal.aborted) {
+        return
+      }
+      console.error('Inspection retry error:', err)
+      setCaptureError(err?.message || 'เกิดข้อผิดพลาดในการตรวจสอบภาพ')
+      if (autoCaptureEnabled) {
+        setAutoPhase('waiting_bottle')
+      }
+    } finally {
+      if (seq === captureSeqRef.current) {
+        setIsCapturing(false)
+      }
+    }
+  }, [autoCaptureEnabled, effectiveDs, isCapturing, onInspectionComplete])
 
   handleCaptureRef.current = handleCaptureAndInspect
 
@@ -311,6 +364,8 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
   const handleReturnToLive = () => {
     dwellTimerRef.current?.cancel()
     bottleAbsentCountRef.current = 0
+    lastFailedRequestRef.current = null
+    setCaptureError(null)
     setViewMode('live')
     if (autoCaptureEnabled) {
       setAutoPhase('waiting_bottle')
@@ -696,8 +751,22 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
           <div className="control-panel-card capture-action-card">
             {captureError && (
               <div className="capture-error-box">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{captureError}</span>
+                <div className="capture-error-message">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{captureError}</span>
+                </div>
+                {lastFailedRequestRef.current && (
+                  <button
+                    type="button"
+                    className="btn-retry-capture"
+                    onClick={() => void handleRetryLastInspection()}
+                    disabled={isCapturing}
+                    title="ส่งคำขอเดิมซ้ำด้วย client_request_id เดิม"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>ลองใหม่ (Retry ด้วย ID เดิม)</span>
+                  </button>
+                )}
               </div>
             )}
 

@@ -126,6 +126,9 @@ export interface HealthStatus {
   detector_reason?: string | null
 }
 
+export type InspectionSortField = 'created_at' | 'expected_product' | 'result' | 'match_score'
+export type SortOrder = 'asc' | 'desc'
+
 export interface InspectionFilters {
   page: number
   page_size: number
@@ -138,8 +141,8 @@ export interface InspectionFilters {
   date_to?: string
   demo?: boolean
   q?: string
-  sort_by?: 'created_at' | 'expected_product' | 'result' | 'match_score' | string
-  sort_order?: 'asc' | 'desc'
+  sort_by?: InspectionSortField | string
+  sort_order?: SortOrder
 }
 
 export interface InspectionFileItem {

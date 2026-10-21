@@ -175,12 +175,12 @@ export const api = {
   getInspectionFiles: (id: string, signal?: AbortSignal) =>
     request<InspectionFilesResponse>(`/api/inspections/${encodeURIComponent(id)}/files`, { signal }),
 
-  downloadZipUrl: (id: string): string =>
-    `${API_BASE_URL}/api/inspections/${encodeURIComponent(id)}/download`,
+  downloadZipUrl: (id: string): string | null =>
+    API_BASE_URL ? `${API_BASE_URL}/api/inspections/${encodeURIComponent(id)}/download` : null,
 
   /** ลิงก์ CSV จาก Backend (ทุกแถวที่ตรง filter ไม่ตัดตาม page) */
-  exportCsvUrl(filters: Omit<InspectionFilters, 'page' | 'page_size'>): string {
-    return `${API_BASE_URL}/api/exports/inspections.csv${query(filters)}`
+  exportCsvUrl(filters: Omit<InspectionFilters, 'page' | 'page_size'>): string | null {
+    return API_BASE_URL ? `${API_BASE_URL}/api/exports/inspections.csv${query(filters)}` : null
   },
 }
 

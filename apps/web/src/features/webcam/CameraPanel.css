@@ -727,14 +727,47 @@ input:checked + .toggle-slider:before {
 
 .capture-error-box {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 0.4rem;
   background: rgba(239, 68, 68, 0.15);
   color: #f87171;
   border: 1px solid #dc2626;
   border-radius: 0.5rem;
-  padding: 0.4rem 0.6rem;
+  padding: 0.5rem 0.65rem;
   font-size: 0.75rem;
+}
+
+.capture-error-message {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.btn-retry-capture {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+  border: 1px solid #ef4444;
+  border-radius: 0.375rem;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.725rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-retry-capture:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.45);
+  color: #ffffff;
+  border-color: #f87171;
+}
+
+.btn-retry-capture:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Latest Result Drawer / Card */

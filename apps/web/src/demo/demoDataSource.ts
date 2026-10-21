@@ -9,6 +9,7 @@ import { ApiError } from '../lib/api'
 import { newRequestId } from '../lib/ids'
 import type { DataSource } from '../lib/dataSource'
 import type {
+  InspectionFileItem,
   InspectionFilters,
   InspectionRequest,
   InspectionResult,
@@ -120,6 +121,10 @@ export function createDemoDataSource(getScenario: () => DemoScenario): DataSourc
 
     async listInspections(f: InspectionFilters, signal) {
       await wait(350, signal)
+      const queryStr = (f.q ?? '').trim().toLowerCase()
+      const sortBy = f.sort_by || 'created_at'
+      const sortOrder = f.sort_order === 'asc' ? 1 : -1
+
       const items = store
         .filter((r) => !f.source_mode || r.source_mode === f.source_mode)
         .filter((r) => !f.result || r.result === f.result)
@@ -128,7 +133,37 @@ export function createDemoDataSource(getScenario: () => DemoScenario): DataSourc
         // ช่วงวันเวลาไทย รวมวันต้นและวันปลาย (เหมือนกติกา backend)
         .filter((r) => !f.date_from || Date.parse(r.created_at) >= Date.parse(`${f.date_from}T00:00:00+07:00`))
         .filter((r) => !f.date_to || Date.parse(r.created_at) < Date.parse(`${f.date_to}T00:00:00+07:00`) + 86_400_000)
-        .sort((a, b) => b.created_at.localeCompare(a.created_at) || b.inspection_id.localeCompare(a.inspection_id))
+        // ค้นหาตามคำค้นหา q (inspection_id, client_request_id, expected_product, detected_product, reason)
+        .filter((r) => {
+          if (!queryStr) return true
+          return (
+            r.inspection_id.toLowerCase().includes(queryStr) ||
+            (r.client_request_id && r.client_request_id.toLowerCase().includes(queryStr)) ||
+            r.expected_product.toLowerCase().includes(queryStr) ||
+            (r.detected_product && r.detected_product.toLowerCase().includes(queryStr)) ||
+            (r.reason && r.reason.toLowerCase().includes(queryStr))
+          )
+        })
+        .sort((a, b) => {
+          let cmp = 0
+          if (sortBy === 'created_at') {
+            cmp = a.created_at.localeCompare(b.created_at)
+          } else if (sortBy === 'expected_product') {
+            cmp = a.expected_product.localeCompare(b.expected_product)
+          } else if (sortBy === 'result') {
+            cmp = a.result.localeCompare(b.result)
+          } else if (sortBy === 'match_score') {
+            const scoreA = a.match_score ?? -1
+            const scoreB = b.match_score ?? -1
+            cmp = scoreA - scoreB
+          } else {
+            cmp = a.created_at.localeCompare(b.created_at)
+          }
+          if (cmp !== 0) {
+            return cmp * sortOrder
+          }
+          return b.inspection_id.localeCompare(a.inspection_id)
+        })
       const start = (f.page - 1) * f.page_size
       return { items: clone(items.slice(start, start + f.page_size)), total: items.length, page: f.page, page_size: f.page_size }
     },
@@ -141,16 +176,47 @@ export function createDemoDataSource(getScenario: () => DemoScenario): DataSourc
     async getInspectionFiles(id, signal) {
       await wait(150, signal)
       const r = find(id)
+      const isSaved = r.storage_status === 'saved'
+      const files: InspectionFileItem[] = [
+        {
+          name: 'original.jpg',
+          kind: 'original',
+          available: isSaved,
+          size_bytes: isSaved ? 102400 : null,
+          download_url: isSaved ? `/api/inspections/${id}/images/original` : null,
+        },
+        {
+          name: 'annotated.jpg',
+          kind: 'annotated',
+          available: isSaved,
+          size_bytes: isSaved ? 112640 : null,
+          download_url: isSaved ? `/api/inspections/${id}/images/annotated` : null,
+        },
+        {
+          name: 'result.json',
+          kind: 'result_json',
+          available: isSaved,
+          size_bytes: isSaved ? 2048 : null,
+          download_url: isSaved ? `/api/inspections/${id}/result.json` : null,
+        },
+      ]
+      if (r.evidence?.supporting_images) {
+        r.evidence.supporting_images.forEach((_, i) => {
+          files.push({
+            name: `supporting/${i}.jpg`,
+            kind: 'supporting',
+            available: isSaved,
+            size_bytes: isSaved ? 95000 : null,
+            download_url: isSaved ? `/api/inspections/${id}/images/supporting/${i}` : null,
+          })
+        })
+      }
       return {
         inspection_id: id,
         storage_status: r.storage_status,
-        all_available: r.storage_status === 'saved',
-        files: [
-          { name: 'original.jpg', kind: 'original', available: true, download_url: null },
-          { name: 'annotated.jpg', kind: 'annotated', available: true, download_url: null },
-          { name: 'result.json', kind: 'result_json', available: true, download_url: null },
-        ],
-        download_zip_url: null,
+        all_available: isSaved,
+        files,
+        download_zip_url: isSaved ? `/api/inspections/${id}/download` : null,
       }
     },
 
