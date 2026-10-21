@@ -6,8 +6,8 @@
 | Git workflow, API contract, dataset/storage guides | มีเอกสาร |
 | CI ตรวจเอกสาร/โครงสร้าง | มีสคริปต์และ workflow |
 | HTML conveyor prototype | ทดลองได้ เกณฑ์สีพื้นฐานสำหรับภาพที่ควบคุม |
-| React app แยก 3 หน้า | app shell + 3 หน้า + โหมด DEMO รันได้ (apps/web); หน้า Webcam ฝัง CameraPanel ของ 04 แล้ว; ฉาก 3D ของ 02 ยังไม่ประกอบเข้าหน้า Simulation (รอ 02-A); History จัดตามภาพต้นแบบ (ทดสอบกับ DEMO; ค้นหา/เรียงลำดับ/ข้อมูลไฟล์รอ API จาก 04) |
-| Three.js conveyor / rotation | M1: scene + state machine ทดสอบกับ mock DEMO ประกอบเข้าหน้า Simulation แล้ว |
+| React app แยก 3 หน้า | app shell + 3 หน้า + โหมด DEMO รันได้ (apps/web); หน้า Webcam ฝัง CameraPanel ของ 04 แล้ว; ฉาก 3D ของ 02 พร้อมใน features/simulation แต่ยังไม่ประกอบเข้าหน้า Simulation (งาน 01-B); History จัดตามภาพต้นแบบ (ทดสอบกับ DEMO; ค้นหา/เรียงลำดับ/ข้อมูลไฟล์รอ API จาก 04) |
+| Three.js conveyor / rotation | scene สายการผลิต (ORIENT/INSPECT แยกกัน) + state machine + ตัวต่อ DataSource + รูปทรงขวดจาก bottle-silhouette-v1 ทดสอบกับ DEMO; ยังไม่ประกอบเข้าหน้า Simulation (งาน 01-B) |
 | Webcam capture/guidance | มี CameraPanel + locator guidance + cleanup streams (build ผ่าน) ประกอบในหน้า WebcamPage |
 | OpenCV inspection ที่ validate กับขวดไทย | มีโมดูล 03 inspect_image + DetectorConfig + template matching v0.2 |
 | Local persistence / SQLite / History API | มี FastAPI + SQLite + StorageManager + export CSV + pytest 58 รายการ (ดู apps/backend/README.md) |
