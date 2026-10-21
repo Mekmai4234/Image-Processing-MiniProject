@@ -1,0 +1,18 @@
+{
+  "schema_version": "bottle-silhouette-v1",
+  "status": "fallback",
+  "reason": "bottle_not_isolated",
+  "image_width": 240,
+  "image_height": 360,
+  "bbox": null,
+  "normalized_width": null,
+  "normalized_height": null,
+  "aspect_ratio": null,
+  "contour": [],
+  "radial_profile": [],
+  "quality": {
+    "whole_bottle_visible": false,
+    "center_drift": null,
+    "axisymmetric_assumption": true
+  }
+}

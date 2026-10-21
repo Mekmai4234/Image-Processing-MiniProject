@@ -334,6 +334,7 @@ def test_health_readiness_fields():
     data = resp.json()
     assert "detector_ready" in data
     assert "detector_status" in data
+    assert "detector_reason" in data
     assert data["detector_status"] in ("ready", "demo_ready", "unavailable")
 
 

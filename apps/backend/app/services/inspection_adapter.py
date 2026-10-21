@@ -21,6 +21,7 @@ try:
         InspectionConfigError,
     )
     from app.inspection.config import DetectorConfig  # type: ignore
+    from app.inspection.shape import ShapeConfig, analyze_shape  # type: ignore
     HAS_REAL_DETECTOR = True
 except ImportError:
     run_detector_03 = None
@@ -30,6 +31,8 @@ except ImportError:
     InspectionInputError = ValueError
     InspectionConfigError = ValueError
     DetectorConfig = None
+    ShapeConfig = None
+    analyze_shape = None
     HAS_REAL_DETECTOR = False
 
 
@@ -608,3 +611,67 @@ class InspectionAdapter:
         if not success:
             raise APIError(500, "annotation_encode_error", "Failed to encode annotated JPEG")
         return encoded.tobytes()
+
+    @classmethod
+    def analyze_bottle_shape(cls, cv2_bgr: np.ndarray) -> Dict[str, Any]:
+        """
+        Analyze bottle silhouette and radial profile for Member 02 (3D representation).
+        Uses pure image processing app.inspection.shape.analyze_shape.
+        Returns JSON-ready dictionary conforming to bottle-silhouette-v1 without mask array.
+        """
+        h, w = cv2_bgr.shape[:2]
+        if analyze_shape is None or ShapeConfig is None:
+            return {
+                "schema_version": "bottle-silhouette-v1",
+                "status": "fallback",
+                "reason": "shape_module_unavailable",
+                "image_width": w,
+                "image_height": h,
+                "bbox": None,
+                "normalized_width": None,
+                "normalized_height": None,
+                "aspect_ratio": None,
+                "contour": [],
+                "radial_profile": [],
+                "quality": {
+                    "whole_bottle_visible": False,
+                    "center_drift": None,
+                    "axisymmetric_assumption": True,
+                },
+            }
+
+        try:
+            if cls._detector_config is not None:
+                shape_config = ShapeConfig.from_detector(cls._detector_config)
+            else:
+                shape_config = ShapeConfig(
+                    background_distance=25.0,
+                    max_background_spread=15.0,
+                    min_bottle_area=0.05,
+                    max_image_pixels=20_000_000,
+                    profile_samples=32,
+                    max_center_drift=0.1,
+                )
+
+            res = analyze_shape(cv2_bgr, shape_config, color_order="BGR")
+            return res.to_dict(include_mask=False)
+        except Exception as e:
+            return {
+                "schema_version": "bottle-silhouette-v1",
+                "status": "fallback",
+                "reason": f"shape_analysis_error: {e}",
+                "image_width": w,
+                "image_height": h,
+                "bbox": None,
+                "normalized_width": None,
+                "normalized_height": None,
+                "aspect_ratio": None,
+                "contour": [],
+                "radial_profile": [],
+                "quality": {
+                    "whole_bottle_visible": False,
+                    "center_drift": None,
+                    "axisymmetric_assumption": True,
+                },
+            }
+

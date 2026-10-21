@@ -33,4 +33,5 @@ def get_health() -> HealthResponse:
         detector_ready=detector_ready,
         detector_status=detector_status,
         readiness_reason=reason,
+        detector_reason=reason,
     )
