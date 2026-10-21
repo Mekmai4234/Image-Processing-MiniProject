@@ -4,6 +4,7 @@ import numpy as np
 
 from .config import DetectorConfig
 from .preprocess import crop, prepare_image, sharpness
+from .segmentation import segment_foreground, whole_upright_bottle
 from .types import Analysis, Box, LocatorResult, InspectionInputError
 
 
@@ -13,30 +14,22 @@ def _contours(mask):
 
 def analyze(rgb: np.ndarray, config: DetectorConfig) -> Analysis:
     height, width = rgb.shape[:2]
-    lab = cv2.cvtColor(rgb, cv2.COLOR_RGB2LAB).astype(np.float32)
-    border = np.concatenate((lab[0], lab[-1], lab[:, 0], lab[:, -1]))
-    background = np.median(border, axis=0)
-    spread = float(np.percentile(np.linalg.norm(border - background, axis=1), 90))
-    if spread > config.max_background_spread:
-        return Analysis(rgb, None, (), False, 0.0, False, "background_not_uniform")
-    mask = (np.linalg.norm(lab - background, axis=2) > config.background_distance).astype(np.uint8) * 255
+    foreground = segment_foreground(rgb, background_distance=config.background_distance,
+                                    max_background_spread=config.max_background_spread,
+                                    min_area=config.min_bottle_area)
+    if foreground.reason is not None:
+        return Analysis(rgb, None, (), False, 0.0, False, foreground.reason)
     kernel = np.ones((3, 3), np.uint8)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-    contours = [c for c in _contours(mask)
-                if cv2.contourArea(c) >= config.min_bottle_area * width * height]
-    if len(contours) != 1:
-        return Analysis(rgb, None, (), False, 0.0, False, "bottle_not_isolated")
-    x, y, w, h = cv2.boundingRect(contours[0])
-    bottle = Box(x, y, w, h)
+    bottle = foreground.box
+    x, y, w, h = bottle.x, bottle.y, bottle.width, bottle.height
     # Reject cut-off objects and broad label-only crops; position needs a whole bottle.
-    visible = x > 1 and y > 1 and x + w < width - 1 and y + h < height - 1 and h > w * 1.15
+    visible = whole_upright_bottle(bottle, width, height)
     bottle_crop = crop(rgb, bottle)
-    bottle_lab = crop(lab, bottle)
+    bottle_lab = cv2.cvtColor(bottle_crop, cv2.COLOR_RGB2LAB).astype(np.float32)
     body_color = np.median(bottle_lab.reshape(-1, 3), axis=0)
     contrast = (np.linalg.norm(bottle_lab - body_color, axis=2) > config.label_contrast).astype(np.uint8) * 255
     # Only keep pixels inside the actual foreground contour.
-    silhouette = np.zeros((height, width), np.uint8)
-    cv2.drawContours(silhouette, contours, -1, 255, cv2.FILLED)
+    silhouette = foreground.mask * 255
     contrast = cv2.bitwise_and(contrast, crop(silhouette, bottle))
     contrast = cv2.morphologyEx(contrast, cv2.MORPH_CLOSE, kernel)
     # Edges recover printed labels whose mean color resembles the bottle body.

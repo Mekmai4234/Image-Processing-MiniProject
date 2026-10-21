@@ -4,6 +4,11 @@
 catalog จริง, templates จริง หรือผล validation/final test จึงยังไม่รับรอง accuracy
 และยังไม่ถือว่างานตรวจฉลากจริงครบเกณฑ์ส่งมอบ
 
+อัปเดตใบงาน 21 ตุลาคม 2026: เพิ่ม [config document/provenance boundary](CONFIGURATION.md),
+[silhouette/profile สำหรับ 02](SHAPE.md) และ annotation ที่แสดง MATCH จาก similarity จริง
+มี HTTP inspection tests เรียก detector จริงของ 03 ผ่าน 04 แล้ว แต่ HTTP locator และ
+stored annotation ของ 04 ยังต้องนำจุดเชื่อมใหม่ไปใช้ รายละเอียดอยู่ใน HANDOFF
+
 โค้ดส่วนนี้ไม่เปิดกล้อง ไม่เรียก HTTP ไม่โหลด .env และไม่อ่าน/เขียนไฟล์หรือฐานข้อมูล
 งาน 04 เป็น adapter ให้ทั้ง Simulation และ Webcam เรียกตัวตรวจเดียวกัน
 
@@ -95,6 +100,8 @@ Pipeline: validate pixels → quality/bottle ROI → label candidates → rectif
   หลัง EXIF ที่รับเข้ามาเสมอ annotation คืนภาพ RGB ใหม่
 - PASS เขียว / FAIL แดง / REVIEW เหลือง; annotation รองรับ missing-label expected ROI
   แบบเส้นประ แต่ detector รุ่นนี้ยังไม่สร้าง FAIL/missing_label
+- annotation แสดงผล `PASS | MATCH 94%` จากคะแนนรอบนั้นและ reason พร้อมคำว่า similarity
+  คะแนน null แสดง MATCH --; ไม่ใส่เปอร์เซ็นต์ตัวอย่าง 94% ให้ทุกภาพ expected_bbox ใช้เส้นประ
 
 Decision เป็น internal result ไม่ใช่ InspectionResult HTTP ทั้งก้อน:
 04 เติม IDs, created_at, storage_status/error, URLs, reviewed_* และ timings storage/total

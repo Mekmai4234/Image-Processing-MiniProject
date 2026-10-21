@@ -1,0 +1,3 @@
+# Optional real-HTTP checks for 03; Backend manifest remains owned by 04.
+-r requirements-test.txt
+-r ../../requirements.txt
