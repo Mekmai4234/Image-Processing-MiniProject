@@ -1,4 +1,4 @@
-import { Box, Camera, History, RefreshCw, WifiOff } from 'lucide-react'
+import { Box, Camera, HardDrive, History, RefreshCw, ScanSearch, WifiOff } from 'lucide-react'
 import { Brand, Logo } from './Logo'
 import { NavLink, Outlet } from 'react-router-dom'
 import { DEMO_SCENARIOS, type DemoScenario } from '../demo/demoDataSource'
@@ -10,12 +10,29 @@ function ConnectionPill() {
   switch (connection.state) {
     case 'checking':
       return <span className="pill checking"><span className="dot" />กำลังเชื่อม API</span>
-    case 'online':
+    case 'online': {
+      const { detector } = connection.readiness
+      const version = connection.configVersion ? ` · ${connection.configVersion}` : ''
+      if (detector === 'not_ready') {
+        return (
+          <span className="pill warn" title={`${API_BASE_URL}${version}`}>
+            <span className="dot" />API พร้อม · ตัวตรวจยังไม่พร้อม
+          </span>
+        )
+      }
+      if (detector === 'ready') {
+        return (
+          <span className="pill online" title={`${API_BASE_URL}${version}`}>
+            <span className="dot" />API พร้อม · ตัวตรวจพร้อม
+          </span>
+        )
+      }
       return (
-        <span className="pill online" title={API_BASE_URL}>
-          <span className="dot" />API พร้อม{connection.configVersion ? ` (${connection.configVersion})` : ''}
+        <span className="pill online" title={`${API_BASE_URL}${version} · Backend ยังไม่รายงานความพร้อมของตัวตรวจ`}>
+          <span className="dot" />API พร้อม
         </span>
       )
+    }
     case 'offline':
       return <span className="pill offline" title={connection.message}><span className="dot" />API ไม่ตอบ</span>
     case 'demo':
@@ -92,6 +109,31 @@ export function AppShell() {
           <button className="btn btn-sm btn-ghost" onClick={() => setSource('demo')}>
             ดูหน้าจอด้วยข้อมูล DEMO
           </button>
+        </div>
+      )}
+
+      {source === 'live' && connection.state === 'online' && connection.readiness.detector === 'not_ready' && (
+        <div className="readiness-bar" role="status">
+          <ScanSearch size={16} aria-hidden="true" />
+          <span>
+            <strong>ตัวตรวจยังไม่พร้อม</strong> {connection.readiness.detectorReason ?? 'Backend ยังไม่มี config หรือภาพอ้างอิงของสินค้า'}
+            {' '}การตรวจจริงจะได้ ERROR จนกว่าจะพร้อม ส่วนประวัติยังเปิดดูได้
+          </span>
+          <button className="btn btn-sm" onClick={recheck}>
+            <RefreshCw size={14} aria-hidden="true" /> ตรวจสถานะใหม่
+          </button>
+          <button className="btn btn-sm btn-ghost" onClick={() => setSource('demo')}>
+            ลองหน้าจอด้วยข้อมูล DEMO
+          </button>
+        </div>
+      )}
+
+      {source === 'live' && connection.state === 'online' && connection.readiness.storage === 'not_ready' && (
+        <div className="readiness-bar" role="status">
+          <HardDrive size={16} aria-hidden="true" />
+          <span>
+            <strong>ที่เก็บไฟล์ของ Backend เขียนไม่ได้</strong> ผลตรวจยังแสดงได้ แต่จะขึ้นสถานะบันทึกไม่สำเร็จ ตรวจ STORAGE_ROOT บนเครื่องที่รัน Backend
+          </span>
         </div>
       )}
 

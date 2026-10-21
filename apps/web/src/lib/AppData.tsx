@@ -3,11 +3,12 @@ import { createDemoDataSource, type DemoScenario } from '../demo/demoDataSource'
 import type { Product, ProductCatalog } from '../types/inspection'
 import { describeApiError, isAbort } from './api'
 import { liveDataSource, type DataSource } from './dataSource'
+import { readinessOf, type Readiness } from './readiness'
 
 export type SourceKind = 'live' | 'demo'
 export type Connection =
   | { state: 'checking' }
-  | { state: 'online'; configVersion?: string }
+  | { state: 'online'; configVersion?: string; readiness: Readiness }
   | { state: 'offline'; message: string }
   | { state: 'demo' }
 
@@ -67,7 +68,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     ;(async () => {
       try {
         const h = await ds.health(ctrl.signal)
-        if (source === 'live') setConnection({ state: 'online', configVersion: h.config_version })
+        if (source === 'live') setConnection({ state: 'online', configVersion: h.config_version, readiness: readinessOf(h) })
       } catch (err) {
         if (isAbort(err)) return
         setConnection({ state: 'offline', message: describeApiError(err) })
