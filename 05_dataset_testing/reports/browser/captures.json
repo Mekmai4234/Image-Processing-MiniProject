@@ -1,0 +1,128 @@
+{
+  "tested_at": "2026-10-21T06:22:02.449071+00:00",
+  "commit": "2569e7ced6e1f4fc788791ab0530b10faea2ace4",
+  "data_kind": "browser",
+  "source": "frontend DEMO; no real photos or camera",
+  "reference_available": false,
+  "visual_acceptance": "blocked_missing_reference",
+  "capture_note": "Requested CSS viewport differs from provider PNG dimensions; PNG dimensions recorded without rescaling. Re-capture at matching dimensions before pixel comparison.",
+  "captures": [
+    {
+      "page": "history",
+      "requested_css_viewport": [
+        1366,
+        768
+      ],
+      "png_dimensions": [
+        1351,
+        759
+      ],
+      "path": "reports/browser/history-1366x768.png",
+      "sha256": "c26c25d3c7be4c2aabebb2da732d48182a4a1720e0483d71d88ed440dd86df32"
+    },
+    {
+      "page": "history",
+      "requested_css_viewport": [
+        1586,
+        992
+      ],
+      "png_dimensions": [
+        1571,
+        982
+      ],
+      "path": "reports/browser/history-1586x992.png",
+      "sha256": "f36858a151ac4d8083f3e832a8c04ac12b76a835fa340206d5f862ae5ea53171"
+    },
+    {
+      "page": "history",
+      "requested_css_viewport": [
+        390,
+        844
+      ],
+      "png_dimensions": [
+        375,
+        811
+      ],
+      "path": "reports/browser/history-390x844.png",
+      "sha256": "a6ff24dcc0b3b1a12325c5ced9c20eab03e8f845f582a05fac20be99e8ad0834"
+    },
+    {
+      "page": "simulation",
+      "requested_css_viewport": [
+        1366,
+        768
+      ],
+      "png_dimensions": [
+        1351,
+        759
+      ],
+      "path": "reports/browser/simulation-1366x768.png",
+      "sha256": "a324a584350bbcb507eb68bbe0b415c91ccf864796f2317b3b098c3b656d586f"
+    },
+    {
+      "page": "simulation",
+      "requested_css_viewport": [
+        1586,
+        992
+      ],
+      "png_dimensions": [
+        1571,
+        982
+      ],
+      "path": "reports/browser/simulation-1586x992.png",
+      "sha256": "61f1462f43f4c3311204c3fc9afc6c540f731842681a949c06a7f072f347cff8"
+    },
+    {
+      "page": "simulation",
+      "requested_css_viewport": [
+        390,
+        844
+      ],
+      "png_dimensions": [
+        375,
+        811
+      ],
+      "path": "reports/browser/simulation-390x844.png",
+      "sha256": "835195cad0e3385d1abd9ebe51e49a52f267044faea0c2c58938a987b0190173"
+    },
+    {
+      "page": "webcam",
+      "requested_css_viewport": [
+        1366,
+        768
+      ],
+      "png_dimensions": [
+        1351,
+        759
+      ],
+      "path": "reports/browser/webcam-1366x768.png",
+      "sha256": "ab1666e4fe18f5238d785f93032cf645fb3edeaf623b2a229fff45603097957f"
+    },
+    {
+      "page": "webcam",
+      "requested_css_viewport": [
+        1586,
+        992
+      ],
+      "png_dimensions": [
+        1571,
+        982
+      ],
+      "path": "reports/browser/webcam-1586x992.png",
+      "sha256": "74b521384a140dc49b4403189b5c3487eee7c9cde6ca9972b2e354dc226eb992"
+    },
+    {
+      "page": "webcam",
+      "requested_css_viewport": [
+        390,
+        844
+      ],
+      "png_dimensions": [
+        375,
+        811
+      ],
+      "path": "reports/browser/webcam-390x844.png",
+      "sha256": "fe4387716471a4023c811a2bf0a3bb8102a27a2f44100cf88e288c2dae6c162d"
+    }
+  ]
+}

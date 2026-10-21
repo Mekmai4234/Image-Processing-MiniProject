@@ -1,8 +1,10 @@
 # งาน 05 — Dataset และ Testing
 
-สถานะ: มีเครื่องมือ offline และ tests ของเครื่องมือแล้ว ยังไม่มีภาพขวดจริง/สินค้าและ tolerance ที่ทีมยืนยัน และยังไม่ได้ทดสอบแอป 01–04 จริง ทุกไฟล์ในงานชุดนี้อยู่ในโฟลเดอร์ 05 เท่านั้น
+สถานะ 21 ตุลาคม 2026: มีเครื่องมือ offline, smoke gates และ browser evidence ของแอปจริงด้วยข้อมูล DEMO แล้ว ยังไม่มีภาพขวดจริง/สินค้าและ tolerance ที่ทีมยืนยัน หรือภาพต้นแบบสำหรับ visual comparison งานรอบนี้อยู่ในโฟลเดอร์ 05 และ workflow ใหม่ของ 05 โดยไม่แก้แอป 01–04 ดู [protocol และสถานะงาน](PROTOCOL.md), [ผลทดสอบ](TEST-REPORT.md) และ [defects ที่ต้องส่งต่อเจ้าของ](DEFECTS.md)
 
 ## เตรียมเครื่องและทดสอบ
+
+ดู [สถานะตามใบงาน 05-A ถึง 05-E](STATUS.md) และ [สรุปหลักฐานที่ยังไม่ครบ](reports/acceptance-status-2026-10-21.json) แยกจากผล smoke tests การตรวจ records ผ่านไม่ได้แปลว่าระบบผ่าน real-data/hardware/visual acceptance
 
 รันจาก repository root บน PowerShell:
 
@@ -17,7 +19,7 @@ py -3 -m venv 05_dataset_testing/.venv
 ## ลำดับทำงาน
 
 1. ยืนยันยี่ห้อ รุ่น ขนาด และ product_id สองรายการกับ 03 รวม tolerance และวิธีให้คำตอบก่อนถ่ายจริง ตัวเลขในคู่มือเดิมยังไม่ใช่ค่าที่ validate แล้ว
-2. ใช้ [capture-plan.csv](templates/capture-plan.csv) วางขวดและ session ที่แยกอิสระก่อนถ่าย แบบฟอร์มเสนอ 10 กลุ่ม 6/2/2 ไม่บังคับจำนวนภาพต่อกลุ่มหรือรับรองว่าพอ ต้องมีทั้งสองสินค้าและเงื่อนไขสำคัญในแต่ละ split
+2. เริ่มจาก [pilot-plan.csv](templates/pilot-plan.csv) เป้าหมาย 180 ภาพและอย่างน้อย 3 กลุ่มอิสระต่อสินค้า หรือขยายด้วย [capture-plan.csv](templates/capture-plan.csv) ให้ครอบคลุมข้อมูลจริงก่อนถ่าย แผน 180 ภาพขั้นต่ำมี 1/1/1 กลุ่มต่อ split ของแต่ละสินค้า ไม่ใช่ 60/20/20 และไม่รับรองความแม่นยำ ถ้าต้องการ 60/20/20 ให้เพิ่มกลุ่มอิสระ
 3. ถ่ายชุดนำร่อง ทวนคำตอบและความครอบคลุมกับ 03 ก่อนเพิ่มจำนวนประมาณ 200 ภาพ เก็บสภาพแสง/ระยะ/ความละเอียด/อุปกรณ์จริง ไม่เดามุมจากการหมุนด้วยมือ
 4. เก็บภาพและ manifest ใน `datasets/` ที่ถูก ignore ใช้ [manifest.csv](templates/manifest.csv) เป็น header ขยายจาก contract ด้วย `source_image_id` สำหรับภาพ crop/resize/augmentation ถ้าไม่มีให้ว่าง รหัสนี้อ้างภาพต้นทางใน manifest เดียวกัน ภาพที่เปลี่ยน expected_product ใช้ image_id เดิมแต่เป็นอีกกรณีตรวจ
 5. ให้มนุษย์ตรวจคำตอบ แยก GT จาก predictions ผู้ตรวจที่สองตรวจเคสกำกวมและบันทึกชื่อ/ข้อยุติในบันทึก dataset ไม่คัดลอกคำตอบโปรแกรมมาเป็น GT
@@ -53,7 +55,7 @@ py -3 -m venv 05_dataset_testing/.venv
 
 กรณี `FAIL/misplaced_label` ต้องมี `label_present=yes`, `visible_enough=yes` และ `position_ok=no` ครบทั้งสามข้อ หากไม่ครบ เครื่องมือแจ้ง error พร้อมบรรทัดและ field และไม่ให้ผ่าน evaluation โดยไม่แก้ manifest ให้เอง ให้ผู้ตรวจทวนภาพแล้วแก้ข้อมูล
 
-`label_product` ยังคงหมายถึงสินค้าที่ฉลากระบุ แยกจากตัวขวดและ expected product ตามคู่มือร่วม รอบแก้นี้ไม่เพิ่มกฎว่าต้องทราบ label_product ทุกกรณีของ misplaced_label และไม่กำหนด reason ใหม่เมื่อผิดชนิดพร้อมผิดตำแหน่ง ต้องให้ 03/05 ทวนกฎนั้นกับ pipeline ก่อนเพิ่มข้อบังคับ โดยคง quality gate ก่อน identity/position ตาม contract
+`label_product` หมายถึงสินค้าที่ฉลากระบุ แยกจากตัวขวดและ expected product โมดูล 03 ปัจจุบันกำหนด quality → known identity → position อย่างชัดเจน ดังนั้นกรณี label_product ที่ทราบต่างจาก expected ต้องใช้ wrong_label เป็นเหตุผลหลักแม้ตำแหน่งผิดด้วย validator ปฏิเสธกรณีที่ขัดกับลำดับนี้โดยไม่แก้ GT เอง กฎของกรณี label_product ไม่ทราบยังต้องทวนกับ 03/05 ก่อนรับ dataset จริง
 
 Catalog ใช้รูปแบบเดียวกับตัวอย่างร่วมของทีม แต่ต้องกรอก brand/size_ml/display_name และ `demo=false`, `config_version`, `reference_paths` ของจริง ไม่ใช้ catalog สังเคราะห์ประเมินผล การมี reference ไม่ได้แปลว่า detector ผ่าน validation
 
@@ -96,6 +98,15 @@ Confusion matrix รวม PASS/FAIL/REVIEW และแยก operational error
 
 ## ขอบเขตที่ต้องรอทีม
 
-ยังต้องยืนยันสินค้า/tolerance/required-view profile, ถ่ายภาพจริงและตรวจทาน, แชร์ข้อมูลอย่างได้รับอนุญาต, ทดสอบ API/UI/กล้อง/Storage จริง และวัดผล detector หลังพร้อม ทุกแถว integration checklist เริ่ม `not_tested` ห้ามเปลี่ยนเป็นผ่านจากการอ่านโค้ดหรือ tests ของเครื่องมือ 05 เท่านั้น
+ยังต้องยืนยันสินค้า/tolerance/required-view profile, ถ่ายภาพจริงและตรวจทาน, แชร์ข้อมูลอย่างได้รับอนุญาต, ทดสอบกล้อง/ระบบจริงด้วยขวดจริง และวัดผล detector หลังพร้อม Checklist แยกเคส real/hardware ที่ยังไม่ได้ทดสอบออกจาก smoke/browser evidence ที่รันแล้ว ห้ามเปลี่ยนเคสจริงเป็นผ่านจาก unit tests
+
+## เครื่องมือที่เพิ่มสำหรับใบงาน A–E
+
+- `import_predictions.py`: แปลง raw HTTP receipts เป็น predictions CSV; ปฏิเสธ DEMO/mode-config ปน/inspection ซ้ำ และแยก multi-view ที่ยังไม่ได้ตกลง protocol ออกจาก single-view
+- `evidence.py`: ตรวจชื่อ case/status/ผู้ทดสอบ/วันเวลา/commit และ hash ไฟล์หลักฐานของเคสที่รันแล้ว
+- `compare_screenshots.py`: สร้าง side-by-side และ diff ที่ viewport ตรงกัน พร้อมบันทึก mask ของ timestamp/id/animation ยังต้อง human review ไม่ใช่ auto pass
+- `run_checks.py`: รวม dataset/repository/backend/frontend tests และ build พร้อมรายงาน dependency/source hashes และ fail หากไม่มี tests หรือมี skip ดูคำสั่งใน [PROTOCOL.md](PROTOCOL.md)
+
+Workflow ใหม่ `.github/workflows/05-testing.yml` ไม่แก้ workflow กลางเดิมและไม่เปลี่ยน package/lock ของแอป Backend smoke pins อยู่ใน requirements-smoke.txt ของ 05; frontend ใช้ package-lock ของทีมเดิม กล้องจริง/real dataset/visual approval แยกจาก smoke CI
 
 ไม่มีการส่งไฟล์ขึ้น GitHub, เปิด Issue/PR หรือแก้ implementation ของ 01–04 จากเครื่องมือเหล่านี้ เอกสารกติกาที่แนบนอก repo ไม่ถูกคัดลอกเข้า repo

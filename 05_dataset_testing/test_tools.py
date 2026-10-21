@@ -133,6 +133,18 @@ class ToolsTests(unittest.TestCase):
         self.assertIn('SHA-256 mismatch', errors)
         self.assertIn('Reference must trace', errors)
 
+    def test_known_wrong_identity_precedes_position_in_current_pipeline(self):
+        self.product['products'].append({'product_id': 'b', 'brand': 'test', 'size_ml': 1,
+                                         'display_name': 'b', 'reference_paths': []})
+        self.rows[2].update(result='FAIL', reason='misplaced_label', position_ok='no', label_product='b')
+        self.save()
+        report = self.audit()
+        self.assertFalse(report['ready_for_evaluation'])
+        self.assertTrue(any('wrong_label precedence' in e for e in report['errors']))
+        self.rows[2]['reason'] = 'wrong_label'
+        self.save()
+        self.assertEqual([], self.audit()['errors'])
+
     def test_misplaced_label_rejects_absent_or_unknown_label(self):
         for present in ('no', 'unknown'):
             with self.subTest(label_present=present):

@@ -200,6 +200,9 @@ def validate(root, manifest, catalog, provenance=None):
                     errors.append(f'{prefix}: misplaced_label needs label_present=yes')
                 if row['position_ok'] != 'no':
                     errors.append(f'{prefix}: misplaced_label needs position_ok=no')
+                if row['label_product'] and row['label_product'] != row['expected_product']:
+                    errors.append(f'{prefix}: label_product differs from expected_product; '
+                                  'known identity mismatch takes wrong_label precedence over misplaced_label')
             if row['reason'] == 'missing_label':
                 evidence = assets.get(row['image_id'], {}).get('missing_label_evidence', {})
                 # This checks human evidence records, never claims to validate pixels itself.
