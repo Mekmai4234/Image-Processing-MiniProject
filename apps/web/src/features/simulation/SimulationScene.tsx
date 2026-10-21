@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import type { InspectionPort } from './api/port'
 import type { ValidationIssue } from './machine/evidence'
 import type { JobInput, MachineConfig } from './machine/types'
@@ -9,8 +9,11 @@ import {
 } from './controller/SimulationController'
 import { ConveyorScene, isWebGLAvailable } from './scene/ConveyorScene'
 import { FallbackDiagram } from './scene/FallbackDiagram'
+import { parseSilhouette, shapeFromSilhouette, type BottleShapeInput, type BottleShapeSpec } from './shape/bottleShape'
 import {
   MODEL_NOTICE,
+  SHAPE_FALLBACK_NOTICE,
+  SHAPE_SILHOUETTE_NOTICE,
   REASON_LABEL,
   ROUTE_LABEL,
   SEARCH_STATUS_LABEL,
@@ -42,6 +45,12 @@ export interface SimulationSceneProps {
   onReplayed?: (event: CompletedEvent) => void
   /** Show the built-in status / camera-monitor overlay. */
   showOverlay?: boolean
+  /**
+   * The POST /api/bottle-shape response for the main photo, passed as received (memoize it).
+   * null, status "fallback" or anything that fails validation → generic shape.
+   * Visual only — it never affects the inspection.
+   */
+  bottleShape?: BottleShapeInput | null
   className?: string
   /** Force the 2D fallback (testing). */
   forceFallback?: boolean
@@ -52,7 +61,7 @@ export interface SimulationSceneProps {
  * unmount (leaving the page abandons the job without deleting any History).
  */
 export const SimulationScene = forwardRef<SimulationSceneHandle, SimulationSceneProps>(function SimulationScene(
-  { port, config, onSnapshot, onCompleted, onReplayed, showOverlay = true, className, forceFallback = false },
+  { port, config, onSnapshot, onCompleted, onReplayed, showOverlay = true, className, forceFallback = false, bottleShape = null },
   ref,
 ) {
   const hostRef = useRef<HTMLDivElement>(null)
@@ -61,6 +70,13 @@ export const SimulationScene = forwardRef<SimulationSceneHandle, SimulationScene
   callbacks.current = { onSnapshot, onCompleted, onReplayed }
   const [snapshot, setSnapshot] = useState<SimulationSnapshot | null>(null)
   const [webgl, setWebgl] = useState<boolean | null>(null)
+  const sceneRef = useRef<ConveyorScene | null>(null)
+  const shape = useMemo(() => shapeFromSilhouette(parseSilhouette(bottleShape)), [bottleShape])
+  const shapeRef = useRef<BottleShapeSpec>(shape)
+  shapeRef.current = shape
+  useEffect(() => {
+    sceneRef.current?.setBottleShape(shape)
+  }, [shape])
 
   useImperativeHandle(
     ref,
@@ -97,6 +113,8 @@ export const SimulationScene = forwardRef<SimulationSceneHandle, SimulationScene
     if (canUseWebGL) {
       try {
         scene = new ConveyorScene(host, { reducedMotion })
+        scene.setBottleShape(shapeRef.current)
+        sceneRef.current = scene
       } catch {
         scene = null
         setWebgl(false)
@@ -121,6 +139,7 @@ export const SimulationScene = forwardRef<SimulationSceneHandle, SimulationScene
       offReplayed()
       controller.destroy()
       scene?.dispose()
+      sceneRef.current = null
       controllerRef.current = null
     }
     // A new port (DEMO ↔ live) or config abandons the current job and builds a fresh
@@ -132,12 +151,12 @@ export const SimulationScene = forwardRef<SimulationSceneHandle, SimulationScene
     <div className={`vv-sim ${className ?? ''}`}>
       <div ref={hostRef} className="vv-sim__canvas" />
       {webgl === false && snapshot && <FallbackDiagram snapshot={snapshot} />}
-      {showOverlay && snapshot && <Overlay snapshot={snapshot} controller={controllerRef.current} />}
+      {showOverlay && snapshot && <Overlay snapshot={snapshot} controller={controllerRef.current} shape={shape} />}
     </div>
   )
 })
 
-function Overlay({ snapshot, controller }: { snapshot: SimulationSnapshot; controller: SimulationController | null }) {
+function Overlay({ snapshot, controller, shape }: { snapshot: SimulationSnapshot; controller: SimulationController | null; shape: BottleShapeSpec }) {
   const job = controller?.getState().job ?? null
   const urls = useViewUrls(snapshot.job_id, job?.views.map((v) => v.image) ?? [])
   const viewIndex =
@@ -205,7 +224,9 @@ function Overlay({ snapshot, controller }: { snapshot: SimulationSnapshot; contr
         </figure>
       )}
 
-      <p className="vv-sim__footnote">{MODEL_NOTICE}</p>
+      <p className="vv-sim__footnote">
+        {shape.source === 'silhouette' ? SHAPE_SILHOUETTE_NOTICE : `${SHAPE_FALLBACK_NOTICE} (${shape.reason})`} · {MODEL_NOTICE}
+      </p>
     </div>
   )
 }

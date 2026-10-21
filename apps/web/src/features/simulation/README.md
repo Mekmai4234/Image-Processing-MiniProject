@@ -45,10 +45,11 @@ const [snap, setSnap] = useState<SimulationSnapshot | null>(null)
   onCompleted={(e: CompletedEvent) => addToSessionStats(e.result)}  // ครั้งเดียวต่อ inspection_id
   onReplayed={() => {}}             // เล่นซ้ำ: ห้ามนับ
   showOverlay={false}               // ถ้า 01 ทำ panel เอง ปิด overlay ในฉากได้ (ป้าย DEMO/ข้อจำกัดต้องแสดงที่ panel ของ 01 แทน)
+  bottleShape={shapeResult}         // ผลจาก POST /api/bottle-shape ส่งเข้ามาตรง ๆ (memo ไว้); null = รูปทรงมาตรฐาน
 />
 ```
 
-props `bottleShape` (รูปทรงขวดจากภาพ) และ `quality` (คุณภาพการเรนเดอร์) ยังไม่มีใน PR นี้ จะเพิ่มใน PR ถัดไปของ 02
+prop `quality` (คุณภาพการเรนเดอร์) ยังไม่มีใน PR นี้ จะเพิ่มใน PR ถัดไปของ 02
 
 ### 3. ปุ่มควบคุม → handle
 
@@ -139,6 +140,17 @@ Three.js มีขนาดใหญ่ แนะนำให้โหลดห�
 - ป้ายสถานีอยู่หลังสายพานบนเสา ไม่บังขวดหรือกล้อง
 - มุมกล้องจัดให้เห็นทั้งเครื่องทุกขนาดหน้าจอ (คำนวณใหม่เมื่อ resize)
 
+## รูปทรงขวดจากภาพ (02-D ฝั่งหน้าเว็บ)
+
+- prop `bottleShape` รับผลของ `POST /api/bottle-shape` (`bottle-silhouette-v1` ตาม `docs/api-contract.md`) **ส่งเข้ามาตรง ๆ ไม่ต้องแปลง** — type คือ `BottleShapeInput` (ระบุเฉพาะ field ที่ฉากใช้ type ของ 01 ที่มี bbox/contour/quality เพิ่มก็ส่งได้)
+- ฉากตรวจรูปแบบเองด้วย `parseSilhouette()`: `null`, `status: fallback` หรือข้อมูลผิดรูปแบบ → รูปทรงมาตรฐาน
+- แปลงตาม SHAPE.md: `world_y = (1 - y_fraction)·H`, `world_radius = radius_over_height·H` โดยเลือก H ให้รัศมีกว้างสุดเท่ารัศมีที่ตัวดันคาดไว้ (คงสัดส่วนเดิม) และจำกัด H ไม่ให้ชนกล้อง
+- ฝา = ส่วนแคบด้านบน, แถบฉลาก = ช่วงลำตัวที่ตรงที่สุด (ตำแหน่งฉลากจริงจาก bbox ยังไม่ทำ)
+- `status: fallback`, ข้อมูลผิดรูปแบบ หรือยังไม่มีข้อมูล → รูปทรงสำรอง พร้อมข้อความ "ใช้รูปทรงขวดสำรอง (reason)"
+- ข้อความในฉากบอกเสมอว่าเป็นรูปทรงโดยประมาณจากภาพเดียว ไม่ใช่ขวดจริงทุกด้าน และรูปทรงไม่เกี่ยวกับผลตรวจ
+- `shape/samples.ts` เป็นรูปทรง DEMO จากสูตร ไม่ได้วัดจากขวดจริง
+- **ยังรอ:** `/api/bottle-shape` เข้า develop (PR #17 ของ 04), 01 เพิ่ม `bottleShape(image, signal)` ใน DataSource, 05 ภาพขวดจริงอย่างน้อย 2 รูปทรง
+
 ## ค่าตั้ง (ปรับได้ใน `machineConfigFrom` / `ControllerOptions`)
 
 | ค่า | ค่าเริ่ม | ชนิดเวลา |
@@ -152,7 +164,7 @@ Three.js มีขนาดใหญ่ แนะนำให้โหลดห�
 
 รันใน `apps/web`: `npm test` และ `npm run build`
 
-- unit: `__tests__/*.test.ts` 55 กรณี — transition ทุกสถานะ, pause/reset/retry/replay, evidence, controller + mock
+- unit: `__tests__/*.test.ts` 71 กรณี — transition ทุกสถานะ, pause/reset/retry/replay, evidence, controller + mock
   และ controller + `createDataSourcePort` กับ DEMO DataSource ของ 01 (PASS, หันหนีทุกมุม → REVIEW, 503 → retry, storage failed)
 - e2e (harness นอก repo รอบ M1): PASS/FAIL/REVIEW, ERROR→retry, pause ระหว่างดัน, replay ไม่นับ, remount 15 รอบไม่มี loop ค้าง, WebGL fallback
 
