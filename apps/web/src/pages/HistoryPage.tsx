@@ -1,6 +1,7 @@
 import { CheckCircle2, ChevronLeft, ChevronRight, Clock3, Download, FileText, Inbox, RefreshCw, UserCheck, XCircle } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { InspectionOverlay } from '../components/InspectionOverlay'
+import { StatCard } from '../components/StatCard'
 import { ResultDetails } from '../components/ResultCard'
 import { DemoTag, ResultBadge } from '../components/ResultBadge'
 import { describeApiError, isAbort } from '../lib/api'
@@ -122,10 +123,10 @@ export function HistoryPage() {
       </div>
 
       <div className="stats" style={{ marginBottom: 'var(--s-5)' }}>
-        <Stat cls="total" icon={<FileText size={20} />} label="ทั้งหมด" value={counts.total} />
-        <Stat cls="pass" icon={<CheckCircle2 size={20} />} label="ผ่าน" value={counts.PASS} />
-        <Stat cls="fail" icon={<XCircle size={20} />} label="ไม่ผ่าน" value={counts.FAIL} />
-        <Stat cls="review" icon={<Clock3 size={20} />} label="รอตรวจทาน" value={counts.REVIEW} />
+        <StatCard tone="total" icon={<FileText size={20} />} label="ทั้งหมด" value={counts.total} />
+        <StatCard tone="pass" icon={<CheckCircle2 size={20} />} label="ผ่าน" value={counts.PASS} />
+        <StatCard tone="fail" icon={<XCircle size={20} />} label="ไม่ผ่าน" value={counts.FAIL} />
+        <StatCard tone="review" icon={<Clock3 size={20} />} label="รอตรวจทาน" value={counts.REVIEW} />
       </div>
 
       <div className="split split-wide">
@@ -286,19 +287,6 @@ export function HistoryPage() {
   )
 }
 
-function Stat({ cls, icon, label, value }: { cls: string; icon: React.ReactNode; label: string; value: number | null }) {
-  return (
-    <div className={`stat ${cls}`}>
-      <span className="icon" aria-hidden="true">
-        {icon}
-      </span>
-      <div>
-        <div className="k">{label}</div>
-        <div className="v">{value ?? '—'}</div>
-      </div>
-    </div>
-  )
-}
 
 function Detail({ r, onUpdate }: { r: InspectionResult; onUpdate(r: InspectionResult): void }) {
   const { ds } = useAppData()
