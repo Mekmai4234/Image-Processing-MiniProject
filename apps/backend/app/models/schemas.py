@@ -32,6 +32,10 @@ class HealthResponse(BaseModel):
     config_version: str = Field(..., description="Configuration and contract version", examples=["v0.2"])
     timezone: str = Field(..., description="Server configured application timezone", examples=["Asia/Bangkok"])
     storage_root_ready: bool = Field(..., description="Storage directory accessibility status", examples=[True])
+    detector_ready: bool = Field(False, description="Detector operational readiness for real inspections", examples=[True])
+    detector_status: str = Field("ready", description="Detector readiness category (ready, demo_only, unavailable)", examples=["ready"])
+    readiness_reason: Optional[str] = Field(None, description="Explanation if detector is not fully ready for production")
+    detector_reason: Optional[str] = Field(None, description="Explanation if detector is not fully ready for production (for UI readiness indicator)")
 
 
 class ProductItem(BaseModel):
@@ -74,6 +78,32 @@ class LocateResponse(BaseModel):
     image_height: int = Field(..., description="Frame pixel height after EXIF normalization")
     quality: QualityInfo = Field(..., description="Frame visual quality scores")
     reason: str = Field(..., description="Locator rationale (usable_view, blurred_image, etc.)")
+
+
+class RadialProfilePoint(BaseModel):
+    y_fraction: float = Field(..., description="Normalized position along bottle height: 0.0 at top, 1.0 at bottom")
+    radius_over_height: float = Field(..., description="Half-width of silhouette at this row divided by bbox height")
+
+
+class ShapeQuality(BaseModel):
+    whole_bottle_visible: bool = Field(False, description="Whether whole upright bottle is visible within frame")
+    center_drift: Optional[float] = Field(None, description="Max deviation of row centers from vertical axis divided by bbox width")
+    axisymmetric_assumption: bool = Field(True, description="Whether axisymmetric revolution assumption is applied")
+
+
+class BottleShapeResponse(BaseModel):
+    schema_version: str = Field("bottle-silhouette-v1", description="Silhouette schema version")
+    status: str = Field(..., description="ready or fallback")
+    reason: str = Field(..., description="Reason code: usable_silhouette, bottle_not_isolated, truncated_or_not_upright, asymmetric_silhouette, etc.")
+    image_width: int = Field(..., description="Normalized image width")
+    image_height: int = Field(..., description="Normalized image height")
+    bbox: Optional[BBox] = Field(None, description="Pixel bounding box of bottle silhouette in full image coordinates")
+    normalized_width: Optional[float] = Field(None, description="bbox.width / image_width")
+    normalized_height: Optional[float] = Field(None, description="bbox.height / image_height")
+    aspect_ratio: Optional[float] = Field(None, description="bbox.width / bbox.height")
+    contour: List[List[int]] = Field(default_factory=list, description="Contour pixel coordinates [[x, y], ...]")
+    radial_profile: List[RadialProfilePoint] = Field(default_factory=list, description="Profile samples from top (0.0) to bottom (1.0)")
+    quality: ShapeQuality = Field(..., description="Geometry and quality gates")
 
 
 class TimingInfo(BaseModel):
@@ -145,3 +175,19 @@ class ReviewRequest(BaseModel):
     reviewed_result: str = Field(..., description="Review outcome: PASS, FAIL, or REVIEW")
     reviewed_reason: str = Field(..., description="Human review rationale")
     reviewer: str = Field(..., description="Reviewer name or identifier")
+
+
+class InspectionFileItem(BaseModel):
+    name: str = Field(..., description="File name (e.g. original.jpg, annotated.jpg, result.json, 0.jpg)")
+    kind: str = Field(..., description="Logical kind: original, annotated, result_json, or supporting")
+    available: bool = Field(..., description="Whether file physically exists on disk")
+    size_bytes: Optional[int] = Field(None, description="File size in bytes if available")
+    download_url: Optional[str] = Field(None, description="Backend API URL to retrieve this file")
+
+
+class InspectionFilesResponse(BaseModel):
+    inspection_id: str = Field(..., description="Inspection UUID")
+    storage_status: str = Field(..., description="Storage status from database (pending, saved, failed)")
+    all_available: bool = Field(..., description="True if all required files are intact and available")
+    files: List[InspectionFileItem] = Field(default_factory=list, description="List of files belonging to this inspection")
+    download_zip_url: Optional[str] = Field(None, description="API URL to download full inspection ZIP bundle")

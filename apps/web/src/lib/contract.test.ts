@@ -83,4 +83,46 @@ describe('DEMO data', () => {
   it('CSV ไม่สร้างจาก mock', () => {
     expect(createDemoDataSource(() => 'pass').exportCsvUrl({})).toBeNull()
   })
+
+  it('getInspectionFiles ใน DEMO สะท้อนตาม storage_status', async () => {
+    const dsSaved = createDemoDataSource(() => 'pass')
+    const saved = await dsSaved.createInspection({
+      image: new Blob(['x']),
+      expected_product: 'bottle_a',
+      source_mode: 'webcam',
+      client_request_id: '10000000-0000-4000-8000-0000000000dd',
+    })
+    const filesSaved = await dsSaved.getInspectionFiles(saved.inspection_id)
+    expect(filesSaved.storage_status).toBe('saved')
+    expect(filesSaved.all_available).toBe(true)
+    expect(filesSaved.files.every((f) => f.available)).toBe(true)
+    expect(filesSaved.download_zip_url).toBeTruthy()
+
+    const dsFailed = createDemoDataSource(() => 'save_failed')
+    const failed = await dsFailed.createInspection({
+      image: new Blob(['x']),
+      expected_product: 'bottle_a',
+      source_mode: 'webcam',
+      client_request_id: '10000000-0000-4000-8000-0000000000ee',
+    })
+    const filesFailed = await dsFailed.getInspectionFiles(failed.inspection_id)
+    expect(filesFailed.storage_status).toBe('failed')
+    expect(filesFailed.all_available).toBe(false)
+    expect(filesFailed.files.every((f) => !f.available)).toBe(true)
+    expect(filesFailed.download_zip_url).toBeNull()
+  })
+
+  it('DEMO listInspections รองรับการค้นหา q และการเรียงลำดับ sort_by/sort_order', async () => {
+    const ds = createDemoDataSource(() => 'pass')
+    // Search with q
+    const resPass = await ds.listInspections({ page: 1, page_size: 10, q: 'bottle_a' })
+    expect(resPass.items.length).toBeGreaterThan(0)
+    expect(resPass.items.every((it) => it.expected_product.includes('bottle_a') || it.inspection_id.includes('bottle_a'))).toBe(true)
+
+    // Sort by match_score asc and desc
+    const resDesc = await ds.listInspections({ page: 1, page_size: 10, sort_by: 'match_score', sort_order: 'desc' })
+    const resAsc = await ds.listInspections({ page: 1, page_size: 10, sort_by: 'match_score', sort_order: 'asc' })
+    expect(resDesc.items[0]?.match_score ?? 0).toBeGreaterThanOrEqual(resDesc.items[resDesc.items.length - 1]?.match_score ?? 0)
+    expect(resAsc.items[0]?.match_score ?? 0).toBeLessThanOrEqual(resAsc.items[resAsc.items.length - 1]?.match_score ?? 0)
+  })
 })
