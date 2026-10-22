@@ -2,7 +2,7 @@
 เจ้าของงาน: คนที่ 2 (รอกรอกชื่อจริงใน docs/team.md)
 ความยาก: ยาก (4/5)
 Branch เริ่มต้น: feature/02-simulation-3d
-สถานะ: M3 — component + ตัวต่อ DataSource (#23), ฉากเครื่องจักรแยก ORIENT/INSPECT (#25), รูปทรงขวดจาก bottle-silhouette-v1 (#27) เข้า develop แล้ว; ฉากแบบสมจริง (#31) รอ review; ทดสอบกับ DEMO และภาพทดสอบเท่านั้น ยังไม่ต่อ backend จริง; ดู apps/web/src/features/simulation/README.md
+สถานะ: M3 — component + ตัวต่อ DataSource (#23), ฉากเครื่องจักรแยก ORIENT/INSPECT (#25), รูปทรงขวดจาก bottle-silhouette-v1 (#27) เข้า develop แล้ว; ฉากแบบสมจริง (#31) เข้า develop แล้ว; ทดสอบกับ DEMO และภาพทดสอบเท่านั้น ยังไม่ต่อ backend จริง; ดู apps/web/src/features/simulation/README.md
 
 STEP — ลำดับลงมือทำและจุดส่งงาน
 
@@ -53,8 +53,8 @@ STEP — ลำดับลงมือทำและจุดส่งงา�
 - 02-A #23: createDataSourcePort(ds) ต่อ DataSource ของ 01, toJobInput, snapshot มีภาพที่ส่งตรวจ, README วิธีประกอบหน้า
 - 02-B/C #25: ฉากสายการผลิต ORIENT (แท่นหมุน + กล้อง locator) แยกจาก INSPECT (ซุ้มกล้องตรวจ), ปลายทาง PASS/REJECT/REVIEW
 - 02-D #27: prop bottleShape รับผล POST /api/bottle-shape ตรง ๆ, fallback เป็นทรงมาตรฐาน
-- unit test 74 กรณีใน features/simulation (ทั้งเว็บ 109) + typecheck + build ผ่าน
-รอ review: 02-E #31 ฉากแบบสมจริง (prop quality เป็น optional)
+- ผลทดสอบ ณ ฐาน #23/#25/#27: unit test 74 กรณีใน features/simulation (ทั้งเว็บ 109) + typecheck + build ผ่าน; จำนวนล่าสุดให้ดู CI ของ commit ที่ใช้งาน
+เข้า develop แล้ว: 02-E #31 ฉากแบบสมจริง (prop quality เป็น optional)
 ทดสอบเพิ่ม: หน้า Simulation ของ 01 (#29) ใช้ฉากถูกตามที่ตกลง; ลองภาพทดสอบหลายชุดในฉาก DEMO ทำงานครบทุกขั้น
 ยังไม่ทำ / รอ:
 - ต่อ /api/bottle-shape จริง (รอ #17 ของ 04 และฟังก์ชันใน DataSource ของ 01)

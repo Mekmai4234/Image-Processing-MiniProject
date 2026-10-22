@@ -2,7 +2,7 @@
 เจ้าของงาน: คนที่ 2 (รอกรอกชื่อจริงใน docs/team.md)
 ความยาก: ยาก (4/5)
 Branch เริ่มต้น: feature/02-simulation-3d
-สถานะ: M3 — component + ตัวต่อ DataSource (#23), ฉากเครื่องจักรแยก ORIENT/INSPECT (#25), รูปทรงขวดจาก bottle-silhouette-v1 (#27) เข้า develop แล้ว; ฉากแบบสมจริง (#31) รอ review; ทดสอบกับ DEMO และภาพทดสอบเท่านั้น ยังไม่ต่อ backend จริง; ดู apps/web/src/features/simulation/README.md
+สถานะ: M3 — component + ตัวต่อ DataSource (#23), ฉากเครื่องจักรแยก ORIENT/INSPECT (#25), รูปทรงขวดจาก bottle-silhouette-v1 (#27) เข้า develop แล้ว; ฉากแบบสมจริง (#31) เข้า develop แล้ว; ทดสอบกับ DEMO และภาพทดสอบเท่านั้น ยังไม่ต่อ backend จริง; ดู apps/web/src/features/simulation/README.md
 
 PROCESS — หลักการ Input/Output และเกณฑ์รับงาน
 
