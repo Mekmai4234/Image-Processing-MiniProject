@@ -1,5 +1,9 @@
 # งาน 05 — Dataset และ Testing
 
+หมายเหตุการรวม PR #34/#35: ข้อความผลทดสอบด้านล่างเป็นประวัติที่ผูกกับ commit ที่แต่ละรายงานระบุ ไม่ใช้แทนผลของ develop หลังรวม #17/#29/#31; เก็บรายงานเดิมทั้งสองชุดโดยไม่แก้ผลย้อนหลัง สถานะ checklist รวมดู [integration acceptance](reports/acceptance-integration-2026-10-22.json) ซึ่งยังไม่ใช่ system acceptance
+
+อัปเดต 22 ตุลาคม 2026: PR #20 merge แล้ว ตรวจฐานรวมล่าสุดและเก็บ browser evidence ใหม่ ดู [รายงานหลัง merge](POSTMERGE-2026-10-22.md) รอบนี้พบ Backend date assertions ไม่ผ่าน 3 cases และ browser defects เดิมยังอยู่ จึงยังไม่ผ่าน acceptance ดู [สถานะล่าสุด](reports/acceptance-status-2026-10-22.json) แทนการใช้ผล smoke เก่ารับรอง commit ใหม่
+
 รอบดำเนินการต่อ 22 ตุลาคม 2026: เพิ่ม [HTTP readiness probe และ component browser harness](EXECUTION-2026-10-22.md) โดยไม่แก้แอปของ 01–04 เรียก Backend จริงโดยไม่ใช้ DEMO ได้ 7 operational errors เพราะ config ยังไม่พร้อม; harness WebGL ของ 02 ทำงานด้วยข้อมูลจำลองและแยกจาก integrated route สิ่งที่ต้องใช้ approved dataset/config กล้องจริง และ reference/ผู้ตรวจยังไม่ถือว่าเสร็จ
 
 สถานะ 21 ตุลาคม 2026: มีเครื่องมือ offline, smoke gates และ browser evidence ของแอปจริงด้วยข้อมูล DEMO แล้ว ยังไม่มีภาพขวดจริง/สินค้าและ tolerance ที่ทีมยืนยัน หรือภาพต้นแบบสำหรับ visual comparison งานรอบนี้อยู่ในโฟลเดอร์ 05 และ workflow ใหม่ของ 05 โดยไม่แก้แอป 01–04 ดู [protocol และสถานะงาน](PROTOCOL.md), [ผลทดสอบ](TEST-REPORT.md) และ [defects ที่ต้องส่งต่อเจ้าของ](DEFECTS.md)

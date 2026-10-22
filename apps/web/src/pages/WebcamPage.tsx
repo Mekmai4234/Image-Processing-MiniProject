@@ -146,6 +146,7 @@ export function WebcamPage() {
           <CameraPanel
             dataSource={ds}
             sourceKind={source}
+            products={products}
             expectedProduct={product || 'bottle_a'}
             onProductChange={(p) => setProduct(p)}
             onInspectionComplete={handleLiveInspectionComplete}

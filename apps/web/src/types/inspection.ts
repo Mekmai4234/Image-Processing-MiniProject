@@ -125,9 +125,14 @@ export interface HealthStatus {
    * ร่างฟิลด์ที่ 01 เสนอให้ 04 เพิ่มใน GET /api/health; ไม่ส่งมา = ยังไม่ทราบ
    */
   detector_ready?: boolean
+  detector_status?: string
+  readiness_reason?: string | null
   /** เหตุผลเมื่อ detector_ready=false เช่น ยังไม่มี reference ของสินค้า */
   detector_reason?: string | null
 }
+
+export type InspectionSortField = 'created_at' | 'expected_product' | 'result' | 'match_score'
+export type SortOrder = 'asc' | 'desc'
 
 export interface InspectionFilters {
   page: number
@@ -140,6 +145,25 @@ export interface InspectionFilters {
   date_from?: string
   date_to?: string
   demo?: boolean
+  q?: string
+  sort_by?: InspectionSortField | string
+  sort_order?: SortOrder
+}
+
+export interface InspectionFileItem {
+  name: string
+  kind: 'original' | 'annotated' | 'result_json' | 'supporting' | string
+  available: boolean
+  size_bytes?: number | null
+  download_url?: string | null
+}
+
+export interface InspectionFilesResponse {
+  inspection_id: string
+  storage_status: StorageStatus
+  all_available: boolean
+  files: InspectionFileItem[]
+  download_zip_url?: string | null
 }
 
 export interface InspectionPage {
