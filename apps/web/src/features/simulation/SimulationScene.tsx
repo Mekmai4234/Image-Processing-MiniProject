@@ -7,7 +7,7 @@ import {
   type CompletedEvent,
   type SimulationSnapshot,
 } from './controller/SimulationController'
-import { ConveyorScene, isWebGLAvailable } from './scene/ConveyorScene'
+import { ConveyorScene, isWebGLAvailable, type SceneQuality } from './scene/ConveyorScene'
 import { FallbackDiagram } from './scene/FallbackDiagram'
 import { parseSilhouette, shapeFromSilhouette, type BottleShapeInput, type BottleShapeSpec } from './shape/bottleShape'
 import {
@@ -51,6 +51,8 @@ export interface SimulationSceneProps {
    * Visual only — it never affects the inspection.
    */
   bottleShape?: BottleShapeInput | null
+  /** Render quality: 'auto' (default) starts high and drops once if the frame rate is poor. */
+  quality?: SceneQuality
   className?: string
   /** Force the 2D fallback (testing). */
   forceFallback?: boolean
@@ -61,7 +63,7 @@ export interface SimulationSceneProps {
  * unmount (leaving the page abandons the job without deleting any History).
  */
 export const SimulationScene = forwardRef<SimulationSceneHandle, SimulationSceneProps>(function SimulationScene(
-  { port, config, onSnapshot, onCompleted, onReplayed, showOverlay = true, className, forceFallback = false, bottleShape = null },
+  { port, config, onSnapshot, onCompleted, onReplayed, showOverlay = true, className, forceFallback = false, bottleShape = null, quality = 'auto' },
   ref,
 ) {
   const hostRef = useRef<HTMLDivElement>(null)
@@ -112,7 +114,7 @@ export const SimulationScene = forwardRef<SimulationSceneHandle, SimulationScene
     let scene: ConveyorScene | null = null
     if (canUseWebGL) {
       try {
-        scene = new ConveyorScene(host, { reducedMotion })
+        scene = new ConveyorScene(host, { reducedMotion, quality: reducedMotion && quality === 'auto' ? 'low' : quality })
         scene.setBottleShape(shapeRef.current)
         sceneRef.current = scene
       } catch {
@@ -145,7 +147,7 @@ export const SimulationScene = forwardRef<SimulationSceneHandle, SimulationScene
     // A new port (DEMO ↔ live) or config abandons the current job and builds a fresh
     // controller + scene; the cleanup above aborts requests and disposes the renderer.
     // Pass memoized values so this only happens when the source/config really changes.
-  }, [port, config, forceFallback])
+  }, [port, config, forceFallback, quality])
 
   return (
     <div className={`vv-sim ${className ?? ''}`}>

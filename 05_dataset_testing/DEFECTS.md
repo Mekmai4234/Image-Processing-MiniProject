@@ -1,5 +1,9 @@
 # ข้อพบจาก browser smoke — 21 ตุลาคม 2026
 
+ตรวจซ้ำ 22 ตุลาคม 2026 บน commit รวม `f4872637d3ca769fce2aef3ae0eab8711fc39d20`: ข้อ 05-BR-01/02/03 ด้านล่างยังพบทั้งหมด ดู [รายงานใหม่](POSTMERGE-2026-10-22.md) และ [browser measurements](reports/browser-postmerge-2026-10-22/observations.json) หลักฐานเก่าวันที่ 21 เก็บเป็นประวัติ ไม่ใช้แทน screenshot ใหม่
+
+เพิ่มข้อส่งต่อ **04: 05-BE-01** — Backend test_inspections.py ล้ม 3 tests เมื่อวันที่ UTC ไม่เท่ากับวันไทย เพราะ assertions ใช้ created_at[:10] หาโฟลเดอร์ แต่ storage ใช้ Asia/Bangkok รายละเอียดและตัวอย่าง boundary ที่ตรวจจริงอยู่ใน [backend-timezone report](reports/backend-timezone-2026-10-22.json) ให้แก้การคาดวันที่ใน tests ตาม contract ไม่แก้ timezone ของ storage หรือ skip smoke gate
+
 ฐานที่ตรวจ: commit 2569e7ced6e1f4fc788791ab0530b10faea2ace4 พร้อมเครื่องมือใหม่ของ 05 ใน working tree ใช้ Vite local และ DEMO; ไม่เปิดกล้องจริง ไม่เรียก detector ด้วยภาพจริง ไม่เปลี่ยน implementation ของเจ้าของส่วน
 
 ## 05-BR-01 — Simulation ยังไม่ประกอบฉาก 3D

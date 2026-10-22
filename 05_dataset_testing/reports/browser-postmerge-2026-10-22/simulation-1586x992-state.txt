@@ -1,0 +1,188 @@
+Browser tab: 1, Title: "Vending Vision", URL: "http://127.0.0.1:5185/simulation".
+0 AXWebArea Vending Vision, URL: 127.0.0.1:5185/simulation
+	1 container root
+		2 link Description: ข้ามไปเนื้อหาหลัก, Value: 127.0.0.1:5185/simulation#main
+		3 container
+			4 link Description: Vending Vision หน้า Simulation, Value: 127.0.0.1:5185/simulation
+			191 text Thai Student Bottle Label Inspection Project
+			5 container โหมดการทำงาน
+				6 link Description: Simulation, Value: 127.0.0.1:5185/simulation
+				7 link Description: Webcam, Value: 127.0.0.1:5185/webcam
+				8 link Description: History, Value: 127.0.0.1:5185/history
+			9 container แหล่งข้อมูล
+				10 checkbox API จริง, Value: 0
+				11 checkbox DEMO, Value: 1
+		71 container
+			72 text โหมด DEMO ข้อมูลสังเคราะห์จาก examples/ ไม่ได้ตรวจภาพจริง ใช้ทดสอบหน้าจอเท่านั้น ผลที่จะจำลอง
+			73 pop up button (collapsed, settable) ผลที่จะจำลอง, Value: PASS ฉลากถูกต้อง, Secondary Actions: Expand
+				74 menu
+					75 (selected) PASS ฉลากถูกต้อง
+					76 FAIL ฉลากผิดสินค้า
+					77 REVIEW ภาพเบลอ
+					78 REVIEW หามุมไม่สำเร็จ
+					79 PASS แต่บันทึกไม่สำเร็จ
+					80 ERROR ระบบตรวจไม่พร้อม (503)
+		16 container main
+			17 heading สายพานจำลอง, Value: 1
+				18 text สายพานจำลอง
+			19 text อัปโหลดภาพขวดหลายมุม แล้วส่งให้ Backend ตรวจ ผลจริงเป็นตัวกำหนดทางคัดแยก
+			20 container ฉากสายพาน 3D
+				21 heading ฉากสายพาน 3D, Value: 2
+					22 text ฉากสายพาน 3D
+				23 text ส่วนนี้จะฝังฉาก Three.js ของงาน 02
+				24 container
+					25 text รอคอมโพเนนต์ฉากจากงาน 02
+					26 text ระหว่างนี้หน้าเว็บส่งชุดภาพตรวจได้เลย ผลจะแสดงด้านล่างและในประวัติ PASS ผ่าน ส่งเข้าสายหลัก
+					27 content list ขั้นตอนบนสายพาน
+						28 container ขวดเข้าสายพาน
+							29 text 1 Feed
+						30 container หมุนหามุมฉลาก
+							31 text 2 Orient
+						32 container ส่งภาพให้ Backend ตรวจ
+							33 text 3 Inspect
+						34 container แยกตามผลจริง
+							35 text 4 Sort
+						36 container ผ่านไปสายหลัก
+							37 text 5 Output
+			38 container ภาพที่ใช้ตรวจ
+				39 heading ภาพที่ใช้ตรวจ, Value: 2
+					40 text ภาพที่ใช้ตรวจ
+				41 text ภาพหลัก มุม 0°
+				85 container
+					86 image ภาพขวดที่ส่งตรวจ
+					87 container ขนาดภาพต้นฉบับ และอัตราย่อที่ใช้วาดกรอบ
+						88 text 400 × 500 px · × 0.69
+				166 text DEMO แสดงภาพสังเคราะห์ที่ตรงพิกัดตัวอย่าง ไม่ได้ตรวจภาพที่คุณเลือก
+				167 container
+					168 text PASS ผ่าน ฉลากถูกต้องและอยู่ตำแหน่ง good
+					169 text DEMO
+					170 definition list
+						171 container สินค้าที่คาดหวัง
+							172 text สินค้าที่คาดหวัง
+						173 text Bottle A — รอเลือกยี่ห้อและรุ่นจริง
+						174 container สินค้าที่ตรวจพบ
+							175 text สินค้าที่ตรวจพบ
+						176 text Bottle A — รอเลือกยี่ห้อและรุ่นจริง
+						177 container ความคล้ายวิธีคำนวณ
+							178 text ความคล้าย
+							179 image วิธีคำนวณ
+						180 text 94%
+						181 container โหมด
+							182 text โหมด
+						183 text Simulation
+						184 container เวลาตรวจ
+							185 text เวลาตรวจ
+						186 text 420 ms
+						187 container config
+							188 text config
+						189 text demo-v0
+					190 text PASS  /  บันทึกแล้ว
+			44 container ตั้งค่าการตรวจ
+				45 heading ตั้งค่าการตรวจ, Value: 2
+					46 text ตั้งค่าการตรวจ
+				81 text DEMO
+				47 container
+					48 text สินค้าที่คาดหวัง
+					49 pop up button (collapsed, settable) สินค้าที่คาดหวัง, Value: Bottle A — รอเลือกยี่ห้อและรุ่นจริง, Secondary Actions: Expand
+						50 menu
+							82 (disabled) Bottle A — รอเลือกยี่ห้อและรุ่นจริง
+							83 (disabled) Bottle B — รอเลือกยี่ห้อและรุ่นจริง
+				52 heading ภาพขวด (4/12), Value: 3
+					53 text ภาพขวด ( 4 / 12 )
+				84 button ใช้ชุดภาพตัวอย่าง
+				89 container
+					90 image ภาพขวด demo-0.svg
+					91 pop up button (collapsed, settable) Description: มุมของ demo-0.svg, Value: 0°, Secondary Actions: Expand
+						92 menu
+							93 ไม่ทราบมุม
+							94 (selected) 0°
+							95 30°
+							96 60°
+							97 90°
+							98 120°
+							99 150°
+							100 180°
+							101 210°
+							102 240°
+							103 270°
+							104 300°
+							105 330°
+					106 checkbox ภาพหลัก, Value: 1
+					107 button ลบ demo-0.svg
+				108 container
+					109 image ภาพขวด demo-90.svg
+					110 pop up button (collapsed, settable) Description: มุมของ demo-90.svg, Value: 90°, Secondary Actions: Expand
+						111 menu
+							112 ไม่ทราบมุม
+							113 0°
+							114 30°
+							115 60°
+							116 (selected) 90°
+							117 120°
+							118 150°
+							119 180°
+							120 210°
+							121 240°
+							122 270°
+							123 300°
+							124 330°
+					125 checkbox ตั้งเป็นหลัก, Value: 0
+					126 button ลบ demo-90.svg
+				127 container
+					128 image ภาพขวด demo-180.svg
+					129 pop up button (collapsed, settable) Description: มุมของ demo-180.svg, Value: 180°, Secondary Actions: Expand
+						130 menu
+							131 ไม่ทราบมุม
+							132 0°
+							133 30°
+							134 60°
+							135 90°
+							136 120°
+							137 150°
+							138 (selected) 180°
+							139 210°
+							140 240°
+							141 270°
+							142 300°
+							143 330°
+					144 checkbox ตั้งเป็นหลัก, Value: 0
+					145 button ลบ demo-180.svg
+				146 container
+					147 image ภาพขวด demo-270.svg
+					148 pop up button (collapsed, settable) Description: มุมของ demo-270.svg, Value: 270°, Secondary Actions: Expand
+						149 menu
+							150 ไม่ทราบมุม
+							151 0°
+							152 30°
+							153 60°
+							154 90°
+							155 120°
+							156 150°
+							157 180°
+							158 210°
+							159 240°
+							160 (selected) 270°
+							161 300°
+							162 330°
+					163 checkbox ตั้งเป็นหลัก, Value: 0
+					164 button ลบ demo-270.svg
+				54 container
+					55 text เลือกภาพขวด (หลายภาพได้) JPG/PNG ไม่เกิน  10  MB ต่อภาพ ภาพเดียว = ตรวจมุมเดียว
+					56 button เลือกภาพขวด (หลายภาพได้) JPG/PNG ไม่เกิน 10 MB ต่อภาพ ภาพเดียว = ตรวจมุมเดียว
+				165 checkbox (settable, integer) Description: ทุกภาพเป็นขวดใบเดียวกัน (ต้องยืนยันก่อนส่งหลายมุม), Value: 1
+				57 button ตรวจชุดภาพนี้
+				58 button รีเซ็ต
+			59 container สรุปรอบนี้
+				60 heading สรุปรอบนี้, Value: 2
+					61 text สรุปรอบนี้
+				62 text นับเฉพาะที่ตรวจในหน้านี้ ดูทั้งหมดที่ History
+				63 text ตรวจแล้ว
+				64 text 1
+				65 text ผ่าน
+				66 text 1
+				67 text คัดออก
+				68 text 0
+		69 container
+			70 text Vending Vision ระบบตรวจฉลากขวดน้ำด้วย Image Processing กำลังแสดงข้อมูลสังเคราะห์ (DEMO)
+
+The focused UI element is 0 AXWebArea Vending Vision, URL: 127.0.0.1:5185/simulation

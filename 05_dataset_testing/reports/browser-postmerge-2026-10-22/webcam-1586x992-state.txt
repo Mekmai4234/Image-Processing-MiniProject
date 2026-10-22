@@ -1,0 +1,47 @@
+Browser tab: 1, Title: "Vending Vision", URL: "http://127.0.0.1:5185/webcam".
+0 AXWebArea Vending Vision, URL: 127.0.0.1:5185/webcam
+	1 container root
+		2 link Description: ข้ามไปเนื้อหาหลัก, Value: 127.0.0.1:5185/webcam#main
+		3 container
+			4 link Description: Vending Vision หน้า Simulation, Value: 127.0.0.1:5185/simulation
+			210 text Thai Student Bottle Label Inspection Project
+			5 container โหมดการทำงาน
+				6 link Description: Simulation, Value: 127.0.0.1:5185/simulation
+				7 link Description: Webcam, Value: 127.0.0.1:5185/webcam
+				8 link Description: History, Value: 127.0.0.1:5185/history
+			9 container แหล่งข้อมูล
+				10 checkbox API จริง, Value: 0
+				11 checkbox DEMO, Value: 1
+		71 container
+			72 text โหมด DEMO ข้อมูลสังเคราะห์จาก examples/ ไม่ได้ตรวจภาพจริง ใช้ทดสอบหน้าจอเท่านั้น ผลที่จะจำลอง
+			73 pop up button (collapsed, settable) ผลที่จะจำลอง, Value: PASS ฉลากถูกต้อง, Secondary Actions: Expand
+				74 menu
+					75 (selected) PASS ฉลากถูกต้อง
+					76 FAIL ฉลากผิดสินค้า
+					77 REVIEW ภาพเบลอ
+					78 REVIEW หามุมไม่สำเร็จ
+					79 PASS แต่บันทึกไม่สำเร็จ
+					80 ERROR ระบบตรวจไม่พร้อม (503)
+		16 container main
+			192 heading ตรวจด้วยกล้อง (Webcam), Value: 1
+				193 text ตรวจด้วยกล้อง (Webcam)
+			194 text หมุนขวดหน้ากล้องจนเห็นฉลาก ถือนิ่ง แล้วถ่ายให้ Backend ตรวจ
+			195 button กล้องสด (Live Camera)
+			196 button เลือกไฟล์ภาพ (File)
+			197 text Webcam Live Inspection
+			198 text ปิดกล้อง
+			199 button เปิดกล้อง, Help: เปิดกล้องเว็บแคม
+			200 container
+				201 container Unable to play media.
+				202 text กล้องปิดอยู่ กดปุ่ม
+				203 text "เปิดกล้อง"
+				204 text  เพื่อขอสิทธิ์เข้าถึงเว็บแคมและเริ่มระบบตรวจสอบฉลาก
+				205 button เปิดกล้องเว็บแคม
+			206 text สินค้าที่ต้องการตรวจ:
+			207 button น้ำดื่มขวด A (สิงห์ 600ml)
+			208 button น้ำดื่มขวด B (คริสตัล 600ml)
+			209 button (disabled) ถ่ายภาพเพื่อตรวจ (Capture), Help: จับภาพจากกล้องที่ความละเอียดจริงและส่งตรวจ
+		69 container
+			70 text Vending Vision ระบบตรวจฉลากขวดน้ำด้วย Image Processing กำลังแสดงข้อมูลสังเคราะห์ (DEMO)
+
+The focused UI element is 7 link Description: Webcam, URL: 127.0.0.1:5185/webcam

@@ -1,0 +1,147 @@
+/* หน้า Simulation (01) — ใช้ token จาก styles/global.css เท่านั้น
+   ทุก selector ขึ้นต้นด้วย .sim- เพื่อไม่กระทบหน้าอื่น */
+
+.sim-scene-panel .panel-head { margin-bottom: var(--s-3); }
+
+/* ช่องฉาก 3D ของ 02 (ฉากวาดเต็มกล่อง) */
+.sim-stage {
+  position: relative;
+  aspect-ratio: 2 / 1;
+  min-height: 320px;
+  max-height: 640px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-control);
+  overflow: hidden;
+  background: var(--bg-deep);
+  margin-bottom: var(--s-3);
+}
+.sim-stage .vv-sim { position: absolute; inset: 0; min-height: 0; border-radius: 0; }
+
+.sim-scene-panel .notice { margin: 0 0 var(--s-3); }
+
+/* ป้ายสถานะฉาก */
+.sim-state {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 12px; border-radius: 999px;
+  border: 1px solid var(--line-strong); background: var(--bg-raise);
+  font-size: var(--fs-xs); font-weight: 600; color: var(--text-2); white-space: nowrap;
+}
+.sim-state::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.sim-state:not(.is-idle):not(.is-complete):not(.is-paused):not(.is-error) { color: var(--cyan); border-color: rgba(18, 213, 245, 0.45); }
+.sim-state:not(.is-idle):not(.is-complete):not(.is-paused):not(.is-error)::before { background: var(--cyan); animation: pulse 1.4s ease-in-out infinite; }
+.sim-state.is-complete { color: var(--pass); }
+.sim-state.is-complete::before { background: var(--pass); }
+.sim-state.is-paused { color: var(--review); }
+.sim-state.is-paused::before { background: var(--review); }
+.sim-state.is-error { color: var(--error); border-color: rgba(196, 181, 253, 0.5); }
+.sim-state.is-error::before { background: var(--error); }
+
+/* แถวล่าง: pipeline + สถิติ */
+.sim-bottom { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: var(--s-5); align-items: stretch; }
+.sim-bottom > * { min-width: 0; }
+
+.sim-pipeline {
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--s-3);
+  list-style: none; margin: 0; padding: 0; counter-reset: none;
+}
+.sim-pipeline li {
+  position: relative;
+  display: grid; justify-items: center; align-content: start; gap: 6px;
+  padding: var(--s-4) var(--s-2) var(--s-3);
+  border: 1px solid var(--line-strong); border-radius: var(--r-control);
+  background: var(--bg-raise); text-align: center;
+  color: var(--text-2);
+}
+.sim-pipeline li svg { color: var(--cyan); }
+.sim-pipeline li strong { color: var(--text); font-size: var(--fs-sm); }
+.sim-pipeline li > span:last-child { font-size: var(--fs-xs); color: var(--muted); line-height: 1.35; }
+.sim-pipeline li:not(:last-child)::after {
+  content: '→'; position: absolute; right: calc(-1 * var(--s-3)); top: 50%;
+  transform: translate(50%, -50%); color: var(--line-strong); font-size: 0.9rem;
+}
+.sim-pipeline li .sim-n { position: absolute; top: -10px; left: -6px; }
+.sim-pipeline li.is-done { border-color: rgba(52, 211, 153, 0.45); }
+.sim-pipeline li.is-done svg { color: var(--pass); }
+.sim-pipeline li.is-active { border-color: var(--cyan); background: var(--cyan-soft); box-shadow: 0 0 0 1px var(--cyan), 0 0 18px rgba(18, 213, 245, 0.25); }
+.sim-pipeline li.is-error { border-color: var(--error); background: var(--error-soft); }
+.sim-pipeline li.is-error svg { color: var(--error); }
+
+.stats.sim-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* ตัวเลขวงกลมหน้าหัวข้อขั้น */
+.sim-n {
+  display: inline-grid; place-items: center; flex: none;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--cyan); color: var(--cyan-ink);
+  font-size: var(--fs-xs); font-weight: 700;
+}
+
+/* แผงควบคุมด้านขวา */
+.sim-step {
+  display: grid; gap: var(--s-3);
+  padding: var(--s-3); border: 1px solid var(--line); border-radius: var(--r-control);
+  background: var(--bg-raise);
+}
+.sim-step h3 { display: flex; align-items: center; gap: var(--s-2); font-size: var(--fs-sm); }
+.sim-step-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s-3); }
+.sim-step-grid > * { min-width: 0; }
+
+.sim-step .thumb.sim-scanning { border-color: var(--review); box-shadow: 0 0 0 1px var(--review); }
+.sim-chip {
+  justify-self: start; padding: 1px 8px; border-radius: 999px;
+  background: var(--cyan-soft); color: var(--cyan); font-size: 0.7rem; font-weight: 600;
+}
+
+.sim-products { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: var(--s-2); }
+.sim-product {
+  position: relative;
+  display: grid; justify-items: center; gap: 4px;
+  padding: var(--s-3) var(--s-2); text-align: center;
+  border: 1px solid var(--line); border-radius: var(--r-control);
+  background: var(--panel); color: var(--text-2); font-size: var(--fs-xs);
+  cursor: pointer;
+}
+.sim-product svg { color: var(--cyan); }
+.sim-product input { position: absolute; top: 6px; right: 6px; accent-color: var(--cyan); }
+.sim-product:has(input:checked) { border-color: var(--cyan); background: var(--cyan-soft); color: var(--text); box-shadow: 0 0 0 1px var(--cyan); }
+.sim-product:has(input:focus-visible) { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.sim-product:has(input:disabled) { cursor: not-allowed; opacity: 0.7; }
+
+.sim-orient { display: flex; align-items: flex-start; gap: var(--s-3); }
+.sim-orient svg { flex: none; color: var(--cyan); }
+.sim-orient > div { display: grid; gap: 4px; font-size: var(--fs-sm); }
+.sim-orient.is-found svg, .sim-orient.is-found strong { color: var(--pass); }
+
+.sim-controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-2); }
+.sim-controls .btn { justify-content: center; }
+.btn.btn-run { background: var(--pass); border-color: var(--pass); color: #022c1c; font-weight: 700; }
+.btn.btn-run:hover:not(:disabled) { filter: brightness(1.08); border-color: var(--pass); }
+
+.sim-speed { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: var(--s-3); font-size: var(--fs-sm); color: var(--text-2); }
+.sim-speed input { width: 100%; accent-color: var(--cyan); }
+.sim-speed output { min-width: 3.5ch; text-align: right; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+
+.sim-issues { margin: 0; padding-left: 1.2em; color: var(--review); font-size: var(--fs-sm); display: grid; gap: 2px; }
+
+/* ภาพที่ส่งตรวจ */
+.sim-captured { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: var(--s-4); align-items: start; }
+.sim-captured > * { min-width: 0; }
+.sim-verdict {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2);
+  padding: var(--s-2) var(--s-3); border-radius: var(--r-control); border: 1px solid var(--line);
+  font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.sim-verdict.PASS { border-color: rgba(52, 211, 153, 0.55); color: var(--pass); background: var(--pass-soft); }
+.sim-verdict.FAIL { border-color: rgba(248, 113, 113, 0.55); color: var(--fail); background: var(--fail-soft); }
+.sim-verdict.REVIEW { border-color: rgba(251, 191, 36, 0.55); color: var(--review); background: var(--review-soft); }
+
+@media (max-width: 1440px) {
+  .sim-bottom { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 760px) {
+  .sim-stage { aspect-ratio: 4 / 3; min-height: 260px; }
+  .sim-pipeline { grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); }
+  .sim-pipeline li:not(:last-child)::after { display: none; }
+  .sim-step-grid, .sim-captured { grid-template-columns: 1fr; }
+}
