@@ -1,6 +1,7 @@
 // Public surface of the 02 simulation feature. 01 imports from here only.
 export { SimulationScene } from './SimulationScene'
 export type { SimulationSceneHandle, SimulationSceneProps } from './SimulationScene'
+export type { SceneQuality } from './scene/ConveyorScene'
 export { SimulationController } from './controller/SimulationController'
 export type { SimulationSnapshot, CompletedEvent, Station } from './controller/SimulationController'
 export { machineConfigFrom, parseSimulationDefaults, suggestedAngles } from './controller/config'

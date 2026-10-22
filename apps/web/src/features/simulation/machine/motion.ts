@@ -9,14 +9,16 @@ import type { MachineState, Motion, Route } from './types'
  */
 export const LAYOUT = {
   belt_y: 0.62,
-  turntable_top_y: 0.7,
-  dispenser_x: -8.4,
-  turntable_x: -5.0,
-  inspect_x: -1.7,
-  reject_x: 1.3,
-  review_x: 3.3,
-  pass_gate_x: 4.9,
-  pass_end_x: 7.6,
+  turntable_top_y: 0.72,
+  /** Radius of the round ORIENT table (the bottle stands at its centre). */
+  turntable_radius: 1.2,
+  dispenser_x: -9.4,
+  turntable_x: -5.7,
+  inspect_x: -2.1,
+  reject_x: 0.9,
+  review_x: 2.9,
+  pass_gate_x: 4.5,
+  pass_end_x: 7.3,
   tray_z: 1.8,
   pusher_rest_z: -0.95,
   /** Pusher plate front at full stroke. */
@@ -146,8 +148,8 @@ export function poseOf(state: MachineState): Pose {
       return pose
     case 'FEED': {
       pose.x = lerp(LAYOUT.dispenser_x, LAYOUT.turntable_x, easeInOut(t))
-      pose.y = lerp(LAYOUT.belt_y, LAYOUT.turntable_top_y, clamp01((t - 0.85) / 0.15))
-      pose.station = t < 0.85 ? 'belt' : 'turntable'
+      pose.y = surfaceY(pose.x)
+      pose.station = onTable(pose.x) ? 'turntable' : 'belt'
       return pose
     }
     case 'ORIENT':
@@ -157,8 +159,8 @@ export function poseOf(state: MachineState): Pose {
       if (motion?.kind === 'rotate') return pose
       if (motion?.kind === 'to_inspect') {
         pose.x = lerp(LAYOUT.turntable_x, LAYOUT.inspect_x, easeInOut(t))
-        pose.y = lerp(LAYOUT.turntable_top_y, LAYOUT.belt_y, clamp01(t / 0.12))
-        pose.station = t < 0.12 ? 'turntable' : 'belt'
+        pose.y = surfaceY(pose.x)
+        pose.station = onTable(pose.x) ? 'turntable' : 'belt'
         return pose
       }
       return atInspect(pose)
@@ -181,6 +183,16 @@ export function poseOf(state: MachineState): Pose {
     case 'COMPLETE':
       return outputPose(pose, route, 1)
   }
+}
+
+/** The table top is a little higher than the belts; the bottle steps up/down at its rim. */
+function onTable(x: number): boolean {
+  return Math.abs(x - LAYOUT.turntable_x) < LAYOUT.turntable_radius - 0.05
+}
+
+function surfaceY(x: number): number {
+  const d = Math.abs(x - LAYOUT.turntable_x) - (LAYOUT.turntable_radius - 0.2)
+  return lerp(LAYOUT.turntable_top_y, LAYOUT.belt_y, clamp01(d / 0.2))
 }
 
 function atInspect(pose: Pose): Pose {
