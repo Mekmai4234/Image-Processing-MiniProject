@@ -138,23 +138,56 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
     }
   }, [])
 
-  // Keep selected product in sync with prop if changed from outside
+  const prevProductRef = useRef<string>(expectedProduct)
+
+  // Unified reset logic whenever product context changes (via props or internal selection)
+  const resetProductContext = useCallback(
+    (newProdId: string) => {
+      // 1. Invalidate dwell timer session token
+      dwellTimerRef.current?.invalidate()
+
+      // 2. Increment capture sequence & abort in-flight capture or retry
+      captureSeqRef.current++
+      captureAbortRef.current?.abort()
+      captureAbortRef.current = null
+      setIsCapturing(false)
+
+      // 3. Clear failed request of previous product and error message
+      lastFailedRequestRef.current = null
+      setCaptureError(null)
+
+      // 4. Clear stale inspection result and frozen preview
+      setInspectionResult(null)
+      if (frozenObjectUrlRef.current) {
+        URL.revokeObjectURL(frozenObjectUrlRef.current)
+        frozenObjectUrlRef.current = null
+      }
+      setFrozenFrameUrl(null)
+      setViewMode('live')
+      bottleAbsentCountRef.current = 0
+
+      // 5. Reset autoPhase to waiting_bottle so new product does not get blocked by old failed state
+      if (autoCaptureEnabled && autoPhase !== 'idle') {
+        setAutoPhase('waiting_bottle')
+      }
+
+      // 6. Synchronize state and tracking ref
+      setSelectedProduct(newProdId)
+      prevProductRef.current = newProdId
+    },
+    [autoCaptureEnabled, autoPhase],
+  )
+
+  // Keep selected product in sync with prop if changed from parent
   useEffect(() => {
-    setSelectedProduct(expectedProduct)
-    dwellTimerRef.current?.invalidate()
-  }, [expectedProduct])
+    if (expectedProduct !== prevProductRef.current) {
+      resetProductContext(expectedProduct)
+    }
+  }, [expectedProduct, resetProductContext])
 
   const handleProductSelect = (prodId: string) => {
-    setSelectedProduct(prodId)
-    lastFailedRequestRef.current = null
-    setCaptureError(null)
-    dwellTimerRef.current?.invalidate()
-    captureSeqRef.current++
-    captureAbortRef.current?.abort()
-    setIsCapturing(false)
-    if (autoCaptureEnabled && (autoPhase === 'holding' || autoPhase === 'error_waiting_retry' || autoPhase === 'inspecting')) {
-      setAutoPhase('waiting_bottle')
-    }
+    if (prodId === selectedProduct) return
+    resetProductContext(prodId)
     onProductChange?.(prodId)
   }
 
@@ -271,6 +304,12 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
     const failedReq = lastFailedRequestRef.current
     if (!failedReq || isCapturing) return
 
+    // Guard: Ensure failed request belongs to the currently active product
+    if (failedReq.expected_product !== selectedProduct) {
+      lastFailedRequestRef.current = null
+      return
+    }
+
     const dwell = dwellTimerRef.current
     const sessionTokenSnapshot = dwell?.token ?? 0
     const seq = ++captureSeqRef.current
@@ -318,7 +357,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
         setIsCapturing(false)
       }
     }
-  }, [autoCaptureEnabled, effectiveDs, isCapturing, onInspectionComplete])
+  }, [autoCaptureEnabled, effectiveDs, isCapturing, onInspectionComplete, selectedProduct])
 
   handleCaptureRef.current = handleCaptureAndInspect
 
@@ -809,7 +848,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{captureError}</span>
                 </div>
-                {lastFailedRequestRef.current && (
+                {lastFailedRequestRef.current && lastFailedRequestRef.current.expected_product === selectedProduct && (
                   <button
                     type="button"
                     className="btn-retry-capture"
