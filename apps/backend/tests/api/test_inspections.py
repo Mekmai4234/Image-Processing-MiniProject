@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 from PIL import Image, ImageDraw
 
 from app.core.config import settings
+from app.core.timezone import get_folder_date
 from app.main import app
 
 client = TestClient(app)
@@ -52,7 +53,7 @@ def test_create_inspection_single_view():
     assert res["images"]["annotated"] == f"/api/inspections/{res['inspection_id']}/images/annotated"
 
     # Verify files created in storage
-    dest_dir = settings.STORAGE_ROOT / res["created_at"][:10] / "pass" / res["inspection_id"]
+    dest_dir = settings.STORAGE_ROOT / get_folder_date() / "pass" / res["inspection_id"]
     assert (dest_dir / "original.jpg").is_file()
     assert (dest_dir / "annotated.jpg").is_file()
     assert (dest_dir / "result.json").is_file()
@@ -95,7 +96,7 @@ def test_create_inspection_multi_view():
     assert res["evidence"]["supporting_images"][1] == f"/api/inspections/{res['inspection_id']}/images/supporting/1"
 
     # Verify supporting files exist on disk
-    dest_dir = settings.STORAGE_ROOT / res["created_at"][:10] / "pass" / res["inspection_id"]
+    dest_dir = settings.STORAGE_ROOT / get_folder_date() / "pass" / res["inspection_id"]
     assert (dest_dir / "supporting" / "0.jpg").is_file()
     assert (dest_dir / "supporting" / "1.jpg").is_file()
 
@@ -497,7 +498,7 @@ def test_demo_mode_tags_results_with_is_demo():
     assert row["is_demo"] == 1
 
     # Check result.json file
-    dest_dir = settings.STORAGE_ROOT / res["created_at"][:10] / "pass" / res["inspection_id"]
+    dest_dir = settings.STORAGE_ROOT / get_folder_date() / "pass" / res["inspection_id"]
     result_json_path = dest_dir / "result.json"
     assert result_json_path.is_file()
     with open(result_json_path, "r", encoding="utf-8") as f:

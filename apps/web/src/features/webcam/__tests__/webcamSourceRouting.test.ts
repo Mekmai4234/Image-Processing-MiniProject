@@ -142,6 +142,8 @@ describe('Webcam Source Routing Integration Tests', () => {
         createInspection: vi.fn().mockResolvedValue(mockResult),
         listInspections: vi.fn(),
         getInspection: vi.fn(),
+        getInspectionFiles: vi.fn(),
+        downloadZipUrl: vi.fn().mockReturnValue(null),
         retrySave: vi.fn(),
         review: vi.fn(),
         exportCsvUrl: vi.fn().mockReturnValue('/api/inspections/export.csv'),
@@ -249,6 +251,92 @@ describe('Webcam Source Routing Integration Tests', () => {
       expect(acceptedLive).toBe(true)
       expect(captures).toHaveLength(2)
       expect(captures[0]?.inspection_id).toBe('live-1')
+    })
+  })
+
+  describe('Retry Idempotency & Contract Adherence', () => {
+    it('retries inspection request using the exact same client_request_id and payload', async () => {
+      const inspectCalls: InspectionRequest[] = []
+      let attempt = 0
+
+      const mockDs: DataSource = {
+        kind: 'live',
+        health: vi.fn(),
+        products: vi.fn(),
+        locateLabel: vi.fn(),
+        createInspection: vi.fn().mockImplementation(async (req: InspectionRequest) => {
+          inspectCalls.push(req)
+          attempt++
+          if (attempt === 1) {
+            throw new Error('503 Service Unavailable')
+          }
+          return {
+            inspection_id: 'insp-retry-ok',
+            client_request_id: req.client_request_id,
+            created_at: new Date().toISOString(),
+            source_mode: req.source_mode,
+            expected_product: req.expected_product,
+            detected_product: req.expected_product,
+            result: 'PASS',
+            reason: 'good',
+            match_score: 0.96,
+            score_method: 'template_ccoeff_normed_clamped_v1',
+            bbox: null,
+            expected_bbox: null,
+            image_width: 640,
+            image_height: 480,
+            orientation_deg: null,
+            timing_ms: { orientation: 0, inspection: 10, storage: 5, total: 15 },
+            config_version: 'test',
+            storage_status: 'saved',
+            storage_error: null,
+            images: { original: null, annotated: null },
+            evidence: {
+              kind: 'single_view',
+              search_status: 'not_requested',
+              supporting_angles_deg: [],
+              reported_coverage_deg: null,
+              verified_coverage: false,
+              required_view_profile: null,
+              supporting_images: [],
+            },
+            reviewed_result: null,
+            reviewed_reason: null,
+            reviewer: null,
+            reviewed_at: null,
+          } as InspectionResult
+        }),
+        listInspections: vi.fn(),
+        getInspection: vi.fn(),
+        getInspectionFiles: vi.fn(),
+        downloadZipUrl: vi.fn().mockReturnValue(null),
+        retrySave: vi.fn(),
+        review: vi.fn(),
+        exportCsvUrl: vi.fn().mockReturnValue(null),
+        imageUrl: vi.fn().mockReturnValue(null),
+      }
+
+      const initialReq: InspectionRequest = {
+        image: dummyBlob,
+        imageName: 'webcam-capture.jpg',
+        expected_product: 'bottle_a',
+        source_mode: 'webcam',
+        client_request_id: 'client-req-uuid-fixed',
+        demo: false,
+      }
+
+      // First attempt fails
+      await expect(mockDs.createInspection(initialReq)).rejects.toThrow('503 Service Unavailable')
+      expect(inspectCalls).toHaveLength(1)
+      expect(inspectCalls[0]?.client_request_id).toBe('client-req-uuid-fixed')
+
+      // Retry attempt re-uses identical request object and client_request_id
+      const retryResult = await mockDs.createInspection(initialReq)
+      expect(inspectCalls).toHaveLength(2)
+      expect(inspectCalls[1]?.client_request_id).toBe('client-req-uuid-fixed')
+      expect(inspectCalls[1]?.client_request_id).toBe(inspectCalls[0]?.client_request_id)
+      expect(retryResult.inspection_id).toBe('insp-retry-ok')
+      expect(retryResult.client_request_id).toBe('client-req-uuid-fixed')
     })
   })
 })

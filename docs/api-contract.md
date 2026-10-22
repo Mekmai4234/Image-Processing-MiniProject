@@ -11,13 +11,17 @@ result = PASS/FAIL/REVIEW; storage_status = pending/saved/failed
 | GET /api/health | — | service status/config version |
 | GET /api/products | — | catalog ที่รองรับ/ชื่อแสดง และ simulation_defaults |
 | POST /api/locate-label | multipart image, expected_product | usable_view, bbox, quality, reason; ยังไม่สร้าง history |
+| POST /api/bottle-shape | multipart image | schema_version, status, radial_profile, quality; ไม่คืน mask และไม่สร้าง history |
 | POST /api/inspections | multipart ตามหัวข้อคำขอตรวจด้านล่าง | InspectionResult และ image URLs |
-| GET /api/inspections | page, page_size, source_mode, result, product_id, date_from, date_to | items,total,page,page_size |
+| GET /api/inspections | page, page_size, source_mode, result, product_id, date_from, date_to, q, sort_by, sort_order | items,total,page,page_size |
 | GET /api/inspections/{id} | id | detail และสถานะไฟล์ |
+| GET /api/inspections/{id}/files | id | metadata รายการไฟล์บนดิสก์และสถานะความสมบูรณ์ |
+| GET /api/inspections/{id}/download | id | ZIP bundle ของไฟล์ตรวจทั้งหมด (ปฏิเสธ 409 files_incomplete หากไฟล์ไม่ครบ) |
+| GET /api/inspections/{id}/result.json | id | immutable decision snapshot ตรงๆ |
 | GET /api/inspections/{id}/images/{kind} | original หรือ annotated | image bytes |
 | GET /api/inspections/{id}/images/supporting/{index} | index เริ่ม 0 ของภาพหลักฐานที่เก็บ | image bytes |
 | POST /api/inspections/{id}/retry-save | id เดิม | storage status; ถ้า source หายแจ้งถ่ายใหม่ |
-| GET /api/exports/inspections.csv | filters เดียวกับ history | CSV ของข้อมูลจริง |
+| GET /api/exports/inspections.csv | filters เดียวกับ history (รวม q, sort_by, sort_order) | CSV ของข้อมูลจริง |
 | PATCH /api/inspections/{id}/review | reviewed_result, reviewed_reason, reviewer | ผลตรวจทานแยก prediction เดิม |
 
 GET export ต้องมี route ที่ไม่ชน dynamic inspection id; pagination และ max size ตรวจฝั่ง server
@@ -180,12 +184,47 @@ UI transform scale+offset ตาม object-fit; mirror preview กับ overlay
 
 การแก้ contract ต้องแก้ examples + consumer 01/02/04 + tests พร้อมกันผ่าน PR
 
-## History / Export ที่ต้องใช้กติกาเดียวกัน
+## History / Export และ Files ที่ต้องใช้กติกาเดียวกัน
 
 page เริ่ม 1, page_size ค่าเริ่ม 20 และสูงสุด 100; product_id ใน filter หมายถึง expected_product
 date_from/date_to เป็น YYYY-MM-DD ตาม APP_TIMEZONE รวมทั้งวันต้นและวันปลาย
 Backend แปลงเป็นช่วง UTC ตั้งแต่ต้นวันแรกจนก่อนต้นวันถัดจากวันสุดท้าย; ปฏิเสธช่วงวันกลับด้าน
-sort ตาม created_at จากใหม่ไปเก่าแล้ว inspection_id เพื่อให้ลำดับคงที่เมื่อเวลาเท่ากัน
-CSV ใช้ filters เดียวกันแต่ส่งออกทุกแถวที่ตรง ไม่ตัดตาม page ของ History
+ค้นหาด้วย q: ค้นหาคำค้นหา (case-insensitive) ใน inspection_id, client_request_id, expected_product, detected_product, reason
+เรียงลำดับด้วย sort_by: รองรับ created_at, expected_product, result, match_score (ค่าเริ่มต้น created_at)
+ทิศทางการเรียงด้วย sort_order: asc หรือ desc (ค่าเริ่มต้น desc แล้ว tie-break ด้วย inspection_id)
+CSV ใช้ filters เดียวกัน (รวม q, sort_by, sort_order) แต่ส่งออกทุกแถวที่ตรง ไม่ตัดตาม page ของ History
 id หรือภาพที่ไม่มีคืน 404; retry ที่ไม่มี source กู้คืนได้คืน error code source_unavailable
 พร้อมสถานะเดิม failed และ retryable=false เพื่อให้ UI แนะนำถ่ายใหม่
+
+`GET /api/inspections/{id}/files`: ตรวจสอบสถานะไฟล์จริงบนดิสก์ คืน all_available=true และ download_zip_url เมื่อไฟล์จำเป็นทั้งหมด (original, annotated, result.json, และ supporting images ตาม evidence) มีอยู่จริงและขนาด > 0 bytes
+`GET /api/inspections/{id}/download`: บันทึกเป็น ZIP archive ของไฟล์ทั้งหมด หากไฟล์ใดขาดหายหรือมีขนาด 0 bytes จะไม่สร้าง partial zip และตอบกลับด้วย 409 files_incomplete ทันที
+`GET /api/inspections/{id}/result.json`: คืน snapshot ผลการตรวจแบบ immutable โดยตรง
+
+## รูปทรงขวดและ Radial Profile (bottle-silhouette-v1)
+
+`POST /api/bottle-shape` สำหรับส่งภาพหลักภาพเดียวเพื่อวิเคราะห์รูปทรงขวดและ radial profile สำหรับนำไปขึ้นรูปจำลอง 3D ของสมาชิก 02
+(ทำงานบนหน่วยความจำ ไม่บันทึกลง Database หรือ Disk และไม่ส่งผลต่อผลตัดสิน PASS/FAIL ของฉลาก)
+
+- **Input**: Multipart `image` (JPEG/PNG) ขนาดสูงสุดและข้อกำหนดเดียวกับ `POST /api/locate-label`
+- **Output**: JSON Schema ตาม interface `bottle-silhouette-v1`:
+  - `schema_version`: `"bottle-silhouette-v1"`
+  - `status`: `"ready"` หรือ `"fallback"`
+  - `reason`: ข้อความระบุผล เช่น `"usable_silhouette"`, `"bottle_not_isolated"`, `"truncated_or_not_upright"`, `"asymmetric_silhouette"`
+  - `image_width` / `image_height`: ขนาดภาพหลักหลังทำ EXIF normalization
+  - `bbox`: พิกัด pixel bounding box ของขวด `{x, y, width, height}` หรือ `null` เมื่อ fallback
+  - `normalized_width` / `normalized_height`: สัดส่วนเทียบกับขนาดภาพ
+  - `aspect_ratio`: `bbox.width / bbox.height`
+  - `contour`: รายการพิกัดเส้นรอบรูปขวด `[[x, y], ...]`
+  - `radial_profile`: ตัวอย่างรัศมี 32 จุด (เรียงจากบน `y_fraction=0.0` ไปล่าง `y_fraction=1.0`) โดย `radius_over_height = ครึ่งความกว้างแถว / bbox.height`
+  - `quality`: `{whole_bottle_visible, center_drift, axisymmetric_assumption}`
+  - **หมายเหตุ**: API จะ**ไม่ส่ง** mask ก้อนใหญ่กลับมาทาง JSON เพื่อความรวดเร็วและประหยัด bandwidth
+- **การแปลงพิกัดสู่ 3D World Units (สำหรับ 02)**:
+  ```text
+  world_y = (1 - y_fraction) * H
+  world_radius = radius_over_height * H
+  ```
+- **Fallback**: หากไม่พบขวด, พื้นหลังไม่เรียบ, ภาพตัดขวด หรือขวดเอียงเกินเกณฑ์ จะคืน `status: "fallback"` และให้หน้าเว็บ 02 ใช้ทรงกระบอก generic แทน
+- **ตัวอย่างผลลัพธ์**:
+  - ตัวอย่างสำเร็จ: [examples/bottle-shape-ready.json](../examples/bottle-shape-ready.json)
+  - ตัวอย่าง fallback: [examples/bottle-shape-fallback.json](../examples/bottle-shape-fallback.json)
+

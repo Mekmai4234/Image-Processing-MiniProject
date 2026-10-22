@@ -177,8 +177,74 @@ class InspectionRepository:
         finally:
             conn.close()
 
-    @staticmethod
+    ALLOWED_SORT_FIELDS = {
+        "created_at": "created_at",
+        "expected_product": "expected_product",
+        "detected_product": "detected_product",
+        "result": "result",
+        "match_score": "match_score",
+    }
+
+    @classmethod
+    def _build_filter_clause(
+        cls,
+        source_mode: Optional[str] = None,
+        result: Optional[str] = None,
+        product_id: Optional[str] = None,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
+        demo: Optional[bool] = None,
+        q: Optional[str] = None,
+        sort_by: Optional[str] = None,
+        sort_order: Optional[str] = None,
+    ) -> Tuple[str, List[Any], str]:
+        conditions = []
+        params: List[Any] = []
+
+        if source_mode:
+            conditions.append("source_mode = ?")
+            params.append(source_mode)
+        if result:
+            conditions.append("result = ?")
+            params.append(result)
+        if product_id:
+            conditions.append("expected_product = ?")
+            params.append(product_id)
+        if date_from:
+            conditions.append("folder_date >= ?")
+            params.append(date_from)
+        if date_to:
+            conditions.append("folder_date <= ?")
+            params.append(date_to)
+        if demo is not None:
+            conditions.append("is_demo = ?")
+            params.append(1 if demo else 0)
+
+        if q and q.strip():
+            pattern = f"%{q.strip()}%"
+            conditions.append(
+                "(inspection_id LIKE ? OR client_request_id LIKE ? OR expected_product LIKE ? OR detected_product LIKE ? OR reason LIKE ?)"
+            )
+            params.extend([pattern, pattern, pattern, pattern, pattern])
+
+        where_clause = ""
+        if conditions:
+            where_clause = "WHERE " + " AND ".join(conditions)
+
+        # Ordering with allowlist
+        sort_field = cls.ALLOWED_SORT_FIELDS.get(sort_by or "created_at", "created_at")
+        order_dir = "ASC" if (sort_order and sort_order.strip().lower() == "asc") else "DESC"
+
+        if sort_field == "match_score":
+            order_clause = f"ORDER BY (match_score IS NULL), match_score {order_dir}, inspection_id {order_dir}"
+        else:
+            order_clause = f"ORDER BY {sort_field} {order_dir}, inspection_id {order_dir}"
+
+        return where_clause, params, order_clause
+
+    @classmethod
     def list_inspections(
+        cls,
         page: int = 1,
         page_size: int = 20,
         source_mode: Optional[str] = None,
@@ -187,38 +253,26 @@ class InspectionRepository:
         date_from: Optional[str] = None,
         date_to: Optional[str] = None,
         demo: Optional[bool] = None,
+        q: Optional[str] = None,
+        sort_by: Optional[str] = None,
+        sort_order: Optional[str] = None,
     ) -> Tuple[List[Dict[str, Any]], int]:
         """
-        Query inspections with filters and pagination.
-        Sort by created_at DESC, inspection_id DESC for deterministic ordering.
+        Query inspections with filters, search, sorting, and pagination.
         """
         conn = get_connection()
         try:
-            conditions = []
-            params = []
-
-            if source_mode:
-                conditions.append("source_mode = ?")
-                params.append(source_mode)
-            if result:
-                conditions.append("result = ?")
-                params.append(result)
-            if product_id:
-                conditions.append("expected_product = ?")
-                params.append(product_id)
-            if date_from:
-                conditions.append("folder_date >= ?")
-                params.append(date_from)
-            if date_to:
-                conditions.append("folder_date <= ?")
-                params.append(date_to)
-            if demo is not None:
-                conditions.append("is_demo = ?")
-                params.append(1 if demo else 0)
-
-            where_clause = ""
-            if conditions:
-                where_clause = "WHERE " + " AND ".join(conditions)
+            where_clause, params, order_clause = cls._build_filter_clause(
+                source_mode=source_mode,
+                result=result,
+                product_id=product_id,
+                date_from=date_from,
+                date_to=date_to,
+                demo=demo,
+                q=q,
+                sort_by=sort_by,
+                sort_order=sort_order,
+            )
 
             count_query = f"SELECT COUNT(*) FROM inspections {where_clause};"
             total = conn.execute(count_query, params).fetchone()[0]
@@ -227,7 +281,7 @@ class InspectionRepository:
             data_query = f"""
                 SELECT * FROM inspections
                 {where_clause}
-                ORDER BY created_at DESC, inspection_id DESC
+                {order_clause}
                 LIMIT ? OFFSET ?;
             """
             cur = conn.execute(data_query, params + [page_size, offset])
@@ -236,47 +290,38 @@ class InspectionRepository:
         finally:
             conn.close()
 
-    @staticmethod
+    @classmethod
     def export_inspections(
+        cls,
         source_mode: Optional[str] = None,
         result: Optional[str] = None,
         product_id: Optional[str] = None,
         date_from: Optional[str] = None,
         date_to: Optional[str] = None,
         demo: Optional[bool] = None,
+        q: Optional[str] = None,
+        sort_by: Optional[str] = None,
+        sort_order: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """Query all inspections matching filters without pagination for CSV export."""
         conn = get_connection()
         try:
-            conditions = []
-            params = []
-            if source_mode:
-                conditions.append("source_mode = ?")
-                params.append(source_mode)
-            if result:
-                conditions.append("result = ?")
-                params.append(result)
-            if product_id:
-                conditions.append("expected_product = ?")
-                params.append(product_id)
-            if date_from:
-                conditions.append("folder_date >= ?")
-                params.append(date_from)
-            if date_to:
-                conditions.append("folder_date <= ?")
-                params.append(date_to)
-            if demo is not None:
-                conditions.append("is_demo = ?")
-                params.append(1 if demo else 0)
-
-            where_clause = ""
-            if conditions:
-                where_clause = "WHERE " + " AND ".join(conditions)
+            where_clause, params, order_clause = cls._build_filter_clause(
+                source_mode=source_mode,
+                result=result,
+                product_id=product_id,
+                date_from=date_from,
+                date_to=date_to,
+                demo=demo,
+                q=q,
+                sort_by=sort_by,
+                sort_order=sort_order,
+            )
 
             data_query = f"""
                 SELECT * FROM inspections
                 {where_clause}
-                ORDER BY created_at DESC, inspection_id DESC;
+                {order_clause};
             """
             cur = conn.execute(data_query, params)
             return [dict(r) for r in cur.fetchall()]
