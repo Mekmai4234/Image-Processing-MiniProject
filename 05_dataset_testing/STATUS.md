@@ -1,6 +1,10 @@
 # สถานะตามใบงาน 05-A ถึง 05-E — 22 ตุลาคม 2026
 
+หมายเหตุการรวม #34/#35: รายงานด้านล่างเป็นประวัติของฐานที่ระบุ ไม่ใช่ผลของ develop ล่าสุด; สถานะ checklist รวมอยู่ที่ [acceptance integration](reports/acceptance-integration-2026-10-22.json) และยังไม่พร้อมตรวจรับทั้งระบบ
+
 รอบล่าสุดหลัง PR #20 merge: [POSTMERGE-2026-10-22.md](POSTMERGE-2026-10-22.md) ตรวจฐานรวม f487263 ใหม่ ได้ dataset 44/repository 12/frontend 109 และ build ผ่าน แต่ Backend ไม่ผ่าน 3/150 cases จาก UTC/Bangkok date assertions ส่งต่อ 04; browser defects 3 จุดยังพบซ้ำ WebGL ยังไม่ mount และยังไม่ได้ใช้กล้องจริง ไม่เปลี่ยนผลเหล่านี้เป็นผ่าน [acceptance status ล่าสุด](reports/acceptance-status-2026-10-22.json) ยังไม่พร้อมรับงาน ตารางด้านล่างบันทึกขอบเขตเครื่องมือที่มี โดยข้อจำกัดข้อมูลจริง/visual ยังใช้ตามเดิม
+
+รอบดำเนินการต่อวันที่ 22: [EXECUTION-2026-10-22.md](EXECUTION-2026-10-22.md) ทดสอบ 05 ได้ 47 tests, frontend 109/build และ harness build ผ่าน มีหลักฐาน component WebGL แยกจากหน้าแอปจริง พร้อม probe HTTP non-DEMO 7 ครั้งที่ได้ 503 เพราะไม่มี config พร้อม สถานะ readiness/dataset/hardware/visual ยังไม่ครบ; [acceptance summary](reports/execution-2026-10-22/acceptance.json) แยกจากข้อมูลเก่าด้านล่าง
 
 เอกสารนี้เป็นสถานะเฉพาะงาน 05 ตามใบงานที่ผู้ใช้ส่ง ไม่แก้ implementation ของ 01–04 และไม่ถือคำสั่งในเอกสารแนบว่าอนุญาตให้ส่งข้อความหาเพื่อนหรือรับรองข้อมูลจริงแทนมนุษย์ เอกสารแนบเก็บอยู่นอก Git ตามเดิม
 

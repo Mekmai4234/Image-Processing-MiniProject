@@ -1,0 +1,192 @@
+{
+  "base_commit": "f4872637d3ca769fce2aef3ae0eab8711fc39d20",
+  "data_kind": "browser",
+  "scope": "isolated component with mock results; not integrated route or webcam",
+  "gpu_hardware_verified": false,
+  "reference_available": false,
+  "human_visual_approval": false,
+  "assertions_passed": true,
+  "observations": [
+    {
+      "name": "webgl-pass",
+      "state": {
+        "state": "COMPLETE",
+        "phase": "COMPLETE",
+        "result": "PASS",
+        "route": "pass",
+        "inspection_id": "00000000-0000-4000-8000-100000000001",
+        "completed": 1,
+        "replayed": 0,
+        "inspect_requests": 1,
+        "force_fallback": false,
+        "evidence_kind": "synthetic_component_browser"
+      },
+      "visible": {
+        "canvasCount": 1,
+        "documentWidth": 1265,
+        "height": 720,
+        "width": 1280
+      },
+      "screenshot_sha256": "07394f267c726ffc90004f63ccf59d0fd5711c39b29135eba3246a19b2d0aa45",
+      "tested_at": "2026-10-21T23:01:57.004Z"
+    },
+    {
+      "name": "webgl-replay",
+      "state": {
+        "state": "COMPLETE",
+        "phase": "COMPLETE",
+        "result": "PASS",
+        "route": "pass",
+        "inspection_id": "00000000-0000-4000-8000-100000000001",
+        "completed": 1,
+        "replayed": 1,
+        "inspect_requests": 1,
+        "force_fallback": false,
+        "evidence_kind": "synthetic_component_browser"
+      },
+      "visible": {
+        "canvasCount": 1,
+        "documentWidth": 1265,
+        "height": 720,
+        "width": 1280
+      },
+      "screenshot_sha256": "51ed979a95d25e8a6753dc5e58eaba61a016f64c413834f6cf045e2af0b0cb9a",
+      "tested_at": "2026-10-21T23:04:08.716Z"
+    },
+    {
+      "name": "webgl-fail",
+      "state": {
+        "state": "COMPLETE",
+        "phase": "COMPLETE",
+        "result": "FAIL",
+        "route": "reject",
+        "inspection_id": "00000000-0000-4000-8000-100000000002",
+        "completed": 2,
+        "replayed": 1,
+        "inspect_requests": 2,
+        "force_fallback": false,
+        "evidence_kind": "synthetic_component_browser"
+      },
+      "visible": {
+        "canvasCount": 1,
+        "documentWidth": 1265,
+        "height": 720,
+        "width": 1280
+      },
+      "screenshot_sha256": "42756e89ad11d0c65a7cc40cb010e2491c651667440d85a3528a2a865f88b7ba",
+      "tested_at": "2026-10-21T23:05:11.274Z"
+    },
+    {
+      "name": "webgl-paused",
+      "state": {
+        "state": "PAUSED",
+        "phase": "FEED",
+        "route": null,
+        "inspection_id": null,
+        "completed": 2,
+        "replayed": 1,
+        "inspect_requests": 2,
+        "force_fallback": false,
+        "evidence_kind": "synthetic_component_browser"
+      },
+      "visible": {
+        "canvasCount": 1,
+        "documentWidth": 1265,
+        "height": 720,
+        "width": 1280
+      },
+      "screenshot_sha256": "3663c7d6497e5db16a3591a257d21203dcff591777d318652b4fb5f6038521f2",
+      "tested_at": "2026-10-21T23:07:04.000Z"
+    },
+    {
+      "name": "webgl-paused-later",
+      "state": {
+        "state": "PAUSED",
+        "phase": "FEED",
+        "route": null,
+        "inspection_id": null,
+        "completed": 2,
+        "replayed": 1,
+        "inspect_requests": 2,
+        "force_fallback": false,
+        "evidence_kind": "synthetic_component_browser"
+      },
+      "visible": {
+        "canvasCount": 1,
+        "documentWidth": 1265,
+        "height": 720,
+        "width": 1280
+      },
+      "screenshot_sha256": "110f145f74911c9c1066f1572ad34fe44f2333dc1cbfc60a301e8029c9c536e8",
+      "tested_at": "2026-10-21T23:09:03.649Z"
+    },
+    {
+      "name": "webgl-review",
+      "state": {
+        "state": "COMPLETE",
+        "phase": "COMPLETE",
+        "result": "REVIEW",
+        "route": "review",
+        "inspection_id": "00000000-0000-4000-8000-100000000003",
+        "completed": 3,
+        "replayed": 1,
+        "inspect_requests": 3,
+        "force_fallback": false,
+        "evidence_kind": "synthetic_component_browser"
+      },
+      "visible": {
+        "canvasCount": 1,
+        "documentWidth": 1265,
+        "height": 720,
+        "width": 1280
+      },
+      "screenshot_sha256": "03e0028faf643fcbeff430963d71942bd9aecf19a46f051f6dc6d9e0c26f2708",
+      "tested_at": "2026-10-21T23:10:44.191Z"
+    },
+    {
+      "name": "fallback-pass",
+      "state": {
+        "state": "COMPLETE",
+        "phase": "COMPLETE",
+        "result": "PASS",
+        "route": "pass",
+        "inspection_id": "00000000-0000-4000-8000-100000000004",
+        "completed": 4,
+        "replayed": 1,
+        "inspect_requests": 4,
+        "force_fallback": true,
+        "evidence_kind": "synthetic_component_browser"
+      },
+      "visible": {
+        "canvasCount": 0,
+        "documentWidth": 1265,
+        "height": 720,
+        "width": 1280
+      },
+      "screenshot_sha256": "d111634cb7c3ede257ebcc3bc87c1cd59616e52ac879c44e42171426efa92245",
+      "tested_at": "2026-10-21T23:12:41.139Z"
+    },
+    {
+      "name": "fallback-reset",
+      "state": {
+        "state": "IDLE",
+        "phase": "IDLE",
+        "route": null,
+        "inspection_id": null,
+        "completed": 4,
+        "replayed": 1,
+        "inspect_requests": 4,
+        "force_fallback": true,
+        "evidence_kind": "synthetic_component_browser"
+      },
+      "visible": {
+        "canvasCount": 0,
+        "documentWidth": 1265,
+        "height": 720,
+        "width": 1280
+      },
+      "screenshot_sha256": "c2c95b47120c6020380c243106e6b7ae1ee78283d91446ef09857a3a0cd1c825",
+      "tested_at": "2026-10-21T23:12:41.569Z"
+    }
+  ]
+}

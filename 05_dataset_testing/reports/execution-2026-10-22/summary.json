@@ -1,0 +1,26 @@
+{
+  "base_commit": "f4872637d3ca769fce2aef3ae0eab8711fc39d20",
+  "all_four_acceptance_items_complete": false,
+  "completed_this_round": [
+    "isolated actual HTTP readiness calls and import of 7 operational errors",
+    "public 02 component mounted in 05 WebGL harness",
+    "PASS/FAIL/REVIEW routing, replay, pause/resume, forced fallback and reset",
+    "47 dataset tests, 12 repository tests, 109 frontend tests/build and harness build"
+  ],
+  "blocked_items": {
+    "1_real_dataset": "Need two approved products/sizes/tolerance, source rights and reviewed grouped pilot",
+    "2_real_metrics": "Actual backend config unready: 7/7 non-DEMO calls return 503; no accuracy evaluation",
+    "3_integrated_webgl_webcam": "Isolated component works; integrated route and physical webcam not verified",
+    "4_visual_approval": "Need agreed reference PNG and named human reviewer"
+  },
+  "source_files_sha256": {
+    "05_dataset_testing/probe_backend.py": "2c8d30f1f4f68bb7d49c867e2350d524c7d961f6915c8e7511f739d06d312f38",
+    "05_dataset_testing/test_readiness_probe.py": "92d247942022833eef7d61337ead1b8820a8e6c42dbf16d486a73a214b2ab3ea",
+    "05_dataset_testing/browser-harness/index.html": "a538a2b567a2eee453325e4169661aaa326b7b5016441fd5ae12b412e6db0753",
+    "05_dataset_testing/browser-harness/main.ts": "87ff0cd92f19e178983859092713904ff0aee3335fd15a647bc6320220c436c2",
+    "05_dataset_testing/browser-harness/README.md": "554b92332171ff2734cb368a55c346d5e69510fcd573230996d32cdc6095a8d9",
+    "05_dataset_testing/browser-harness/style.css": "a98c3e78d1dcf17d0eef517664e5788346ab9eba3d30c4222d7b23ffa773cb5b",
+    "05_dataset_testing/browser-harness/vite.config.mjs": "6b472a8e5722f9c0ad495ef42ccc6e42a384d2b7ba873b83fb42c87c01937d4f"
+  },
+  "backend_regression": "3 failed / 150 cases; 94 subtests passed; unchanged owner-04 date assertions"
+}

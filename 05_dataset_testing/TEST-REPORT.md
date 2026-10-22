@@ -1,6 +1,10 @@
 # ผลตรวจงาน 05 — 21 ตุลาคม 2026
 
+หมายเหตุการรวม PR #34/#35: ข้อความผลทดสอบด้านล่างเป็นประวัติที่ผูกกับ commit ที่แต่ละรายงานระบุ ไม่ใช้แทนผลของ develop หลังรวม #17/#29/#31; เก็บรายงานเดิมทั้งสองชุดโดยไม่แก้ผลย้อนหลัง สถานะ checklist รวมดู [integration acceptance](reports/acceptance-integration-2026-10-22.json) ซึ่งยังไม่ใช่ system acceptance
+
 **ผลใหม่ 22 ตุลาคม 2026:** ตรวจ commit รวม `f4872637d3ca769fce2aef3ae0eab8711fc39d20` หลัง PR #20 merge ได้ dataset tools 44/repository 12/frontend 109 tests และ build ผ่าน แต่ Backend ผ่าน 147/150 cases + 94 subtests มี 3 failure เรื่อง UTC/Bangkok storage date assertions ไม่มี skips เก็บ screenshot ใหม่ 9 ภาพและทวน defects เดิมแล้ว ยังไม่ผ่าน real-data/hardware/visual acceptance รายละเอียด [รายงานหลัง merge](POSTMERGE-2026-10-22.md) ผลวันที่ 21 ด้านล่างเป็นประวัติของ commit เก่า ไม่ใช้ยืนยันว่า gate ปัจจุบันผ่าน
+
+รอบใหม่ 22 ตุลาคม 2026: dataset tools 47 tests (เพิ่ม input-safety ของ readiness probe 3 กรณี), repository 12 และ frontend 109/build ผ่าน Backend ยังล้ม 3/150 cases ตามวัน UTC/Bangkok โดย 94 subtests ผ่าน ทดสอบ browser harness ของ 05 ที่ mount 02 component ได้จริง: canvas=1 ใน WebGL, PASS/FAIL/REVIEW ไป pass/reject/review, replay ไม่เพิ่มคำขอหรือ count, pause คงสถานะแล้ว resume ได้, forced fallback มี canvas=0 และ reset คืน IDLE ทั้งหมดเป็น synthetic component smoke ไม่ใช่ integrated/hardware acceptance ดู [รายงานดำเนินการ](EXECUTION-2026-10-22.md) และ [ผล browser](reports/execution-2026-10-22/component-observations.json)
 
 ฐานแอปที่ตรวจ: `2569e7ced6e1f4fc788791ab0530b10faea2ace4` จาก develop พร้อม working tree ของงาน 05 รอบนี้ รายงาน JSON บันทึก dirty flag และ SHA-256 ของ source ที่ใช้ทดสอบ จึงไม่ได้อ้างว่าเครื่องมือใหม่อยู่ใน base commit แล้ว
 
