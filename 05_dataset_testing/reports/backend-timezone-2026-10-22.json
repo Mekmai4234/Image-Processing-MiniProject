@@ -1,0 +1,59 @@
+{
+  "commit": "f4872637d3ca769fce2aef3ae0eab8711fc39d20",
+  "tested_at": "2026-10-21T22:26:31.376075+00:00",
+  "status": "failed",
+  "owner": "04",
+  "data_kind": "synthetic",
+  "tests": 150,
+  "passed": 147,
+  "failed": 3,
+  "subtests_passed": 94,
+  "skipped": 0,
+  "failing_tests": [
+    {
+      "test": "test_create_inspection_single_view",
+      "file": "apps/backend/tests/api/test_inspections.py",
+      "line": 56
+    },
+    {
+      "test": "test_create_inspection_multi_view",
+      "file": "apps/backend/tests/api/test_inspections.py",
+      "line": 99
+    },
+    {
+      "test": "test_demo_mode_tags_results_with_is_demo",
+      "file": "apps/backend/tests/api/test_inspections.py",
+      "line": 502
+    }
+  ],
+  "assertion": "The three tests build storage paths from created_at[:10] (UTC date); storage paths use Asia/Bangkok date.",
+  "application_timezone": "Asia/Bangkok",
+  "deterministic_boundary_check": [
+    {
+      "created_at_utc": "2026-10-21T16:59:59+00:00",
+      "test_assumption_date": "2026-10-21",
+      "storage_folder_date": "2026-10-21",
+      "matches": true
+    },
+    {
+      "created_at_utc": "2026-10-21T17:00:00+00:00",
+      "test_assumption_date": "2026-10-21",
+      "storage_folder_date": "2026-10-22",
+      "matches": false
+    },
+    {
+      "created_at_utc": "2026-10-21T22:30:00+00:00",
+      "test_assumption_date": "2026-10-21",
+      "storage_folder_date": "2026-10-22",
+      "matches": false
+    }
+  ],
+  "conclusion": "Tests assume the wrong calendar date when UTC and Bangkok dates differ; backend storage behavior follows the documented timezone contract.",
+  "action_for_04": "Use the documented application-local date in these test assertions and add a fixed UTC/Bangkok midnight boundary regression. Do not change storage timezone or suppress the smoke gate.",
+  "scope": "No backend implementation or assertions were modified by 05.",
+  "source_files_sha256": {
+    "apps/backend/tests/api/test_inspections.py": "96a28c2442dff8944cca25d7c84ae6a3deb2bfc5cd8f9b0975853ce563a957f8",
+    "apps/backend/app/core/timezone.py": "b676a4b78e67ce9dbfa7e1d54855628a711b2bfb68d1053953a153bcc2b0ce7f",
+    "apps/backend/app/services/storage.py": "8ac848bfe6ac5bddfc519003a088c2cdbf99dfa747192dccf0107c917914424d"
+  }
+}
