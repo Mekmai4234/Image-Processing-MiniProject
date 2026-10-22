@@ -1,4 +1,4 @@
-import type { InspectionResult } from '../../types/inspection'
+import type { InspectionResult, Product } from '../../types/inspection'
 import type { DataSource } from '../../lib/dataSource'
 import type { SourceKind } from '../../lib/AppData'
 
@@ -18,6 +18,14 @@ export interface GuidanceInfo {
   readyToCapture: boolean
 }
 
+export type AutoCapturePhase =
+  | 'idle'
+  | 'waiting_bottle'
+  | 'holding'
+  | 'inspecting'
+  | 'awaiting_removal'
+  | 'error_waiting_retry'
+
 export interface CaptureFrameResult {
   blob: Blob
   width: number
@@ -28,6 +36,7 @@ export interface CaptureFrameResult {
 export interface CameraPanelProps {
   dataSource?: DataSource
   sourceKind?: SourceKind
+  products?: Product[]
   expectedProduct?: string
   onProductChange?: (productId: string) => void
   onInspectionComplete?: (result: InspectionResult) => void

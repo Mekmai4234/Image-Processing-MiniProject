@@ -1,5 +1,6 @@
 import type {
   HealthStatus,
+  InspectionFilesResponse,
   InspectionFilters,
   InspectionPage,
   InspectionRequest,
@@ -25,6 +26,8 @@ export interface DataSource {
   createInspection(req: InspectionRequest, signal?: AbortSignal): Promise<InspectionResult>
   listInspections(filters: InspectionFilters, signal?: AbortSignal): Promise<InspectionPage>
   getInspection(id: string, signal?: AbortSignal): Promise<InspectionResult>
+  getInspectionFiles(id: string, signal?: AbortSignal): Promise<InspectionFilesResponse>
+  downloadZipUrl(id: string): string | null
   retrySave(id: string, signal?: AbortSignal): Promise<InspectionResult>
   review(id: string, body: ReviewRequest, signal?: AbortSignal): Promise<InspectionResult>
   /** null = ไม่มีไฟล์ CSV จริงให้ดาวน์โหลด */
@@ -41,6 +44,8 @@ export const liveDataSource: DataSource = {
   createInspection: api.createInspection,
   listInspections: api.listInspections,
   getInspection: api.getInspection,
+  getInspectionFiles: api.getInspectionFiles,
+  downloadZipUrl: api.downloadZipUrl,
   retrySave: api.retrySave,
   review: api.review,
   exportCsvUrl: api.exportCsvUrl,

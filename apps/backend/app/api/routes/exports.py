@@ -17,12 +17,30 @@ def export_inspections_csv(
     date_from: Optional[str] = Query(None, description="Filter from YYYY-MM-DD"),
     date_to: Optional[str] = Query(None, description="Filter to YYYY-MM-DD"),
     demo: Optional[bool] = Query(None, description="Filter by demo mode (true/false)"),
+    q: Optional[str] = Query(None, description="Search keyword matching IDs, products, or reason"),
+    sort_by: Optional[str] = Query("created_at", description="Field to sort by"),
+    sort_order: Optional[str] = Query("desc", description="Sort order: asc or desc"),
 ):
     if date_from and date_to and date_from > date_to:
         raise APIError(
             status_code=400,
             code="invalid_date_range",
             message=f"date_from ({date_from}) cannot be after date_to ({date_to})",
+        )
+
+    if sort_by and sort_by not in InspectionRepository.ALLOWED_SORT_FIELDS:
+        allowed = list(InspectionRepository.ALLOWED_SORT_FIELDS.keys())
+        raise APIError(
+            status_code=400,
+            code="invalid_sort_field",
+            message=f"sort_by must be one of {allowed}, got '{sort_by}'",
+        )
+
+    if sort_order and sort_order.lower() not in ("asc", "desc"):
+        raise APIError(
+            status_code=400,
+            code="invalid_sort_order",
+            message=f"sort_order must be 'asc' or 'desc', got '{sort_order}'",
         )
 
     rows = InspectionRepository.export_inspections(
@@ -32,6 +50,9 @@ def export_inspections_csv(
         date_from=date_from,
         date_to=date_to,
         demo=demo,
+        q=q,
+        sort_by=sort_by,
+        sort_order=sort_order,
     )
 
     fieldnames = [
