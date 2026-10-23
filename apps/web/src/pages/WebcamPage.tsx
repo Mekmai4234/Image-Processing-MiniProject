@@ -336,7 +336,7 @@ export function WebcamPage() {
                   <h3 style={{ marginBottom: 10 }}>ความพร้อมของภาพ</h3>
                   <ul className="checklist">
                     <CheckItem ok={locator ? locator.quality.sharp_enough : null}>ภาพคมชัด</CheckItem>
-                    <CheckItem ok={locator ? locator.quality.bottle_visible : null}>เห็นทั้งขวด</CheckItem>
+                    <CheckItem ok={locator ? locator.quality.bottle_visible : null}>เห็นทั้งขวด (ไม่บังคับ)</CheckItem>
                     <CheckItem ok={locator ? locator.quality.label_visible : null}>เห็นฉลาก</CheckItem>
                     <CheckItem ok={result ? result.detected_product === result.expected_product : null}>
                       ตรงสินค้า (รู้หลังตรวจ)

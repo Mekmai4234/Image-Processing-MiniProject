@@ -14,7 +14,14 @@ from .segmentation import segment_foreground, whole_upright_bottle
 from .types import Box, Decision, LocatorResult
 
 
-def reference_analysis(rgb, product, config):
+def reference_analysis(rgb, product, config, *, allow_closeup=False):
+    if allow_closeup:
+        from .live_reference import find_live_label
+        match = find_live_label(rgb, product.templates, config.min_sharpness)
+        if match:
+            quality = {'bottle_visible': False, 'label_visible': True, 'sharp_enough': match['sharp']}
+            return (match['box'], None, match['score'], 'label_match' if match['sharp'] else 'blurred_image',
+                    quality, match['method'], match['diagnostics'])
     foreground = segment_foreground(rgb, background_distance=config.background_distance,
                                     max_background_spread=config.max_background_spread,
                                     min_area=config.min_bottle_area)
@@ -22,7 +29,7 @@ def reference_analysis(rgb, product, config):
     visible = whole_upright_bottle(bottle, rgb.shape[1], rgb.shape[0])
     quality = {'bottle_visible': visible, 'label_visible': False, 'sharp_enough': False}
     if not visible:
-        return None, None, None, 'orientation_failed', quality
+        return None, None, None, 'orientation_failed', quality, None, {'position_assessed': False}
     expected = expected_box(bottle, product.position)
     body = cv2.cvtColor(crop(rgb, bottle), cv2.COLOR_RGB2GRAY)
     best_score, best_box = -1.0, expected
@@ -52,12 +59,14 @@ def reference_analysis(rgb, product, config):
         cx = abs((best_box.x + best_box.width / 2) - (expected.x + expected.width / 2)) / bottle.width
         cy = abs((best_box.y + best_box.height / 2) - (expected.y + expected.height / 2)) / bottle.height
         reason = 'good' if cx <= rules.center_tolerance[0] and cy <= rules.center_tolerance[1] else 'misplaced_label'
-    return best_box, expected, score, reason, quality
+    if allow_closeup and reason in ('good', 'misplaced_label'):
+        reason = 'label_match'
+    return best_box, expected, score, reason, quality, 'reference_template_search_ccoeff_v1', {'position_assessed': not allow_closeup}
 
 
 def reference_locator(rgb, product, config):
-    box, _, _, reason, quality = reference_analysis(rgb, product, config)
-    usable = reason in ('good', 'misplaced_label')
+    box, _, _, reason, quality, _, _ = reference_analysis(rgb, product, config, allow_closeup=True)
+    usable = reason in ('good', 'misplaced_label', 'label_match')
     return LocatorResult(usable, box, rgb.shape[1], rgb.shape[0], quality,
                          'usable_view' if usable else 'label_not_visible' if reason == 'unknown_product' else reason)
 
@@ -65,10 +74,10 @@ def reference_locator(rgb, product, config):
 def inspect_reference(rgb, expected_product, config, source_mode, angle_deg, evidence, supporting_count):
     started = perf_counter()
     product = next(p for p in config.products if p.product_id == expected_product)
-    box, expected, score, reason, quality = reference_analysis(rgb, product, config)
-    return Decision('PASS' if reason == 'good' else 'FAIL', reason, expected_product,
+    box, expected, score, reason, quality, method, diagnostics = reference_analysis(rgb, product, config, allow_closeup=source_mode == 'webcam')
+    return Decision('PASS' if reason in ('good', 'label_match') else 'FAIL', reason, expected_product,
                     expected_product if quality['label_visible'] else None, score,
-                    'reference_template_search_ccoeff_v1' if score is not None else None,
+                    method if score is not None else None,
                     box, expected, rgb.shape[1], rgb.shape[0], angle_deg,
                     config.config_version, source_mode,
                     {'orientation': 0.0, 'inspection': (perf_counter() - started) * 1000},
@@ -77,5 +86,5 @@ def inspect_reference(rgb, expected_product, config, source_mode, angle_deg, evi
                      'reported_coverage_deg': evidence.reported_coverage_deg,
                      'verified_coverage': False, 'required_view_profile': None,
                      'supporting_indices': list(range(supporting_count))},
-                    {'quality': quality, 'config_validated': False,
+                    {**diagnostics, 'quality': quality, 'config_validated': False,
                      'limitation': 'single_reference_visible_view_only; tilt_not_measured'})

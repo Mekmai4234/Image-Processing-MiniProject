@@ -1,3 +1,11 @@
+## Webcam close-up update — 2026-10-23
+
+User-reference Webcam inspection/locator now searches printed-label SIFT correspondences directly in cluttered frames. It does not require a plain background or an entire bottle. Geometry acceptance requires at least 8 distinct inliers, inlier ratio >= 0.5, reference hull coverage >= 0.12, convex fully visible label projection with bounded area/edge distortion, and rectified grayscale correlation >= 0.2. Search frames are bounded to 800px and template features cached. `score_method=reference_sift_inlier_ratio_v1` reports the measured inlier ratio, not confidence or the template-correlation score. Quality uses rectified-label Laplacian variance at a common 192x128 resolution. The plain-background simulation detector and its position check remain available.
+
+Webcam PASS reason `label_match` means the label matches the reference; no whole-bottle placement assertion is made. `quality.bottle_visible=false` can coexist with `usable_view=true` when the whole label is geometrically matched and sharp. The UI must accept that case, must not interpret failed foreground segmentation as measured blur, and must keep the auto-capture latch while a matching label is still present. A missing/blurred/clipped label must not auto-capture. Camera previews may be mirrored; uploaded optical frames and API coordinates remain unmirrored.
+
+This is prototype logic, not independent real-bottle accuracy validation. Private user camera frames are tested only locally and are not committed.
+
 # Current binary acceptance policy — 2026-10-23
 
 This section supersedes the legacy v0.2 verdict policy below. New HTTP inspections return PASS or FAIL. Uncertain visual evidence is FAIL with the original reason (blurred_image, label_not_visible, unknown_product, ambiguous_match, orientation_failed); operational errors remain HTTP errors. The visible failure does not prove a physical defect or 360-degree label absence. Legacy stored REVIEW rows are projected as FAIL in API/CSV, with original snapshots retained. FAIL filters include legacy REVIEW rows. Pure detector interfaces retain legacy tri-state behavior outside user-reference mode for backwards compatibility.

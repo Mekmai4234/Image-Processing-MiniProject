@@ -16,7 +16,7 @@ FIELDS = ('image_id filename physical_bottle_id capture_session product_id label
           'expected_product angle_deg label_present position_ok visible_enough result reason '
           'split_group_id split reviewer').split()
 SPLITS = ('development', 'validation', 'test')
-REASONS = {'PASS': {'good'}, 'FAIL': {'wrong_label', 'misplaced_label', 'missing_label', 'blurred_image',
+REASONS = {'PASS': {'good', 'label_match'}, 'FAIL': {'wrong_label', 'misplaced_label', 'missing_label', 'blurred_image',
                     'label_not_visible', 'unknown_product', 'ambiguous_match', 'orientation_failed'},
            'REVIEW': {'blurred_image', 'label_not_visible', 'unknown_product',
                       'ambiguous_match', 'orientation_failed'}}

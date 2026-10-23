@@ -16,6 +16,7 @@ export const RESULT_LABEL: Record<InspectionResultValue, string> = {
 
 export const REASON_LABEL: Record<InspectionReason, string> = {
   good: 'ฉลากถูกต้องและอยู่ตำแหน่ง',
+  label_match: 'ฉลากตรงภาพอ้างอิง (ตรวจเฉพาะฉลาก)',
   wrong_label: 'ฉลากผิดสินค้า',
   misplaced_label: 'ฉลากผิดตำแหน่ง',
   missing_label: 'ไม่มีฉลาก (ยืนยันจากหลักฐานหลายมุม)',
@@ -29,6 +30,7 @@ export const REASON_LABEL: Record<InspectionReason, string> = {
 /** ชื่อเหตุผลแบบสั้นตามภาพต้นแบบ History ใช้ในตาราง/ป้าย (คำอธิบายเต็มภาษาไทยอยู่ใน REASON_LABEL) */
 export const REASON_SHORT: Record<InspectionReason, string> = {
   good: 'Correct label',
+  label_match: 'Label matches reference',
   wrong_label: 'Wrong label',
   misplaced_label: 'Misplaced label',
   missing_label: 'Label missing',

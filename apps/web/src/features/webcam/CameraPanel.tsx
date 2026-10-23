@@ -376,7 +376,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
 
     // Phase: awaiting_removal -> wait for user to take bottle out or press next
     if (autoPhase === 'awaiting_removal') {
-      const bottleSeen = locateResult?.quality?.bottle_visible || locateResult?.usable_view
+      const bottleSeen = locateResult?.quality?.label_visible || locateResult?.quality?.bottle_visible || locateResult?.usable_view
       if (!bottleSeen) {
         bottleAbsentCountRef.current++
         if (bottleAbsentCountRef.current >= 2) {
@@ -395,7 +395,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
     // Phase: error_waiting_retry -> hold and wait for user to retry or remove bottle
     if (autoPhase === 'error_waiting_retry') {
       dwell.cancel()
-      const bottleSeen = locateResult?.quality?.bottle_visible || locateResult?.usable_view
+      const bottleSeen = locateResult?.quality?.label_visible || locateResult?.quality?.bottle_visible || locateResult?.usable_view
       if (!bottleSeen) {
         bottleAbsentCountRef.current++
         if (bottleAbsentCountRef.current >= 2) {
@@ -794,12 +794,12 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
           <div className="control-panel-card">
             <h3 className="control-card-title">
               <Sparkles className="w-4 h-4 text-cyan-400" />
-              <span>สินค้าที่คาดหวัง (Expected Product)</span>
+              <span>สินค้าอ้างอิง</span>
             </h3>
 
             <div className="product-options-list">
               {productCatalog.length > 0 ? (
-                productCatalog.map((p) => (
+                productCatalog.slice(0, 1).map((p) => (
                   <button
                     key={p.product_id}
                     type="button"
@@ -807,7 +807,6 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
                     onClick={() => handleProductSelect(p.product_id)}
                   >
                     <span className="product-btn-name">{p.display_name}</span>
-                    <span className="product-btn-id">{p.product_id}</span>
                   </button>
                 ))
               ) : (
@@ -839,7 +838,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
               <div className="camera-quality-list" aria-label="Check items">
                 {[
                   ['Image sharp', locateResult?.quality.sharp_enough],
-                  ['Bottle visible', locateResult?.quality.bottle_visible],
+                  ['เห็นทั้งขวด (ไม่บังคับ)', locateResult?.quality.bottle_visible],
                   ['Label detected', locateResult?.quality.label_visible],
                   ['Product match', inspectionResult ? inspectionResult.detected_product===inspectionResult.expected_product : undefined],
                 ].map(([label,ok])=><span className={`camera-quality-item ${ok===true?'quality-ok':''}`} key={String(label)}>{ok===true?<CheckCircle2 size={17}/>:<Info size={17}/>} {label}</span>)}

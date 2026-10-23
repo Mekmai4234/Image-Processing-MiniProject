@@ -24,6 +24,7 @@ export const VERDICT_LABEL: Record<InspectionVerdict, string> = {
 
 export const REASON_LABEL: Record<InspectionReason, string> = {
   good: 'ฉลากถูกต้อง',
+  label_match: 'ฉลากตรงภาพอ้างอิง',
   wrong_label: 'ฉลากผิดสินค้า',
   misplaced_label: 'ฉลากผิดตำแหน่ง',
   missing_label: 'ไม่มีฉลาก (หลักฐานยืนยันแล้ว)',
