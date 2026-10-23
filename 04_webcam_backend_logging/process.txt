@@ -52,3 +52,9 @@ Preview อาจ mirror ได้เพื่อความสะดวก แ
 capture จริงได้, log กับไฟล์ตรงกัน, restart แล้วยังอ่านประวัติที่ saved ได้,
 retry ไม่ซ้ำ, permission/disk error ไม่กลายเป็นผลสินค้า,
 เก็บข้อมูลในเครื่องที่รัน backend ตาม path ที่ระบุได้จริง
+
+
+อัปเดตรุ่นรวม 23 ตุลาคม 2026
+เริ่มระบบด้วย start.cmd หรือ scripts/start.ps1 จาก root แล้วเปิด /settings เพื่อตั้งภาพอ้างอิงสองสินค้า
+Runtime รวมทุกงานอยู่ใน apps/web และ apps/backend; ดู docs/release-2026-10-23.md สำหรับวิธีใช้/ผลทดสอบล่าสุด
+เกณฑ์ reference mode เป็นการทดลอง ไม่ใช่ independent validation; เก็บภาพจริงและ log เฉพาะเครื่อง ไม่เพิ่มเข้า Git

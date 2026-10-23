@@ -2,15 +2,15 @@
 
 ชื่อโครงการ: Vending Vision; Repository: Image-Processing-MiniProject
 เจ้าของ Repository: @Mekmai4234 (ยังไม่ถือว่าเป็นคนที่ 1 โดยอัตโนมัติ)
-กรอกชื่อและ username ของสมาชิกจริงก่อน assign Issues / ขอ review
+บัญชีผู้รับผิดชอบยืนยันจากผู้เขียน PR และ commit ของงานแต่ละส่วน
 
 | งาน | ชื่อจริง | GitHub username | ขอบเขต | Branch | ความยาก |
 |---|---|---|---|---|---|
-| 01 | รอกรอก | รอกรอก | UI/UX, 3 หน้า, overlay, API client | feature/01-web-ui | 3/5 |
-| 02 | รอกรอก | รอกรอก | Three.js, conveyor, orient, reject | feature/02-simulation-3d | 4/5 |
-| 03 | รอกรอก | รอกรอก | locate/classify/position/score | feature/03-image-processing | 5/5 |
-| 04 | รอกรอก | รอกรอก | Webcam, FastAPI, files, SQLite | feature/04-webcam-backend | 4/5 |
-| 05 | รอกรอก | รอกรอก | dataset, ground truth, evaluation | feature/05-dataset-testing | 4/5 |
+| 01 | jirapa-gm | [@jirapa-gm](https://github.com/jirapa-gm) | UI/UX, 3 หน้า, overlay, API client | feature/01-web-ui | 3/5 |
+| 02 | JAKKRICH | [@jakkrich0912-web](https://github.com/jakkrich0912-web) | Three.js, conveyor, orient, reject | feature/02-simulation-3d | 4/5 |
+| 03 | Mekmai Jankeaw | [@Mekmai4234](https://github.com/Mekmai4234) | locate/classify/position/score | feature/03-image-processing | 5/5 |
+| 04 | Phonlakrit Somsong | [@PhonlakritTH](https://github.com/PhonlakritTH) | Webcam, FastAPI, files, SQLite | feature/04-webcam-backend | 4/5 |
+| 05 | Marisa Pimpralab | [@marisa46054](https://github.com/marisa46054) | dataset, ground truth, evaluation | feature/05-dataset-testing | 4/5 |
 
 ## จุดเชื่อม
 

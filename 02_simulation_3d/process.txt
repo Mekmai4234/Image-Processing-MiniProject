@@ -57,3 +57,9 @@ current_station: conveyor / orient_turntable / inspect_camera / reject_tray / re
 snapshot.captured_image คือ Blob เดียวกับที่ส่ง POST /api/inspections ใช้แสดงคู่กับกรอบจากผลตรวจ
 รูปทรงขวดจาก /api/bottle-shape ใช้แสดงผลอย่างเดียว ไม่มีผลต่อผลตรวจ
 null / status fallback / ข้อมูลผิดรูปแบบ → ทรงมาตรฐาน และบอกบนฉากว่าเป็นรูปทรงโดยประมาณ
+
+
+อัปเดตรุ่นรวม 23 ตุลาคม 2026
+เริ่มระบบด้วย start.cmd หรือ scripts/start.ps1 จาก root แล้วเปิด /settings เพื่อตั้งภาพอ้างอิงสองสินค้า
+Runtime รวมทุกงานอยู่ใน apps/web และ apps/backend; ดู docs/release-2026-10-23.md สำหรับวิธีใช้/ผลทดสอบล่าสุด
+เกณฑ์ reference mode เป็นการทดลอง ไม่ใช่ independent validation; เก็บภาพจริงและ log เฉพาะเครื่อง ไม่เพิ่มเข้า Git

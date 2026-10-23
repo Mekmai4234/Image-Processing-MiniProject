@@ -1,21 +1,17 @@
-# สถานะความสามารถ
+# สถานะ implementation
 
-| ส่วน | สถานะฐานเริ่มต้น |
+อัปเดต 23 ตุลาคม 2026 — ดู [วิธีใช้และผลทดสอบรุ่นรวม](release-2026-10-23.md)
+
+| ส่วน | สถานะ |
 |---|---|
-| คู่มือ env/step/process 01–05 | พร้อมเริ่มทำงาน |
-| Git workflow, API contract, dataset/storage guides | มีเอกสาร |
-| CI ตรวจเอกสาร/โครงสร้าง | มีสคริปต์และ workflow |
-| HTML conveyor prototype | ทดลองได้ เกณฑ์สีพื้นฐานสำหรับภาพที่ควบคุม |
-| React app แยก 3 หน้า | app shell + 3 หน้า + โหมด DEMO รันได้ (apps/web); ประกอบฉาก Simulation 02 และหน้า Webcam 04 แล้ว |
-| Three.js conveyor / rotation | M3: component + ตัวต่อ DataSource, ฉาก ORIENT/INSPECT แยกกัน, รูปทรงขวดจาก silhouette เข้า develop แล้ว (#23 #25 #27); ฉากสมจริง #31 เข้า develop แล้ว; ทดสอบกับ DEMO เท่านั้น ยังไม่ต่อ backend จริง |
-| Webcam capture/guidance | มี CameraPanel + locator guidance + cleanup streams (build ผ่าน) ประกอบในหน้า WebcamPage |
-| OpenCV inspection ที่ validate กับขวดไทย | มีโมดูล 03 inspect_image + DetectorConfig + template matching v0.2 |
-| Local persistence / SQLite / History API | มี FastAPI + SQLite + StorageManager + export CSV + pytest 58 รายการ (ดู apps/backend/README.md) |
-| Accuracy / timing ที่วัดจริง | อยู่ระหว่างเก็บข้อมูลและทดสอบในห้องปฏิบัติการ |
+| หน้าจอ | React 3 หน้า + Reference setup; dark navy/cyan ตามภาพอ้างอิง |
+| Simulation | Three.js จริง, feed/orient/inspect/sort/output, รูปทรงจากภาพ, pause/reset/replay |
+| Webcam | getUserMedia + อัปโหลดไฟล์, locator, capture/retry/auto capture |
+| Image Processing | OpenCV คุณภาพ/ฉลาก/สินค้า/ตำแหน่ง; ตั้งภาพอ้างอิงสองสินค้าได้ |
+| Reference mode | ตัดสินด้วย reference ผู้ใช้ โดยระบุ experimental และ validated=false |
+| Storage/History | SQLite + original/annotated/result.json, metadata, ZIP/CSV, search/filter/sort, human review |
+| CI | Backend/detector/frontend/dataset/repository tests และ build บน develop/main |
+| Independent accuracy | ยังไม่มี validation/test ของสินค้าจริงที่ทีมรับรอง ไม่อ้างตัวเลขความแม่นยำ |
+| Physical camera acceptance | ต้องทวนบน notebook และขวดสินค้าจริงของทีม |
 
-ทุก PR อัปเดตตามหลักฐานรันจริง พร้อม test/ภาพ/รายงาน ไม่ใช้ภาพ mockup ยืนยันว่าเสร็จ
-requirements.txt เป็นรายการเตรียมเครื่องเริ่มต้น ยังไม่ได้ lock จากแอปที่รันทดสอบครบ
-
-ปรับฐานก่อนเริ่มงาน: contract v0.2 รองรับหลักฐานหลายมุม, canonical fields,
-ตัวอย่าง UUID, คู่มือ config และตรวจ regression ของ repository
-รายการนี้เป็นการเตรียมข้อตกลงและเครื่องมือทีม ไม่ได้เพิ่ม endpoint หรือ webcam ที่รันจริง
+DEMO สังเคราะห์แยกจาก reference mode และ validated detector config ไม่ใช้ภาพออกแบบเป็นหลักฐาน accuracy

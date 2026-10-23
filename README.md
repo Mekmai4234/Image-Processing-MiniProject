@@ -2,17 +2,25 @@
 
 เว็บตรวจฉลากขวดน้ำไทยด้วย Image Processing พร้อมสายพานคัดแยกจำลอง 3D
 
-> สถานะ: โครงงานและคู่มือพัฒนาสำหรับทีม 5 คน พร้อมต้นแบบ HTML ทดลอง
-> ยังไม่มีเว็บ React / Backend / Webcam / ตัวตรวจจริงครบระบบ
-> ต้นแบบและภาพออกแบบไม่ใช่หลักฐานความแม่นยำของระบบจริง
+เว็บ React + ฉาก Three.js + Webcam + FastAPI/OpenCV + SQLite และไฟล์ภาพในเครื่อง เชื่อมงาน 01–05 แล้ว
 
-## เริ่มตรงนี้
+## เริ่มใช้งาน
 
-1. อ่าน [ขอบเขตและเกณฑ์รับงาน](docs/scope.md)
-2. ดู [การแบ่งงานสมาชิก](docs/team.md) แล้วใส่ชื่อและ GitHub username จริงผ่าน PR
-3. อ่าน [คู่มือเริ่มต้น](docs/getting-started.md) และ [วิธีทำงานร่วมกัน](CONTRIBUTING.md)
-4. ไปยังโฟลเดอร์งานของตัวเอง อ่าน `env.txt` → `step.txt` → `process.txt`
-5. เริ่ม Feature Branch จาก `develop` และเปิด PR กลับเข้า `develop`
+ติดตั้ง Python 3.11+ และ Node.js 22.12+ (พร้อม npm) แล้วเปิด `start.cmd` หรือรัน:
+
+```powershell
+.\scripts\start.ps1
+```
+
+โปรแกรมจะเตรียม dependencies/build และเปิด Backend ที่ **http://127.0.0.1:8000** ซึ่งให้บริการหน้าเว็บด้วย
+เข้า **[Reference setup](http://127.0.0.1:8000/settings)** เลือกภาพขวดเต็มใบสองสินค้า ตั้งชื่อ และปรับกรอบให้ครอบฉลาก จากนั้นเลือกโหมด API จริงเพื่อใช้ Simulation / Webcam / History
+
+- ภาพอ้างอิงและ config เก็บใน `storage/reference-profile/` และโหลดกลับหลังเปิดโปรแกรมใหม่
+- ผลตรวจเก็บเป็นภาพต้นฉบับ ภาพวาดกรอบ `result.json` และ SQLite ใน `STORAGE_ROOT`; ดาวน์โหลด ZIP/CSV ได้จาก History
+- ใช้พื้นหลังเรียบ เห็นขวดทั้งใบ แสงคงที่ และฉลากด้านหน้าชัดเจน
+- **REFERENCE MODE เป็นเกณฑ์ทดลองจากภาพที่เลือกเอง ไม่ใช่โมเดลที่ผ่าน independent validation**; match score ไม่ใช่ confidence/accuracy
+- DEMO แยกจาก API จริงอย่างชัดเจน ไม่เปิดกล้องจริงและไม่อ้างว่าเป็นผลตรวจภาพจริง
+- ใช้ [คู่มือเริ่มต้น](docs/getting-started.md), [วิธีทำงานร่วมกัน](CONTRIBUTING.md) และคู่มือ env/step/process ของแต่ละส่วน
 
 ## หน้าเว็บเป้าหมาย
 
@@ -35,6 +43,18 @@
 | 03 | [Image Processing](03_image_processing/step.txt) | หาฉลาก ตรวจชนิด ตำแหน่ง คุณภาพภาพ และคะแนน |
 | 04 | [Webcam / Backend / Logging](04_webcam_backend_logging/step.txt) | กล้อง API SQLite และภาพกับ Log ในเครื่อง |
 | 05 | [Dataset / Testing](05_dataset_testing/step.txt) | ภาพอ้างอิง Ground truth ชุดทดสอบ และรายงานผล |
+
+## สมาชิกและ GitHub ผู้รับผิดชอบ
+
+| งาน | ส่วนที่รับผิดชอบ | GitHub ผู้ทำ |
+|---|---|---|
+| 01 | Web UI — Simulation / Webcam / History | [@jirapa-gm](https://github.com/jirapa-gm) |
+| 02 | Simulation 3D — สายพาน / หมุนขวด / คัดแยก | [@jakkrich0912-web](https://github.com/jakkrich0912-web) |
+| 03 | Image Processing — หาฉลาก / เปรียบเทียบ / รูปทรง | [@Mekmai4234](https://github.com/Mekmai4234) |
+| 04 | Webcam / Backend / Logging | [@PhonlakritTH](https://github.com/PhonlakritTH) |
+| 05 | Dataset / Testing / Evidence / CI | [@marisa46054](https://github.com/marisa46054) |
+
+ประวัติ commit เดิมของสมาชิกถูกเก็บไว้ใน `main` และ `develop` โดยไม่ squash หรือเปลี่ยนชื่อผู้เขียน Contributors ของ GitHub อัปเดตจาก commit บน default branch และอาจใช้เวลาประมวลผล
 
 แต่ละโฟลเดอร์มี `env.txt` (เตรียมเครื่อง), `step.txt` (ทำตามลำดับ),
 และ `process.txt` (หลักการ Input/Output และการเชื่อมงาน)
@@ -62,7 +82,7 @@ scripts/                      ตัวตรวจโครงสร้าง�
 
 ## Branch และการส่งงาน
 
-- `main`: default branch สำหรับจุดส่งมอบที่ตรวจแล้ว (ขณะนี้เป็นฐานเอกสาร)
+- `main`: default branch สำหรับรุ่นใช้งานที่ทดสอบแล้ว
 - `develop`: รวมการพัฒนารอบปัจจุบัน เริ่มทำงานจาก branch นี้
 - `feature/...`: งานย่อยแต่ละคน → PR เข้า `develop`
 - เมื่อผ่านเกณฑ์รอบส่งมอบ: PR `develop` → `main`
@@ -82,12 +102,11 @@ scripts/                      ตัวตรวจโครงสร้าง�
 py -3 scripts/check_repository.py
 ```
 
-CI นี้ตรวจโครงสร้าง คู่มือ ตัวอย่างข้อมูล และลิงก์เอกสารภายใน
-ยังไม่ใช่การทดสอบ accuracy หรือแอปที่ยังไม่พัฒนา
+CI ตรวจโครงสร้างเอกสารร่วมกับ backend/detector/frontend tests และ production build; tests สังเคราะห์ไม่ใช่การประเมิน accuracy กับขวดจริง
 
 ## ขอบเขตเริ่มต้นและการเก็บข้อมูล
 
-เริ่มขวดไทย 2 ยี่ห้อ ยี่ห้อละ 1 รุ่น/ขนาด โดยทีมระบุของจริงใน product catalog
+เริ่มจากสินค้า 2 รุ่น โดยตั้งชื่อและภาพฉลากในหน้า Reference setup; ทีมยังต้องเก็บภาพ validation/test ที่แยกจากภาพอ้างอิงก่อนรายงาน accuracy
 ใช้รหัสชั่วคราว `bottle_a` / `bottle_b` จนกว่าจะเลือกสินค้า
 เก็บข้อมูลจริงและภาพ Webcam ในเครื่องที่รัน Backend ตาม `STORAGE_ROOT`
 ถ้าจะโฮสต์ Backend บน server ไฟล์จะอยู่บน server ต้องออกแบบการดาวน์โหลดเพิ่ม

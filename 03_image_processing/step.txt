@@ -60,3 +60,9 @@ HTTP locator และ stored annotation ของ 04 ยังรอรับ�
 12. ส่งผลให้คนที่ 4 ตาม schema และจับมือคนที่ 5 วัด confusion matrix
     ปรับ threshold จาก validation เท่านั้น ก่อนล็อก config_version ไปทดสอบชุดสุดท้าย
     ส่ง PR พร้อมวิธีรัน tests ผลทดลอง และตัวอย่างที่ยังทำผิด
+
+
+อัปเดตรุ่นรวม 23 ตุลาคม 2026
+เริ่มระบบด้วย start.cmd หรือ scripts/start.ps1 จาก root แล้วเปิด /settings เพื่อตั้งภาพอ้างอิงสองสินค้า
+Runtime รวมทุกงานอยู่ใน apps/web และ apps/backend; ดู docs/release-2026-10-23.md สำหรับวิธีใช้/ผลทดสอบล่าสุด
+เกณฑ์ reference mode เป็นการทดลอง ไม่ใช่ independent validation; เก็บภาพจริงและ log เฉพาะเครื่อง ไม่เพิ่มเข้า Git
