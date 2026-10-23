@@ -135,7 +135,7 @@ def test_get_inspection_images(created_inspection):
 def test_human_review(created_inspection):
     insp_id = created_inspection["inspection_id"]
     review_payload = {
-        "reviewed_result": "REVIEW",
+        "reviewed_result": "FAIL",
         "reviewed_reason": "Manually verified label alignment looks ambiguous",
         "reviewer": "Quality_Officer_01",
     }
@@ -147,10 +147,12 @@ def test_human_review(created_inspection):
     # Original model prediction remains PASS
     assert data["result"] == "PASS"
     # Review fields are updated
-    assert data["reviewed_result"] == "REVIEW"
+    assert data["reviewed_result"] == "FAIL"
     assert data["reviewed_reason"] == "Manually verified label alignment looks ambiguous"
     assert data["reviewer"] == "Quality_Officer_01"
     assert data["reviewed_at"] is not None
+    response = client.patch(f"/api/inspections/{insp_id}/review", json={**review_payload, 'reviewed_result': 'REVIEW'})
+    assert response.status_code == 400
 
 
 def test_retry_save(created_inspection):

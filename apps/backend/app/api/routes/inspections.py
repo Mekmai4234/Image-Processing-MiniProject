@@ -630,7 +630,7 @@ def get_supporting_image(inspection_id: str, index: int):
 
 @router.patch("/inspections/{inspection_id}/review", response_model=InspectionResult)
 def review_inspection(inspection_id: str, review: ReviewRequest) -> InspectionResult:
-    valid_results = ("PASS", "FAIL", "REVIEW")
+    valid_results = ("PASS", "FAIL")
     if review.reviewed_result not in valid_results:
         raise APIError(
             status_code=400,

@@ -141,7 +141,7 @@ class InspectionResult(BaseModel):
     source_mode: str = Field(..., description="simulation or webcam")
     expected_product: str = Field(..., description="Product ID expected")
     detected_product: Optional[str] = Field(None, description="Product ID detected by model")
-    result: str = Field(..., description="Decision verdict: PASS, FAIL, or REVIEW")
+    result: str = Field(..., description="Binary acceptance verdict: PASS or FAIL")
     reason: str = Field(..., description="Decision rationale")
     match_score: Optional[float] = Field(None, description="Template match similarity score [0..1]")
     score_method: Optional[str] = Field(None, description="Scoring method used")
@@ -172,7 +172,7 @@ class InspectionListResponse(BaseModel):
 
 
 class ReviewRequest(BaseModel):
-    reviewed_result: str = Field(..., description="Review outcome: PASS, FAIL, or REVIEW")
+    reviewed_result: str = Field(..., description="Manual acceptance outcome: PASS or FAIL")
     reviewed_reason: str = Field(..., description="Human review rationale")
     reviewer: str = Field(..., description="Reviewer name or identifier")
 
