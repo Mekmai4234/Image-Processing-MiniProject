@@ -127,11 +127,17 @@ async def create_inspection(
             raise APIError(
                 status_code=503,
                 code="inspection_unavailable",
-                message="Detector configuration or catalog references from module 03 are not ready on this backend. For development, specify demo=true.",
+                message="ยังไม่มีภาพอ้างอิงสินค้า กรุณาบันทึกอย่างน้อยหนึ่งสินค้าในหน้าตั้งค่าภาพอ้างอิงก่อนตรวจ",
                 request_id=client_request_id,
             )
 
     # 3. Validate product
+    active_config = InspectionAdapter.get_detector_config()
+    if not is_demo and active_config and getattr(active_config, "reference_mode", False):
+        if expected_product not in {product.product_id for product in active_config.products}:
+            raise APIError(400, "reference_not_configured",
+                           "สินค้าที่เลือกยังไม่มีภาพอ้างอิง กรุณาเลือกสินค้าที่บันทึกแล้ว หรือเพิ่มภาพในหน้าตั้งค่า",
+                           request_id=client_request_id)
     valid_products = [p["product_id"] for p in settings.SUPPORTED_PRODUCTS]
     if expected_product not in valid_products:
         raise APIError(

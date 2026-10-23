@@ -526,7 +526,7 @@ def test_detector_present_but_config_unready_returns_503(monkeypatch):
     assert response.status_code == 503
     err = response.json()
     assert err["error"]["code"] == "inspection_unavailable"
-    assert "not ready" in err["error"]["message"].lower()
+    assert "ภาพอ้างอิง" in err["error"]["message"]
 
 
 def test_detector_module_03_signature_and_decision_mapping(monkeypatch):

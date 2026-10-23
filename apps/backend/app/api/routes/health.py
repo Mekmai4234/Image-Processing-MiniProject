@@ -21,7 +21,7 @@ def get_health() -> HealthResponse:
         reason = "Experimental user-reference matching; not independently validated" if getattr(active, "reference_mode", False) else None
     elif settings.ALLOW_DEMO_MODE:
         detector_status = "demo_ready"
-        reason = "ยังไม่มีภาพอ้างอิงครบสองสินค้า กรุณาเปิดหน้าตั้งค่าภาพอ้างอิง"
+        reason = "ยังไม่มีภาพอ้างอิงสินค้า กรุณาบันทึกอย่างน้อยหนึ่งสินค้าในหน้าตั้งค่าภาพอ้างอิง"
     else:
         detector_status = "unavailable"
         reason = "Real detector templates and validation report are not yet configured"

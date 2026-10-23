@@ -70,6 +70,7 @@ export function describeApiError(err: unknown): string {
     case 413:
       return 'ไฟล์ใหญ่เกินกำหนด ลดขนาดหรือจำนวนภาพ'
     case 503:
+      if (err.code === 'inspection_unavailable' && err.message.includes('ภาพอ้างอิง')) return err.message
       return 'ระบบตรวจยังไม่พร้อม ลองใหม่อีกครั้ง'
     default:
       return err.message || `Backend ตอบ ${err.status}`
@@ -143,6 +144,7 @@ function query(filters: Partial<InspectionFilters>): string {
 export const api = {
   referenceProfile: (signal?: AbortSignal) => request<ReferenceProfile>('/api/reference-profile', { signal }),
   saveReference: (body: FormData) => request<ReferenceProfile>('/api/reference-profile', { method: 'POST', body }),
+  removeReference: (identity: string) => request<ReferenceProfile>(`/api/reference-profile/products/${encodeURIComponent(identity)}`, { method: 'DELETE' }),
   bottleShape(image: Blob, signal?: AbortSignal) {
     const form = new FormData()
     form.append('image', image, 'bottle.jpg')

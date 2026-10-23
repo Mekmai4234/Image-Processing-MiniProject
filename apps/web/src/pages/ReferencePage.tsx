@@ -38,8 +38,18 @@ export function ReferencePage() {
     try {
       const result = await api.saveReference(form)
       setProfile(result); recheck()
-      setSuccess(result.ready ? 'บันทึกครบสองสินค้าแล้ว เริ่มตรวจภาพจริงได้ในโหมดเทียบภาพอ้างอิง' : 'บันทึกแล้ว กรุณาตั้งค่าภาพอ้างอิงอีกสินค้า')
+      setSuccess(result.ready ? 'บันทึกแล้ว เริ่มตรวจสินค้านี้ได้ในโหมดเทียบภาพอ้างอิง ไม่จำเป็นต้องเพิ่มสินค้าที่สอง' : 'บันทึกแล้ว แต่ตัวตรวจยังไม่พร้อม กรุณาตรวจสถานะระบบ')
       setSource('live')
+    } catch (e) { setError(describeApiError(e)) }
+    finally { setBusy(false) }
+  }
+
+  async function remove(identity: string) {
+    setBusy(true); setError(''); setSuccess('')
+    try {
+      const result = await api.removeReference(identity)
+      setProfile(result); recheck()
+      setSuccess('นำออกจากรายการใช้งานแล้ว ภาพเดิมและสำเนาการตั้งค่ายังเก็บสำรองในเครื่อง')
     } catch (e) { setError(describeApiError(e)) }
     finally { setBusy(false) }
   }
@@ -63,8 +73,10 @@ export function ReferencePage() {
       </section>
       <section className="panel stack"><h2>สินค้าที่ตั้งค่าแล้ว</h2>
         {['bottle_a','bottle_b'].map(id=>{const p=profile?.products.find(p=>p.product_id===id);return <article className="reference-product" key={id}>{p?<><img src={resolveApiUrl(p.image_url+`?v=${profile?.version}`) ?? ''} alt={p.name}/><div><strong>{p.name}</strong><p className="hint">{id} · ภาพอ้างอิงในเครื่อง</p><span className="row"><CheckCircle2 size={17}/>บันทึกแล้ว</span></div></>:<><ScanLine size={32}/><div><strong>{id}</strong><p className="hint">ยังไม่ได้ตั้งค่า</p></div></>}</article>})}
+        <div className="row">{profile?.products.map(p => <button key={p.product_id} className="btn btn-sm" disabled={busy} onClick={() => remove(p.product_id)}>นำภาพอ้างอิง {p.product_id === 'bottle_a' ? 'Bottle A' : 'Bottle B'} ออก</button>)}</div>
+        <p className="hint">Bottle A/B ควรเป็นคนละสินค้า อย่าใส่ฉลากเดียวกันทั้งสองช่อง เพราะคะแนนจะใกล้กันจนแยกไม่ออก</p>
         <p className="hint">ภาพและ config เก็บใน STORAGE_ROOT/reference-profile และโหลดกลับเมื่อเปิด Backend ใหม่ ไม่มีการอัปโหลดเข้า GitHub</p>
-        <p className="hint">หลังบันทึกสองสินค้า ให้ลองภาพที่ไม่ใช่ภาพอ้างอิง: ฉลากถูก / ฉลากผิด / ภาพเบลอ และตรวจผลใน History</p>
+        <p className="hint">บันทึกอย่างน้อยหนึ่งสินค้าก็เริ่มตรวจได้ เลือกตรวจเฉพาะสินค้าที่ตั้งค่าแล้ว หากมีเพียงหนึ่งสินค้า ภาพที่ความคล้ายต่ำจะเป็น REVIEW และไม่สามารถระบุชื่อสินค้าอื่นได้ ฉลากที่คล้ายกันอาจแยกผิด เพิ่มอีกสินค้าเมื่อต้องการเปรียบเทียบชนิดฉลาก แล้วลองภาพที่ไม่ใช่ภาพอ้างอิงและตรวจผลใน History</p>
         <Link className="btn btn-primary" to="/simulation">ไปหน้า Simulation <ArrowRight size={18}/></Link>
       </section>
     </div>

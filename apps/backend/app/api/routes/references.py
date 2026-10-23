@@ -39,3 +39,8 @@ def get_reference_image(product_id: str):
     if not path.is_file():
         raise APIError(404, "not_found", "Reference image unavailable")
     return FileResponse(path, media_type="image/jpeg")
+
+
+@router.delete("/reference-profile/products/{product_id}")
+def remove_reference(product_id: str):
+    return reference_profile.remove_reference(product_id)

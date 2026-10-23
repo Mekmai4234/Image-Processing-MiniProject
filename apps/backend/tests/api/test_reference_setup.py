@@ -44,7 +44,7 @@ def enroll(client,kind):
 def test_reference_enrollment_live_decisions_and_restart(client):
     assert not client.get('/api/reference-profile').json()['ready']
     first=enroll(client,'a');assert first.status_code==200,first.text
-    assert not first.json()['ready']
+    assert first.json()['ready']
     second=enroll(client,'b');assert second.status_code==200,second.text
     assert second.json()['ready'] and not second.json()['validated']
     assert not InspectionAdapter.get_detector_config().validated
@@ -63,6 +63,29 @@ def test_reference_enrollment_live_decisions_and_restart(client):
         assert files['all_available']
 
 
+def test_single_reference_is_ready_after_restart_and_unconfigured_product_is_rejected(client):
+    response = enroll(client, 'a')
+    assert response.status_code == 200 and response.json()['ready']
+    InspectionAdapter.set_detector_config(None)
+    load_profile()
+    assert client.get('/api/health').json()['detector_ready']
+    for product, kind, status, outcome in [
+        ('bottle_a', 'a', 200, 'PASS'),
+        ('bottle_a', 'b', 200, 'REVIEW'),
+        ('bottle_b', 'a', 400, None),
+    ]:
+        response = client.post('/api/inspections', data={
+            'expected_product': product, 'source_mode': 'simulation',
+            'client_request_id': str(uuid4()), 'demo': 'false'},
+            files={'image': ('test.png', encoded(kind), 'image/png')})
+        assert response.status_code == status, response.text
+        if outcome:
+            assert response.json()['result'] == outcome, response.text
+            assert response.json()['demo'] is False
+        else:
+            assert response.json()['error']['code'] == 'reference_not_configured'
+
+
 def test_setup_rejects_missing_acknowledgement_and_bad_crop(client):
     response=client.post('/api/reference-profile',data={'product_id':'bottle_a','name':'test','crop':'[0,0,1,1]'},
         files={'image':('test.png',encoded(),'image/png')})
@@ -71,3 +94,15 @@ def test_setup_rejects_missing_acknowledgement_and_bad_crop(client):
         'crop':'[0,0,2,1]','acknowledge_experimental':'true'},files={'image':('test.png',encoded(),'image/png')})
     assert response.status_code==400
     assert not client.get('/api/reference-profile').json()['products']
+
+
+def test_remove_reference_keeps_backup_and_recomputes_readiness(client):
+    enroll(client, 'a'); enroll(client, 'b')
+    response = client.delete('/api/reference-profile/products/bottle_b')
+    assert response.status_code == 200 and response.json()['ready']
+    assert [p['product_id'] for p in response.json()['products']] == ['bottle_a']
+    assert list((settings.STORAGE_ROOT / 'reference-profile').glob('profile-backup-*.json'))
+    assert client.delete('/api/reference-profile/products/bottle_b').status_code == 404
+    response = client.delete('/api/reference-profile/products/bottle_a')
+    assert response.status_code == 200 and not response.json()['ready']
+    assert not client.get('/api/health').json()['detector_ready']

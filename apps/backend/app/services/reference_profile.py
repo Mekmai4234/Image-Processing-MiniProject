@@ -52,7 +52,7 @@ def activate(profile):
         catalog.append({"product_id": identity, "display_name": item["name"], "validated": False,
                         "reference_paths": [f"/api/reference-profile/images/{identity}"]})
     config = None
-    if len(products) == 2:
+    if products:
         config = DetectorConfig(config_version=profile["version"], products=tuple(products),
             min_sharpness=25, min_match_score=0.72, min_match_margin=0.08,
             background_distance=18, max_background_spread=30, label_contrast=20,
@@ -72,11 +72,28 @@ def load_profile():
             activate(profile)
 
 
+def remove_reference(identity):
+    with LOCK:
+        profile = read_profile()
+        if identity not in profile['products']:
+            raise APIError(404, 'not_found', 'Reference not configured')
+        # Keep a recoverable snapshot and all source images on local disk.
+        archive = profile_root() / f"profile-backup-{uuid4().hex}.json"
+        archive.write_text(json.dumps(profile, ensure_ascii=False), encoding='utf-8')
+        del profile['products'][identity]
+        profile['version'] = f"reference-{uuid4().hex[:12]}"
+        activate(profile)
+        temporary = profile_root() / 'profile.json.tmp'
+        temporary.write_text(json.dumps(profile, ensure_ascii=False), encoding='utf-8')
+        temporary.replace(profile_root() / 'profile.json')
+    return public_profile()
+
+
 def public_profile():
     with LOCK:
         profile = read_profile()
         return {"version": profile["version"], "notice": NOTICE, "validated": False,
-                "ready": len(profile["products"]) == 2 and InspectionAdapter.is_detector_ready(),
+                "ready": bool(profile["products"]) and InspectionAdapter.is_detector_ready(),
                 "products": [{"product_id": key, "name": value["name"], "crop": value["crop"],
                               "image_url": f"/api/reference-profile/images/{key}"}
                              for key, value in profile["products"].items()]}

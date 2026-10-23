@@ -13,7 +13,7 @@
 ```
 
 โปรแกรมจะเตรียม dependencies/build และเปิด Backend ที่ **http://127.0.0.1:8000** ซึ่งให้บริการหน้าเว็บด้วย
-เข้า **[Reference setup](http://127.0.0.1:8000/settings)** เลือกภาพขวดเต็มใบสองสินค้า ตั้งชื่อ และปรับกรอบให้ครอบฉลาก จากนั้นเลือกโหมด API จริงเพื่อใช้ Simulation / Webcam / History
+เข้า **[Reference setup](http://127.0.0.1:8000/settings)** เลือกภาพขวดเต็มใบอย่างน้อยหนึ่งสินค้า ตั้งชื่อ และปรับกรอบให้ครอบฉลาก จากนั้นเลือกโหมด API จริงเพื่อใช้ Simulation / Webcam / History
 
 - ภาพอ้างอิงและ config เก็บใน `storage/reference-profile/` และโหลดกลับหลังเปิดโปรแกรมใหม่
 - ผลตรวจเก็บเป็นภาพต้นฉบับ ภาพวาดกรอบ `result.json` และ SQLite ใน `STORAGE_ROOT`; ดาวน์โหลด ZIP/CSV ได้จาก History
