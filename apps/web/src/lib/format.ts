@@ -26,6 +26,19 @@ export const REASON_LABEL: Record<InspectionReason, string> = {
   orientation_failed: 'หามุมฉลากไม่สำเร็จ',
 }
 
+/** ชื่อเหตุผลแบบสั้นตามภาพต้นแบบ History ใช้ในตาราง/ป้าย (คำอธิบายเต็มภาษาไทยอยู่ใน REASON_LABEL) */
+export const REASON_SHORT: Record<InspectionReason, string> = {
+  good: 'Correct label',
+  wrong_label: 'Wrong label',
+  misplaced_label: 'Misplaced label',
+  missing_label: 'Label missing',
+  blurred_image: 'Blurred image',
+  label_not_visible: 'Label not visible',
+  unknown_product: 'Unknown product',
+  ambiguous_match: 'Ambiguous match',
+  orientation_failed: 'Orientation failed',
+}
+
 export const LOCATOR_LABEL: Record<LocatorReason, string> = {
   usable_view: 'พบฉลาก ถือขวดนิ่ง ๆ',
   blurred_image: 'ภาพเบลอ ถือขวดนิ่งขึ้น',
