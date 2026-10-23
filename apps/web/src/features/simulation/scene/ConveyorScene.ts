@@ -187,9 +187,7 @@ export class ConveyorScene {
     this.buildTurntable()
     this.buildInspectTower()
     this.buildPusher(LAYOUT.reject_x, COLORS.reject, this.rejectPlate)
-    this.buildPusher(LAYOUT.review_x, COLORS.review, this.reviewPlate)
     this.buildChuteAndTray(LAYOUT.reject_x, COLORS.reject)
-    this.buildChuteAndTray(LAYOUT.review_x, COLORS.review)
     this.buildPassEnd()
     this.buildStackLight()
     this.buildCallouts()
@@ -818,7 +816,6 @@ export class ConveyorScene {
       ['ORIENT', LAYOUT.turntable_x, LAYOUT.turntable_top_y + 0.1, 2.7, '#e6f6ff', 'rgba(9,40,72,0.95)'],
       ['INSPECT', LAYOUT.inspect_x, 2.62, 3.45, '#e6f6ff', 'rgba(9,40,72,0.95)'],
       ['REJECT', LAYOUT.reject_x, LAYOUT.belt_y + 0.45, 2.3, '#ffffff', 'rgba(127,20,20,0.95)'],
-      ['REVIEW', LAYOUT.review_x, LAYOUT.belt_y + 0.45, 2.3, '#1f1300', 'rgba(245,179,1,0.95)'],
       ['PASS', LAYOUT.pass_end_x - 0.4, LAYOUT.belt_y + 0.1, 1.95, '#ffffff', 'rgba(21,128,61,0.95)'],
     ]
     const z = -0.85

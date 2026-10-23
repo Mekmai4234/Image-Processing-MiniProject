@@ -21,10 +21,13 @@ function toWaitResult(d: Driver) {
 }
 
 describe('single view', () => {
-  it('runs IDLE → FEED → SETTLE → INSPECT → WAIT_RESULT without ORIENT or locate', () => {
+  it('automatically rotates 360 degrees before inspecting one real photo without inventing views', () => {
     const d = new Driver(initialState())
     d.start(singleJob())
     expect(d.state.phase).toBe('FEED')
+    d.tickTo('ORIENT')
+    expect(d.state.motion?.kind).toBe('rotate')
+    expect(d.state.motion?.to_deg).toBe(360)
     d.tickTo('SETTLE')
     d.tickTo('INSPECT')
     d.tickTo('WAIT_RESULT')

@@ -21,7 +21,7 @@ export const REASON_LABEL: Record<InspectionReason, string> = {
   missing_label: 'ไม่มีฉลาก (ยืนยันจากหลักฐานหลายมุม)',
   blurred_image: 'ภาพเบลอ',
   label_not_visible: 'มองไม่เห็นฉลาก',
-  unknown_product: 'ไม่รู้จักสินค้า',
+  unknown_product: 'ฉลากไม่ตรงภาพอ้างอิง',
   ambiguous_match: 'ผลเทียบสูสี ตัดสินไม่ได้',
   orientation_failed: 'หามุมฉลากไม่สำเร็จ',
 }
@@ -34,7 +34,7 @@ export const REASON_SHORT: Record<InspectionReason, string> = {
   missing_label: 'Label missing',
   blurred_image: 'Blurred image',
   label_not_visible: 'Label not visible',
-  unknown_product: 'Unknown product',
+  unknown_product: 'Reference mismatch',
   ambiguous_match: 'Ambiguous match',
   orientation_failed: 'Orientation failed',
 }

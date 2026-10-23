@@ -69,8 +69,8 @@ class RealDetectorHTTPTests(unittest.TestCase):
                     body = response.json()
                     direct = inspect_image(image, "bottle_a", InspectionAdapter.get_detector_config(),
                                            color_order="RGB", source_mode=mode)
-                    self.assertEqual((body["result"], body["reason"]), (result, reason))
-                    self.assertEqual(body["result"], direct.result)
+                    self.assertEqual((body["result"], body["reason"]), ("FAIL" if result == "REVIEW" else result, reason))
+                    self.assertEqual(body["result"], "FAIL" if direct.result == "REVIEW" else direct.result)
                     self.assertEqual(body["bbox"], direct.to_dict()["bbox"])
                     self.assertEqual(body["match_score"], direct.match_score)
                     self.assertEqual(body["config_version"], direct.config_version)
@@ -102,12 +102,12 @@ class RealDetectorHTTPTests(unittest.TestCase):
         original_saved = self.client.get(body["images"]["original"]).content
         self.assertEqual(hashlib.sha256(original_saved).hexdigest(), hashlib.sha256(normalized_bytes).hexdigest())
 
-    def test_unvalidated_config_cannot_produce_http_pass_or_fail(self):
+    def test_unvalidated_config_fails_closed_at_binary_http_boundary(self):
         InspectionAdapter.set_detector_config(synthetic_config(validated=False))
         for kind in ("a", "b"):
             response = self.post(bottle_image(kind))
             self.assertEqual(response.status_code, 200, response.text)
-            self.assertEqual(response.json()["result"], "REVIEW")
+            self.assertEqual(response.json()["result"], "FAIL")
 
     def test_unconfigured_backend_returns_503_without_history(self):
         InspectionAdapter.set_detector_config(None)
@@ -125,7 +125,7 @@ class RealDetectorHTTPTests(unittest.TestCase):
                   ("supporting_images", ("side.png", png_bytes(image), "image/png"))])
         self.assertEqual(response.status_code, 200, response.text)
         body = response.json()
-        self.assertEqual((body["result"], body["reason"]), ("REVIEW", "orientation_failed"))
+        self.assertEqual((body["result"], body["reason"]), ("FAIL", "orientation_failed"))
         self.assertFalse(body["evidence"]["verified_coverage"])
         self.assertIsNone(body["bbox"])
         self.assertEqual(len(body["evidence"]["supporting_images"]), 1)

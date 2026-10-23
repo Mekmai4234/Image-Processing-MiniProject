@@ -16,7 +16,8 @@ SAMPLES = {"inspection-pass.json": "PASS", "inspection-fail.json": "FAIL",
            "inspection-review.json": "REVIEW", "inspection-orientation-review.json": "REVIEW"}
 REASONS = {
     "PASS": {"good"},
-    "FAIL": {"wrong_label", "misplaced_label", "missing_label"},
+    "FAIL": {"wrong_label", "misplaced_label", "missing_label", "blurred_image",
+             "label_not_visible", "unknown_product", "ambiguous_match", "orientation_failed"},
     "REVIEW": {"blurred_image", "label_not_visible", "unknown_product",
                "ambiguous_match", "orientation_failed"},
 }
@@ -172,7 +173,8 @@ def validate_repository(root):
         check(utc_timestamp(result["created_at"]), path, "created_at must be an ISO-8601 UTC timestamp")
         score = result["match_score"]
         check(score is None or number(score) and 0 <= score <= 1, path, "invalid match_score")
-        check(result["score_method"] == (None if score is None else "template_ccoeff_normed_clamped_v1"), path, "invalid score_method")
+        methods = (None,) if score is None else ('template_ccoeff_normed_clamped_v1', 'reference_template_search_ccoeff_v1')
+        check(result["score_method"] in methods, path, "invalid score_method")
         width, height = result["image_width"], result["image_height"]
         valid_size = all(type(value) is int and value > 0 for value in (width, height))
         check(valid_size, path, "image dimensions must be positive integers")

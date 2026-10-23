@@ -37,7 +37,7 @@ export function percentOf(part: number, total: number): string | null {
 
 export const PIPELINE_STAGES = [
   { key: 'feed', label: 'Feed', detail: 'ขวดเข้าสายพาน' },
-  { key: 'orient', label: 'Orient', detail: 'หมุนหามุมที่เห็นฉลาก' },
+  { key: 'orient', label: 'Orient', detail: 'หมุนขวดอัตโนมัติ' },
   { key: 'inspect', label: 'Inspect', detail: 'ส่งภาพจริงให้ Backend ตรวจ' },
   { key: 'sort', label: 'Sort', detail: 'คัดแยกตามผลจริง' },
   { key: 'output', label: 'Output', detail: 'ขวดถึงปลายทาง' },

@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock3, FileText, RefreshCw, XCircle } from 'lucide-react'
+import { CheckCircle2, FileText, RefreshCw, XCircle } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { InspectionDetail } from '../components/history/InspectionDetail'
 import { EMPTY_HISTORY_FILTERS, HistoryFilters, type HistoryFilterValues } from '../components/history/HistoryFilters'
@@ -115,7 +115,6 @@ export function HistoryPage() {
           <StatCard tone="total" icon={<FileText size={22} />} label="Total" value={counts.total} />
           <StatCard tone="pass" icon={<CheckCircle2 size={22} />} label="Passed" value={counts.PASS} />
           <StatCard tone="fail" icon={<XCircle size={22} />} label="Failed" value={counts.FAIL} />
-          <StatCard tone="review" icon={<Clock3 size={22} />} label="Review" value={counts.REVIEW} />
         </div>
 
         <HistoryFilters

@@ -137,9 +137,8 @@ function onSegmentDone(state: MachineState, now: number): Transition {
   switch (state.phase) {
     case 'FEED': {
       if (job.mode === 'single_view') {
-        // Single photo: skip the search entirely; nothing on the far side is invented.
-        const plan = planInspection(job, 'not_requested', [], null)
-        return same({ ...state, phase: 'SETTLE', motion: toInspectMotion(), plan, request: buildInspectionRequest(job, plan) })
+        // Automatic visual turn only. The photo stays a single-view observation.
+        return same({ ...state, phase: 'ORIENT', motion: rotateMotion(state.angle_deg, state.angle_deg + 360) })
       }
       const orient: OrientProgress = {
         cursor: 0,
@@ -154,6 +153,10 @@ function onSegmentDone(state: MachineState, now: number): Transition {
       return same({ ...state, phase: 'ORIENT', orient, motion: rotateMotion(state.angle_deg, angleOfCursor(state, 0)) })
     }
     case 'ORIENT': {
+      if (job.mode === 'single_view') {
+        const plan = planInspection(job, 'not_requested', [], null)
+        return same({ ...state, phase: 'SETTLE', motion: toInspectMotion(), plan, request: buildInspectionRequest(job, plan) })
+      }
       if (!state.orient) return same(state)
       // Rotation reached the photo's real angle: ask the locator about that photo only.
       return issueLocate({ ...state, motion: null, angle_deg: angleOfCursor(state, state.orient.cursor) })

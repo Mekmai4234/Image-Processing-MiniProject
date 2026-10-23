@@ -7,7 +7,7 @@ import { useAppData } from '../lib/AppData'
 export function ReferencePage() {
   const { recheck, setSource } = useAppData()
   const [profile, setProfile] = useState<ReferenceProfile | null>(null)
-  const [identity, setIdentity] = useState('bottle_a')
+  const identity = 'bottle_a'
   const [name, setName] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState('')
@@ -38,7 +38,7 @@ export function ReferencePage() {
     try {
       const result = await api.saveReference(form)
       setProfile(result); recheck()
-      setSuccess(result.ready ? 'บันทึกแล้ว เริ่มตรวจสินค้านี้ได้ในโหมดเทียบภาพอ้างอิง ไม่จำเป็นต้องเพิ่มสินค้าที่สอง' : 'บันทึกแล้ว แต่ตัวตรวจยังไม่พร้อม กรุณาตรวจสถานะระบบ')
+      setSuccess(result.ready ? 'บันทึกแล้ว เริ่มตรวจสินค้านี้ได้ในโหมดเทียบภาพอ้างอิง ใช้ภาพอ้างอิงนี้เป็นเกณฑ์ PASS/FAIL' : 'บันทึกแล้ว แต่ตัวตรวจยังไม่พร้อม กรุณาตรวจสถานะระบบ')
       setSource('live')
     } catch (e) { setError(describeApiError(e)) }
     finally { setBusy(false) }
@@ -60,7 +60,6 @@ export function ReferencePage() {
     <div className="split">
       <section className="panel stack">
         <h2><Upload size={20} /> ภาพอ้างอิง</h2>
-        <label className="field">สินค้า<select value={identity} disabled={busy} onChange={e => {setIdentity(e.target.value); setSuccess(''); setFile(null)}}><option value="bottle_a">Bottle A</option><option value="bottle_b">Bottle B</option></select></label>
         <label className="field">ชื่อยี่ห้อ / รุ่น / ขนาด<input type="text" value={name} maxLength={100} onChange={e => setName(e.target.value)} placeholder="เช่น น้ำดื่มรุ่นที่ใช้จริง 600 ml" /></label>
         <label className="field">ภาพขวดเต็มใบ JPG/PNG ไม่เกิน 10 MB<input type="file" accept="image/jpeg,image/png" disabled={busy} onChange={e => {const f=e.target.files?.[0]; if(f && f.size <= 10_000_000){setFile(f);setError('')} else if(f) setError('ภาพต้องไม่เกิน 10 MB')}} /></label>
         {preview && <div className="reference-preview"><img src={preview} alt="ภาพขวดอ้างอิง เลือกกรอบให้ครอบเฉพาะฉลาก" /><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><rect x={crop[0]*100} y={crop[1]*100} width={crop[2]*100} height={crop[3]*100} fill="#12d5f522" stroke="#12d5f5" strokeWidth="0.7" /></svg></div>}
@@ -71,12 +70,10 @@ export function ReferencePage() {
         {success && <p className="notice success" role="status">{success}</p>}
         <button className="btn btn-primary" disabled={busy || !file || !name.trim() || !acknowledged} onClick={save}><Save size={18} />{busy?'กำลังบันทึก…':'บันทึกภาพอ้างอิง'}</button>
       </section>
-      <section className="panel stack"><h2>สินค้าที่ตั้งค่าแล้ว</h2>
-        {['bottle_a','bottle_b'].map(id=>{const p=profile?.products.find(p=>p.product_id===id);return <article className="reference-product" key={id}>{p?<><img src={resolveApiUrl(p.image_url+`?v=${profile?.version}`) ?? ''} alt={p.name}/><div><strong>{p.name}</strong><p className="hint">{id} · ภาพอ้างอิงในเครื่อง</p><span className="row"><CheckCircle2 size={17}/>บันทึกแล้ว</span></div></>:<><ScanLine size={32}/><div><strong>{id}</strong><p className="hint">ยังไม่ได้ตั้งค่า</p></div></>}</article>})}
-        <div className="row">{profile?.products.map(p => <button key={p.product_id} className="btn btn-sm" disabled={busy} onClick={() => remove(p.product_id)}>นำภาพอ้างอิง {p.product_id === 'bottle_a' ? 'Bottle A' : 'Bottle B'} ออก</button>)}</div>
-        <p className="hint">Bottle A/B ควรเป็นคนละสินค้า อย่าใส่ฉลากเดียวกันทั้งสองช่อง เพราะคะแนนจะใกล้กันจนแยกไม่ออก</p>
+      <section className="panel stack"><h2>สินค้าอ้างอิงที่ใช้งาน</h2><p className="hint">ตั้งค่าสินค้าเดียว ผลตรวจมี PASS / FAIL หากภาพเบลอ ไม่พบฉลาก หรือความคล้ายต่ำ จะเป็น FAIL พร้อมเหตุผล เปลี่ยนสินค้าได้โดยอัปโหลดภาพอ้างอิงใหม่</p>
+        {['bottle_a'].map(id=>{const p=profile?.products.find(p=>p.product_id===id);return <article className="reference-product" key={id}>{p?<><img src={resolveApiUrl(p.image_url+`?v=${profile?.version}`) ?? ''} alt={p.name}/><div><strong>{p.name}</strong><p className="hint">สินค้าอ้างอิง · ภาพในเครื่อง</p><span className="row"><CheckCircle2 size={17}/>บันทึกแล้ว</span></div></>:<><ScanLine size={32}/><div><strong>สินค้าอ้างอิง</strong><p className="hint">ยังไม่ได้ตั้งค่า</p></div></>}</article>})}
+        <div className="row">{profile?.products.map(p => <button key={p.product_id} className="btn btn-sm" disabled={busy} onClick={() => remove(p.product_id)}>นำภาพอ้างอิง สินค้า ออก</button>)}</div>
         <p className="hint">ภาพและ config เก็บใน STORAGE_ROOT/reference-profile และโหลดกลับเมื่อเปิด Backend ใหม่ ไม่มีการอัปโหลดเข้า GitHub</p>
-        <p className="hint">บันทึกอย่างน้อยหนึ่งสินค้าก็เริ่มตรวจได้ เลือกตรวจเฉพาะสินค้าที่ตั้งค่าแล้ว หากมีเพียงหนึ่งสินค้า ภาพที่ความคล้ายต่ำจะเป็น REVIEW และไม่สามารถระบุชื่อสินค้าอื่นได้ ฉลากที่คล้ายกันอาจแยกผิด เพิ่มอีกสินค้าเมื่อต้องการเปรียบเทียบชนิดฉลาก แล้วลองภาพที่ไม่ใช่ภาพอ้างอิงและตรวจผลใน History</p>
         <Link className="btn btn-primary" to="/simulation">ไปหน้า Simulation <ArrowRight size={18}/></Link>
       </section>
     </div>

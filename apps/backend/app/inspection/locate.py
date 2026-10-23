@@ -85,4 +85,8 @@ def locate_label(image: np.ndarray, expected_product: str, config: DetectorConfi
     if not isinstance(expected_product, str) or expected_product not in {p.product_id for p in config.products}:
         raise InspectionInputError("expected_product is not in catalog")
     rgb = prepare_image(image, color_order=color_order, max_pixels=config.max_image_pixels)
+    if config.reference_mode:
+        from .reference_match import reference_locator
+        product = next(p for p in config.products if p.product_id == expected_product)
+        return reference_locator(rgb, product, config)
     return locator_result(analyze(rgb, config))

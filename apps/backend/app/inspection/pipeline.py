@@ -74,6 +74,9 @@ def inspect_image(image: np.ndarray, expected_product: str, config: DetectorConf
     # Validate every supporting image before doing any inspection.
     supporting = tuple(prepare_image(view, color_order=color_order, max_pixels=config.max_image_pixels)
                        for view in supporting_images)
+    if config.reference_mode:
+        from .reference_match import inspect_reference
+        return inspect_reference(rgb, expected_product, config, source_mode, angle_deg, evidence, len(supporting))
     start = perf_counter()
     supporting_results = [locator_result(analyze(view, config)).to_dict() for view in supporting]
     orientation_ms = (perf_counter() - start) * 1000 if supporting else 0.0

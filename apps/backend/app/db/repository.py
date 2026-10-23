@@ -205,8 +205,11 @@ class InspectionRepository:
             conditions.append("source_mode = ?")
             params.append(source_mode)
         if result:
-            conditions.append("result = ?")
-            params.append(result)
+            if result == 'FAIL':
+                conditions.append("result IN ('FAIL', 'REVIEW')")
+            else:
+                conditions.append("result = ?")
+                params.append(result)
         if product_id:
             conditions.append("expected_product = ?")
             params.append(product_id)

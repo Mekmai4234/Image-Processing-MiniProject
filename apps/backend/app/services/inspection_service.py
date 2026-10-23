@@ -138,7 +138,7 @@ def record_to_inspection_result(record: Dict[str, Any]) -> InspectionResult:
         source_mode=record["source_mode"],
         expected_product=record["expected_product"],
         detected_product=record.get("detected_product"),
-        result=record["result"],
+        result='FAIL' if record['result'] == 'REVIEW' else record['result'],
         reason=record["reason"],
         match_score=record.get("match_score"),
         score_method=record.get("score_method"),

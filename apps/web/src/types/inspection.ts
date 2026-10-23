@@ -8,7 +8,7 @@ export type StorageStatus = 'pending' | 'saved' | 'failed'
 
 export const REASONS = {
   PASS: ['good'],
-  FAIL: ['wrong_label', 'misplaced_label', 'missing_label'],
+  FAIL: ['wrong_label', 'misplaced_label', 'missing_label', 'blurred_image', 'unknown_product', 'ambiguous_match', 'orientation_failed', 'label_not_visible'],
   REVIEW: ['blurred_image', 'label_not_visible', 'unknown_product', 'ambiguous_match', 'orientation_failed'],
 } as const
 

@@ -23,7 +23,11 @@ def profile_root():
 
 def read_profile():
     file = profile_root() / "profile.json"
-    return json.loads(file.read_text(encoding="utf-8")) if file.exists() else {"version": None, "products": {}}
+    profile = json.loads(file.read_text(encoding="utf-8")) if file.exists() else {"version": None, "products": {}}
+    # Preserve the original file on disk; use one active reference from legacy A/B profiles.
+    item = profile['products'].get('bottle_a') or profile['products'].get('bottle_b')
+    profile['products'] = {'bottle_a': item} if item else {}
+    return profile
 
 
 def image_path(item):
@@ -36,10 +40,10 @@ def image_path(item):
 def activate(profile):
     products = []
     catalog = []
-    for identity in ("bottle_a", "bottle_b"):
+    for identity in ("bottle_a",):
         item = profile["products"].get(identity)
         if not item:
-            catalog.append({"product_id": identity, "display_name": f"Bottle {identity[-1].upper()} — ยังไม่มีภาพอ้างอิง",
+            catalog.append({"product_id": identity, "display_name": "สินค้าที่ต้องการตรวจ — ยังไม่มีภาพอ้างอิง",
                             "reference_paths": [], "validated": False})
             continue
         image = cv2.imread(str(image_path(item)))
@@ -100,8 +104,8 @@ def public_profile():
 
 
 def save_reference(identity, name, payload, crop):
-    if identity not in ("bottle_a", "bottle_b") or not name.strip() or len(name.strip()) > 100:
-        raise APIError(400, "invalid_reference", "Choose Bottle A/B and a name of 1–100 characters")
+    if identity != 'bottle_a' or not name.strip() or len(name.strip()) > 100:
+        raise APIError(400, "invalid_reference", "Use the single product reference and a name of 1–100 characters")
     import math
     if (not isinstance(crop, list) or len(crop) != 4 or
         any(type(v) not in (int, float) or not math.isfinite(v) for v in crop)):
@@ -122,6 +126,9 @@ def save_reference(identity, name, payload, crop):
     if bgr[py:py+ph, px:px+pw].std() < 3:
         raise APIError(400, "invalid_reference", "The selected label needs a visible printed pattern")
     with LOCK:
+        current_file = profile_root() / 'profile.json'
+        if current_file.exists():
+            (profile_root() / f'profile-backup-{uuid4().hex}.json').write_bytes(current_file.read_bytes())
         profile = read_profile()
         filename = f"{uuid4().hex}.jpg"
         profile_root().mkdir(parents=True, exist_ok=True)

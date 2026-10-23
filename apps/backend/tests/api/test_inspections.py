@@ -184,7 +184,7 @@ def test_exhausted_search_produces_review_orientation_failed():
     assert response.status_code == 200
     res = response.json()
 
-    assert res["result"] == "REVIEW"
+    assert res["result"] == "FAIL"
     assert res["reason"] == "orientation_failed"
     assert len(res["evidence"]["supporting_images"]) == 3
     assert res["evidence"]["verified_coverage"] is False
@@ -341,8 +341,8 @@ def test_demo_mode_rejects_checkerboard_as_fail():
     response = client.post("/api/inspections", files=files, data=data)
     assert response.status_code == 200
     res = response.json()
-    # 04-4: Non-bottle returns REVIEW with label_not_visible adhering to Contract v0.2 Enum
-    assert res["result"] == "REVIEW"
+    # 04-4: Non-bottle fails closed with label_not_visible adhering to Contract v0.2 Enum
+    assert res["result"] == "FAIL"
     assert res["reason"] == "label_not_visible"
     assert res["is_demo"] is True
 
@@ -350,7 +350,7 @@ def test_demo_mode_rejects_checkerboard_as_fail():
 def test_demo_mode_unverified_coverage_never_returns_missing_label(monkeypatch):
     """
     04-2: Client reported_coverage_deg (even 360) without backend-verified coverage
-    must NEVER turn REVIEW/label_not_visible into FAIL/missing_label.
+    must preserve label_not_visible instead of claiming a missing label.
     """
     from app.services.inspection_adapter import InspectionAdapter
 
@@ -454,7 +454,7 @@ def test_http_endpoint_demo_mode_claim_360_remains_review(monkeypatch):
     resp_a = client.post("/api/inspections", files={"image": ("bottle.jpg", img_bytes, "image/jpeg")}, data=data_no_cov)
     assert resp_a.status_code == 200
     res_a = resp_a.json()
-    assert res_a["result"] == "REVIEW"
+    assert res_a["result"] == "FAIL"
     assert res_a["reason"] == "label_not_visible"
 
     # Case B: same image with reported_coverage_deg = 360
@@ -469,7 +469,7 @@ def test_http_endpoint_demo_mode_claim_360_remains_review(monkeypatch):
     resp_b = client.post("/api/inspections", files={"image": ("bottle.jpg", img_bytes, "image/jpeg")}, data=data_claim_360)
     assert resp_b.status_code == 200
     res_b = resp_b.json()
-    assert res_b["result"] == "REVIEW"
+    assert res_b["result"] == "FAIL"
     assert res_b["reason"] == "label_not_visible"
 
 

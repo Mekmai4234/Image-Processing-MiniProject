@@ -78,7 +78,6 @@ export function ReviewPanel({ r, onUpdate }: { r: InspectionResult; onUpdate(r: 
                 >
                   <option value="PASS">PASS</option>
                   <option value="FAIL">FAIL</option>
-                  <option value="REVIEW">REVIEW</option>
                 </select>
               </label>
               <label className="field" style={{ flex: 2 }}>

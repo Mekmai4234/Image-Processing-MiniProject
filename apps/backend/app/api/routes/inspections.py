@@ -323,6 +323,10 @@ async def create_inspection(
     )
     timing_inspection_ms = round((time.perf_counter() - t_start) * 1000, 2)
 
+    # Binary acceptance policy: uncertainty is rejected with its original reason.
+    if inspect_output['result'] == 'REVIEW':
+        inspect_output['result'] = 'FAIL'
+
     # 9. Create annotated visual image
     annotated_bytes = InspectionAdapter.create_annotated_image(
         cv_bgr=cv_main,

@@ -4,6 +4,7 @@ import { useAppData } from '../lib/AppData'
 /** สินค้าที่คาดหวังมาจาก catalog เท่านั้น */
 export function ProductSelect({ value, onChange, disabled }: { value: string; onChange(v: string): void; disabled?: boolean }) {
   const { products, catalogError } = useAppData()
+  if (products.length > 0) return <div className="field"><span>สินค้าอ้างอิง</span><strong>{products[0].display_name}</strong></div>
   return (
     <label className="field">
       สินค้าที่คาดหวัง

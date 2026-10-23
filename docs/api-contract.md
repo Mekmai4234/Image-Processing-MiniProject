@@ -1,3 +1,13 @@
+# Current binary acceptance policy — 2026-10-23
+
+This section supersedes the legacy v0.2 verdict policy below. New HTTP inspections return PASS or FAIL. Uncertain visual evidence is FAIL with the original reason (blurred_image, label_not_visible, unknown_product, ambiguous_match, orientation_failed); operational errors remain HTTP errors. The visible failure does not prove a physical defect or 360-degree label absence. Legacy stored REVIEW rows are projected as FAIL in API/CSV, with original snapshots retained. FAIL filters include legacy REVIEW rows. Pure detector interfaces retain legacy tri-state behavior outside user-reference mode for backwards compatibility.
+
+One active reference is configured in Settings. The internal compatibility ID is bottle_a, not a user choice. A/B legacy profiles use A (or B when A is absent) as the single reference without deleting old images. Saving a replacement keeps a profile backup. The simulator accepts one photo and performs a visual automatic turn; it never invents camera frames, angles, or verified coverage.
+
+The reference search uses grayscale CCOEFF over bottle-relative scales 0.85/1.0/1.15, threshold 0.72 and configured center tolerance. It does not independently estimate label tilt; validated=false. Same-reference acceptance is a regression check, not evidence of generalization.
+
+---
+
 # API contract v0.2 (แผนให้ทีม implement)
 
 ยังไม่มี routes ใน scaffold; เอกสารนี้เป็นข้อตกลงไม่ใช่คำยืนยันว่า endpoint รันแล้ว

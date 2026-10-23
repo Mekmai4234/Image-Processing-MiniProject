@@ -18,13 +18,13 @@ import type {
 } from '../types/inspection'
 import { syntheticImage } from './synthetic'
 
-export const DEMO_EXAMPLES = [passJson, failJson, reviewJson, orientJson] as unknown as InspectionResult[]
+export const DEMO_EXAMPLES = ([passJson, failJson, reviewJson, orientJson] as unknown as InspectionResult[]).map(r => r.result === 'REVIEW' ? { ...r, result: 'FAIL' as const } : r)
 
 export const DEMO_SCENARIOS = {
   pass: { label: 'PASS ฉลากถูกต้อง', base: 0 },
   wrong_label: { label: 'FAIL ฉลากผิดสินค้า', base: 1 },
-  blurred: { label: 'REVIEW ภาพเบลอ', base: 2 },
-  orientation_failed: { label: 'REVIEW หามุมไม่สำเร็จ', base: 3 },
+  blurred: { label: 'FAIL ภาพเบลอ', base: 2 },
+  orientation_failed: { label: 'FAIL หามุมไม่สำเร็จ', base: 3 },
   save_failed: { label: 'PASS แต่บันทึกไม่สำเร็จ', base: 0 },
   api_error: { label: 'ERROR ระบบตรวจไม่พร้อม (503)', base: -1 },
 } as const

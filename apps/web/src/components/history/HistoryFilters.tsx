@@ -51,7 +51,6 @@ export function HistoryFilters({ value, onChange, products, csvUrl, csvDisabledR
           <option value="">All results</option>
           <option value="PASS">PASS</option>
           <option value="FAIL">FAIL</option>
-          <option value="REVIEW">REVIEW</option>
         </select>
       </label>
       <label className="field">

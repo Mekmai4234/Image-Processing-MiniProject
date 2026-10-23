@@ -86,6 +86,8 @@ def export_inspections_csv(
     writer.writeheader()
     for row in rows:
         row_dict = dict(row)
+        if row_dict.get('result') == 'REVIEW':
+            row_dict['result'] = 'FAIL'
         row_dict["demo"] = "true" if row_dict.get("is_demo") else "false"
         writer.writerow(row_dict)
 

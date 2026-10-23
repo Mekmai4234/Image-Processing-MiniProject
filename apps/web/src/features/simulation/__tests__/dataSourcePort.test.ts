@@ -60,14 +60,14 @@ describe('createDataSourcePort over the DEMO DataSource', () => {
     expect(mine[0]?.source_mode).toBe('simulation')
   })
 
-  it('every angle hidden → search exhausted → REVIEW lane', async () => {
+  it('every angle hidden → search exhausted → FAIL reject lane', async () => {
     const { controller, completed } = setup('orientation_failed')
     controller.start(toJobInput('bottle_a', [0, 90, 180, 270].map((a) => ({ blob: blob(`v${a}`), angle: a }))))
     await runUntil(controller, 'COMPLETE')
     const state = controller.getState()
     expect(state.orient?.status).toBe('exhausted')
     expect(state.request?.supporting_images).toHaveLength(3)
-    expect(completed[0]?.route).toBe('review')
+    expect(completed[0]?.route).toBe('reject')
   })
 
   it('API 503 is an ERROR with retry; retry reuses the request and then completes', async () => {

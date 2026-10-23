@@ -39,9 +39,7 @@ import {
   SEARCH_STATUS_LABEL,
   SHAPE_FALLBACK_NOTICE,
   SimulationScene,
-  SINGLE_VIEW_NOTICE,
   STATE_LABEL,
-  suggestedAngles,
   toJobInput,
   type CompletedEvent,
   type SimulationSceneHandle,
@@ -53,14 +51,13 @@ import { formatMs, formatSimilarity, REASON_LABEL } from '../lib/format'
 import { newRequestId } from '../lib/ids'
 import { addCompleted, EMPTY_STATS, percentOf, pipelineStage, PIPELINE_STAGES, simErrorText } from '../lib/simSession'
 import { dataUrlToBlob, useObjectUrls } from '../lib/useObjectUrls'
-import { appendViews, removeView as dropView, setViewAngle, type ViewItem } from '../lib/views'
+import { removeView as dropView, type ViewItem } from '../lib/views'
 import type { InspectionResult } from '../types/inspection'
 import type { BottleShapeInput } from '../features/simulation/shape/bottleShape'
 import './SimulationPage.css'
 
-const MAX_VIEWS = 12 // MAX_INSPECTION_VIEWS (backend ตรวจซ้ำเสมอ)
+const MAX_VIEWS = 1 // MAX_INSPECTION_VIEWS (backend ตรวจซ้ำเสมอ)
 const MAX_FILE_MB = 10 // MAX_UPLOAD_MB; 1 MB = 1,000,000 bytes
-const FALLBACK_DEFAULTS = { max_rotation_deg: 360, rotation_step_deg: 30 }
 const SPEEDS = { min: 0.25, max: 3, step: 0.25 }
 
 const STAGE_ICONS = [Rows3, RefreshCw, Camera, Split, PackageCheck]
@@ -89,10 +86,7 @@ export function SimulationPage() {
     () => machineConfigFrom(maxDeg !== null && stepDeg !== null ? { max_rotation_deg: maxDeg, rotation_step_deg: stepDeg } : undefined),
     [maxDeg, stepDeg],
   )
-  const angleOptions = useMemo(
-    () => suggestedAngles(maxDeg !== null && stepDeg !== null ? { max_rotation_deg: maxDeg, rotation_step_deg: stepDeg } : FALLBACK_DEFAULTS),
-    [maxDeg, stepDeg],
-  )
+
 
   const [snap, setSnap] = useState<SimulationSnapshot | null>(null)
   const [stats, setStats] = useState(EMPTY_STATS)
@@ -118,7 +112,6 @@ export function SimulationPage() {
       .finally(()=>{if(!ctrl.signal.aborted)setShapeBusy(false)})
     return ()=>ctrl.abort()
   }, [ds, views[0]?.blob])
-  const [sameBottle, setSameBottle] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
 
   // เปลี่ยนแหล่งข้อมูล = ฉากเริ่มใหม่ (port ใหม่) และนับสถิติใหม่
@@ -133,8 +126,7 @@ export function SimulationPage() {
 
   const running = isRunning(snap)
   const paused = !!snap?.paused
-  const multi = views.length > 1
-  const canStart = !running && snap?.state !== 'ERROR' && !!product && views.length > 0 && (!multi || sameBottle)
+  const canStart = !running && snap?.state !== 'ERROR' && !!product && views.length > 0
 
   const result =
     snap?.result && savedResult?.inspection_id === snap.result.inspection_id ? savedResult : (snap?.result ?? null)
@@ -173,31 +165,30 @@ export function SimulationPage() {
       }
       next.push({ id: newRequestId(), blob: f, name: f.name, url: urls.create(f), angle: null })
     }
-    // ภาพใหม่ angle=null จนผู้ใช้เลือกเอง; ภาพเดิมคงมุมเดิม
-    const { views: merged, dropped } = appendViews(views, next, MAX_VIEWS)
-    if (dropped > 0) {
-      next.slice(next.length - dropped).forEach((x) => urls.revoke(x.url))
-      setUploadError(`ส่งได้สูงสุด ${MAX_VIEWS} ภาพต่อรอบ`)
-    }
-    setViews(merged)
+    sceneRef.current?.reset()
+    setSavedResult(null)
+    views.forEach(v => urls.revoke(v.url))
+    next.slice(1).forEach(v => urls.revoke(v.url))
+    setViews(next.slice(0, 1))
     setIssues([])
   }
 
   async function loadDemoSet() {
     const base = DEMO_EXAMPLES[0]
     const made = await Promise.all(
-      [0, 90, 180, 270].map(async (a) => {
+      [0].map(async (a) => {
         const blob = await dataUrlToBlob(a === 0 ? syntheticImage(base) : syntheticImage(base, { angle: a }))
         return { id: newRequestId(), blob, name: `demo-${a}.svg`, url: urls.create(blob), angle: a }
       }),
     )
     views.forEach((v) => urls.revoke(v.url))
     setViews(made)
-    setSameBottle(true)
     setIssues([])
   }
 
   function removeView(id: string) {
+    sceneRef.current?.reset()
+    setSavedResult(null)
     const target = views.find((x) => x.id === id)
     if (target) urls.revoke(target.url)
     setViews(dropView(views, id))
@@ -205,9 +196,10 @@ export function SimulationPage() {
   }
 
   function clearViews() {
+    sceneRef.current?.reset()
+    setSavedResult(null)
     views.forEach((v) => urls.revoke(v.url))
     setViews([])
-    setSameBottle(false)
     setUploadError(null)
     setIssues([])
   }
@@ -266,12 +258,6 @@ export function SimulationPage() {
               />
             </div>
 
-            {snap?.mode === 'single_view' && (
-              <p className="notice review">
-                <TriangleAlert size={16} aria-hidden="true" />
-                {SINGLE_VIEW_NOTICE}
-              </p>
-            )}
             {error && (
               <div className="notice error" role="alert">
                 <TriangleAlert size={16} aria-hidden="true" />
@@ -316,7 +302,6 @@ export function SimulationPage() {
                 <StatCard tone="total" label="ตรวจแล้ว" value={stats.total} />
                 <StatCard tone="pass" label="ผ่าน" value={stats.pass} hint={percentOf(stats.pass, stats.total)} />
                 <StatCard tone="fail" label="คัดออก" value={stats.fail} hint={percentOf(stats.fail, stats.total)} />
-                <StatCard tone="review" label="ถ่ายใหม่" value={stats.review} hint={percentOf(stats.review, stats.total)} />
               </div>
             </Panel>
           </div>
@@ -326,7 +311,7 @@ export function SimulationPage() {
           <Panel
             className="sim-control-panel"
             title="Simulation controls"
-            subtitle="อัปโหลดภาพขวดหลายมุม เลือกสินค้า แล้วเริ่มจำลอง"
+            subtitle="อัปโหลดภาพขวด แล้วกด Run เครื่องหมุนและตรวจอัตโนมัติ"
             icon={<Settings2 size={22} />}
             actions={source === 'demo' ? <DemoTag /> : undefined}
           >
@@ -359,22 +344,6 @@ export function SimulationPage() {
                         <div key={v.id} className={`thumb ${chosen ? 'primary' : ''} ${scanning ? 'sim-scanning' : ''}`}>
                           <img src={v.url} alt={`ภาพขวด ${v.name}`} />
                           <div className="meta">
-                            <select
-                              aria-label={`มุมของ ${v.name}`}
-                              value={v.angle ?? ''}
-                              onChange={(e) => {
-                                setViews((all) => setViewAngle(all, v.id, e.target.value === '' ? null : Number(e.target.value)))
-                                setIssues([])
-                              }}
-                              disabled={running}
-                            >
-                              <option value="">ไม่ทราบมุม</option>
-                              {angleOptions.map((a) => (
-                                <option key={a} value={a}>
-                                  {a}°
-                                </option>
-                              ))}
-                            </select>
                             {chosen && <span className="sim-chip">ภาพที่ส่งตรวจ</span>}
                           </div>
                           <button className="btn btn-sm remove" aria-label={`ลบ ${v.name}`} onClick={() => removeView(v.id)} disabled={running}>
@@ -388,14 +357,13 @@ export function SimulationPage() {
 
                 <label className={`drop ${views.length ? 'sim-drop-compact' : ''}`}>
                   <ImagePlus size={24} aria-hidden="true" />
-                  <span>เลือกภาพขวด (หลายภาพได้)</span>
+                  <span>เลือกภาพขวดที่ต้องการตรวจ</span>
                   <span className="hint">
-                    JPG/PNG ไม่เกิน {MAX_FILE_MB} MB ต่อภาพ · ภาพเดียวไม่ต้องระบุมุม · หลายภาพต้องระบุมุมทุกภาพ
+                    JPG/PNG ไม่เกิน {MAX_FILE_MB} MB ต่อภาพ · เครื่องหมุนขวดอัตโนมัติ ไม่ต้องเลือกมุม
                   </span>
                   <input
                     type="file"
                     accept="image/*"
-                    multiple
                     disabled={running}
                     onChange={(e) => {
                       addFiles(e.target.files)
@@ -408,33 +376,19 @@ export function SimulationPage() {
                     {uploadError}
                   </p>
                 )}
-                {multi && (
-                  <label className="check">
-                    <input type="checkbox" checked={sameBottle} onChange={(e) => setSameBottle(e.target.checked)} disabled={running} />
-                    ทุกภาพเป็นขวดใบเดียวกัน (ต้องยืนยันก่อนส่งหลายมุม)
-                  </label>
-                )}
               </section>
 
               <div className="sim-step-grid">
                 <section className="sim-step" aria-labelledby="sim-step-2">
                   <h3 id="sim-step-2">
-                    <span className="sim-n">2</span> เลือกสินค้า
+                    <span className="sim-n">2</span> สินค้าอ้างอิง
                   </h3>
                   {products.length === 0 ? (
                     <p className="hint">ยังไม่มีรายการสินค้าจาก catalog</p>
                   ) : (
-                    <div className="sim-products" role="radiogroup" aria-labelledby="sim-step-2">
-                      {products.map((p) => (
+                    <div className="sim-products" role="group" aria-labelledby="sim-step-2">
+                      {products.slice(0, 1).map((p) => (
                         <label key={p.product_id} className="sim-product">
-                          <input
-                            type="radio"
-                            name="sim-product"
-                            value={p.product_id}
-                            checked={product === p.product_id}
-                            onChange={() => setProduct(p.product_id)}
-                            disabled={running}
-                          />
                           {p.reference_paths?.[0] ? <img className="sim-product-photo" src={resolveApiUrl(p.reference_paths[0]) ?? ''} alt={p.display_name}/> : <Milk size={26} aria-hidden="true" />}
                           <span>{p.display_name}</span>
                         </label>
@@ -501,7 +455,6 @@ export function SimulationPage() {
                 </label>
                 <p className="hint">ความเร็วเปลี่ยนเฉพาะภาพเคลื่อนไหว ไม่ย่นเวลารอ Backend</p>
                 {!product && <p className="hint">เลือกสินค้าก่อนเริ่ม</p>}
-                {multi && !sameBottle && <p className="hint">ยืนยันว่าทุกภาพเป็นขวดใบเดียวกันก่อนเริ่ม</p>}
                 {issues.length > 0 && (
                   <ul className="sim-issues" role="alert">
                     {issues.map((m) => (
@@ -584,8 +537,8 @@ function OrientStatus({ snap }: { snap: SimulationSnapshot | null }) {
       <div className="sim-orient">
         <Compass size={28} aria-hidden="true" />
         <div>
-          <strong>ภาพเดียว ไม่หมุนค้นหา</strong>
-          <span className="hint">{SEARCH_STATUS_LABEL.not_requested}</span>
+          <strong>หมุนขวดอัตโนมัติ</strong>
+          <span className="hint">{snap.phase === 'ORIENT' ? 'กำลังหมุนขวดบนแท่น…' : 'หมุนแล้วส่งภาพที่อัปโหลดเข้าตรวจ'}</span>
         </div>
       </div>
     )
@@ -596,7 +549,7 @@ function OrientStatus({ snap }: { snap: SimulationSnapshot | null }) {
         <Compass size={28} aria-hidden="true" />
         <div>
           <strong>ยังไม่เริ่ม</strong>
-          <span className="hint">หลายภาพ: ฉากจะหมุนตามมุมจริงที่อัปโหลดทีละมุม</span>
+          <span className="hint">เครื่องจะหมุนขวดบนแท่นแล้วนำไปถ่ายภาพเอง</span>
         </div>
       </div>
     )
