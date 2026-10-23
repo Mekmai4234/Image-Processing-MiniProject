@@ -17,10 +17,11 @@ def get_health() -> HealthResponse:
     detector_ready = InspectionAdapter.is_detector_ready()
     if detector_ready:
         detector_status = "ready"
-        reason = None
+        active = InspectionAdapter.get_detector_config()
+        reason = "Experimental user-reference matching; not independently validated" if getattr(active, "reference_mode", False) else None
     elif settings.ALLOW_DEMO_MODE:
         detector_status = "demo_ready"
-        reason = "Baseline detector ready; real model templates awaiting validation"
+        reason = "ยังไม่มีภาพอ้างอิงครบสองสินค้า กรุณาเปิดหน้าตั้งค่าภาพอ้างอิง"
     else:
         detector_status = "unavailable"
         reason = "Real detector templates and validation report are not yet configured"

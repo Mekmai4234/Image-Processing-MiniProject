@@ -5,6 +5,8 @@ from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api.router import api_router
 from app.core.config import settings
@@ -25,6 +27,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         settings.validate_storage_root()
         logger.info(f"Storage directory validated and ready at: {settings.STORAGE_ROOT}")
         init_db()
+        from app.services.reference_profile import load_profile
+        load_profile()
         logger.info("SQLite database schema initialized.")
         reconcile_info = StorageManager.reconcile_on_startup()
         logger.info(f"Startup storage reconciliation completed: {reconcile_info}")
@@ -86,7 +90,10 @@ app.include_router(api_router)
 
 
 @app.get("/")
-def root():
+def root(request: Request):
+    index = settings.REPO_ROOT / "apps/web/dist/index.html"
+    if index.is_file() and "text/html" in request.headers.get("accept", ""):
+        return FileResponse(index)
     return {
         "name": "Vending Vision Backend API",
         "version": settings.CONFIG_VERSION,
@@ -94,3 +101,18 @@ def root():
         "health_url": "/api/health",
         "products_url": "/api/products",
     }
+
+
+web_dist = settings.REPO_ROOT / "apps/web/dist"
+if (web_dist / "assets").is_dir():
+    app.mount("/assets", StaticFiles(directory=web_dist / "assets"), name="web-assets")
+
+
+@app.get("/{page:path}", include_in_schema=False)
+def web_page(page: str):
+    index = web_dist / "index.html"
+    if page in ("simulation", "webcam", "history", "settings") and index.is_file():
+        return FileResponse(index)
+    if page == "favicon.svg" and (web_dist / "favicon.svg").is_file():
+        return FileResponse(web_dist / "favicon.svg")
+    raise APIError(404, "not_found", "Page or endpoint not found")

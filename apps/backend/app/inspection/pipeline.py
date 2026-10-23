@@ -124,9 +124,11 @@ def inspect_image(image: np.ndarray, expected_product: str, config: DetectorConf
     diagnostics["raw_scores"] = match.raw_scores
     if match.reason != "matched":
         return finish("REVIEW", match.reason)
-    if not config.validated:
+    if not config.validated and not config.reference_mode:
         diagnostics["limitation"] = "configuration_not_validated"
         return finish("REVIEW", "ambiguous_match", match)
+    if config.reference_mode:
+        diagnostics["limitation"] = "experimental_user_references_not_validated"
     # Explicit precedence: sufficient quality -> known identity -> position.
     if match.detected_product != expected_product:
         return finish("FAIL", "wrong_label", match)

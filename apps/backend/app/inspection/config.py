@@ -67,6 +67,8 @@ class DetectorConfig:
     min_pattern_std: float = 1.0
     validated: bool = False
     validation_reference: str | None = None
+    # User-selected references allow prototype decisions, never imply validation.
+    reference_mode: bool = False
 
     def validate(self):
         if not isinstance(self.config_version, str) or not self.config_version.strip():
@@ -120,6 +122,8 @@ class DetectorConfig:
                 raise InspectionConfigError(f"{name} must be greater than zero")
         if type(self.validated) is not bool:
             raise InspectionConfigError("validated must be boolean")
+        if type(self.reference_mode) is not bool:
+            raise InspectionConfigError("reference_mode must be boolean")
         if self.validated and (not isinstance(self.validation_reference, str)
                                or not self.validation_reference.strip()):
             raise InspectionConfigError("validated config needs a validation report reference")
