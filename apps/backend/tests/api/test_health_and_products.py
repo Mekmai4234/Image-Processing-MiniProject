@@ -30,12 +30,12 @@ def test_products_endpoint():
     data = response.json()
     assert data["config_version"] == settings.CONFIG_VERSION
     assert isinstance(data["products"], list)
-    assert len(data["products"]) >= 2
+    assert len(data["products"]) == 1
 
     # Check bottle_a & bottle_b exist
     product_ids = [p["product_id"] for p in data["products"]]
     assert "bottle_a" in product_ids
-    assert "bottle_b" in product_ids
+    assert "bottle_b" not in product_ids
 
     # Check simulation defaults
     assert "simulation_defaults" in data
