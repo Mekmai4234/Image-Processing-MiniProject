@@ -101,6 +101,7 @@ export interface LocateLabelResult {
 }
 
 export interface Product {
+  reference_paths?: string[]
   product_id: ProductId
   display_name: string
   brand?: string | null

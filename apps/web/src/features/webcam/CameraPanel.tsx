@@ -40,6 +40,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
   onInspectionComplete,
   autoLocate = true,
   className = '',
+  children,
 }) => {
   const appData = useAppData()
   const effectiveDs: DataSource = dataSource ?? liveDataSource
@@ -465,7 +466,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
 
     if (!clientW || !clientH) return null
 
-    const scale = Math.max(clientW / imgW, clientH / imgH)
+    const scale = Math.min(clientW / imgW, clientH / imgH)
     const offsetX = (clientW - imgW * scale) / 2
     const offsetY = (clientH - imgH * scale) / 2
 
@@ -781,6 +782,14 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
 
         {/* Right Column: Controls, Product Select & Auto-capture */}
         <div className="camera-controls-column">
+          <div className="control-panel-card">
+            <h3 className="control-card-title"><Camera size={20} /> Camera controls</h3>
+            <p className="camera-device-caption">{devices.find(d=>d.deviceId===activeDeviceId)?.label || 'Notebook webcam'}</p>
+            <div className="camera-power-actions">
+              <button className="btn-primary-capture" disabled={isStreaming || cameraStatus==='requesting'} onClick={()=>startCamera()}><Play size={18}/> Open camera</button>
+              <button className="btn-next-bottle" disabled={!isStreaming} onClick={stopCamera}><VideoOff size={18}/> Close camera</button>
+            </div>
+          </div>
           {/* Target Product Selection (from real catalog) */}
           <div className="control-panel-card">
             <h3 className="control-card-title">
@@ -827,6 +836,14 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
             <p className="control-card-desc">
               เมื่อเปิดใช้งาน ระบบจะตรวจจับภาพนิ่งต่อเนื่องและถ่ายส่งตรวจทันทีเมื่อพบฉลากชัดเจน
             </p>
+              <div className="camera-quality-list" aria-label="Check items">
+                {[
+                  ['Image sharp', locateResult?.quality.sharp_enough],
+                  ['Bottle visible', locateResult?.quality.bottle_visible],
+                  ['Label detected', locateResult?.quality.label_visible],
+                  ['Product match', inspectionResult ? inspectionResult.detected_product===inspectionResult.expected_product : undefined],
+                ].map(([label,ok])=><span className={`camera-quality-item ${ok===true?'quality-ok':''}`} key={String(label)}>{ok===true?<CheckCircle2 size={17}/>:<Info size={17}/>} {label}</span>)}
+              </div>
 
             {autoCaptureEnabled && (
               <div className={`auto-phase-badge phase-${autoPhase}`}>
@@ -898,6 +915,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
       </div>
 
       {/* Bottom Drawer: Latest Inspection Result Card */}
+      {!inspectionResult && <div className="latest-result-card"><h3>Latest result</h3><p className="camera-device-caption">ผลและภาพวาดกรอบจะแสดงเมื่อถ่ายและตรวจแล้ว</p></div>}
       {inspectionResult && (
         <div className="latest-result-card">
           <div className="result-header-row">
@@ -1009,6 +1027,7 @@ export const CameraPanel: React.FC<CameraPanelProps> = ({
           </div>
         </div>
       )}
+      <div className="camera-recent-captures">{children}</div>
     </div>
   )
 }

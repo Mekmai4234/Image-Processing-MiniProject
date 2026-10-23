@@ -19,6 +19,7 @@ export type ImageKind = 'original' | 'annotated' | { supporting: number }
  * ทุกหน้าเรียกผ่าน interface นี้ เพื่อไม่ให้ mock ปนกับข้อมูลจริงในโค้ดหน้า
  */
 export interface DataSource {
+  bottleShape?(image: Blob, signal?: AbortSignal): ReturnType<typeof api.bottleShape>
   readonly kind: 'live' | 'demo'
   health(signal?: AbortSignal): Promise<HealthStatus>
   products(signal?: AbortSignal): Promise<ProductCatalog>
@@ -37,6 +38,7 @@ export interface DataSource {
 }
 
 export const liveDataSource: DataSource = {
+  bottleShape: api.bottleShape,
   kind: 'live',
   health: api.health,
   products: api.products,

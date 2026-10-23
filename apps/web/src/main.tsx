@@ -5,6 +5,7 @@ import { AppShell } from './components/AppShell'
 import { AppDataProvider } from './lib/AppData'
 import { HistoryPage } from './pages/HistoryPage'
 import { WebcamPage } from './pages/WebcamPage'
+import { ReferencePage } from './pages/ReferencePage'
 import './styles/global.css'
 
 // หน้า Simulation มี Three.js ขนาดใหญ่ โหลดแยกเฉพาะตอนเปิดหน้านี้ หน้า Webcam/History จึงเปิดเร็วขึ้น
@@ -28,6 +29,7 @@ createRoot(document.getElementById('root')!).render(
             />
             <Route path="/webcam" element={<WebcamPage />} />
             <Route path="/history" element={<HistoryPage />} />
+            <Route path="/settings" element={<ReferencePage />} />
             <Route path="*" element={<Navigate to="/simulation" replace />} />
           </Route>
         </Routes>

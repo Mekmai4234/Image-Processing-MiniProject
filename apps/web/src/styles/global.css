@@ -606,4 +606,37 @@ dl.kv dd { margin: 0; font-variant-numeric: tabular-nums; }
 /* กันตาราง/ฟอร์มดันคอลัมน์ทะลุ grid */
 .split > *, .stack > *, .inspect-grid > * { min-width: 0; }
 .brand-name { white-space: nowrap; }
+.settings-link { display: grid; place-items: center; min-width: 38px; min-height: 38px; border: 1px solid var(--line-strong); border-radius: 8px; }
+.reference-page { display: grid; gap: 18px; }
+.reference-preview { position: relative; width: min(100%, 400px); margin: auto; line-height: 0; border-radius: 10px; overflow: hidden; }
+.reference-preview img { width: 100%; height: auto; }
+.reference-preview svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.reference-crop { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.reference-product { display: flex; align-items: center; gap: 18px; border: 1px solid var(--line-strong); border-radius: 12px; padding: 16px; background: var(--bg-deep); }
+.reference-product img { width: 80px; height: 140px; object-fit: contain; border-radius: 6px; background: #edf3f7; }
+.reference-mode-note { display: flex; flex-wrap: wrap; gap: 14px; padding: 6px 12px; border: 1px solid var(--line-strong); border-radius: 6px; color: var(--text-2); font-size: 12px; margin-bottom: 12px; }
+.webcam-live-page { margin-top: 14px; }
+.sim-product-photo { width: 76px; height: 110px; object-fit: contain; border-radius: 6px; }
+
+/* Release layout, aligned with the supplied three dashboard references. */
+body { background: radial-gradient(ellipse at 40% 0%, #082344 0%, #03152c 54%, #020d1c 100%); }
+.main { padding: 14px; }
+.panel { background: linear-gradient(145deg, #071d35, #041326); border-color: #22567e; border-radius: 14px; }
+.split, .history-layout { gap: 16px; }
+.stack { gap: 16px; }
+.topbar { background: linear-gradient(90deg, #031123, #052144); }
+.brand-name { font-size: 24px; letter-spacing: 0; }
+.nav a { min-height: 46px; }
+.history-detail { min-width: 0; }
+.history-filters { min-width: 0; }
+.date-pair { min-width: 0; }
+.date-pair input { min-width: 0; width: 100%; }
+.filters-note select { width: auto; padding: 4px 8px; margin-left: 8px; }
+@media (max-width: 1400px) { .brand-sub { display: none; } .pill { max-width: 180px; overflow: hidden; text-overflow: ellipsis; } }
+@media (max-width: 1000px) { .split, .history-layout { grid-template-columns: minmax(0,1fr); } .topbar { height: auto; min-height: 68px; grid-template-columns: 1fr auto; padding: 10px 14px; gap: 8px; } .nav { grid-column: 1/-1; grid-row: 2; } .top-actions { gap: 6px; } }
+@media (max-width: 600px) { .brand-name { font-size: 17px; } .main { padding: 10px; } .pill { display: none; } .reference-crop { grid-template-columns: 1fr; } .history-filters { grid-template-columns: minmax(0,1fr); } .nav a { padding: 0 12px; } }
 @media (max-width: 760px) { .brand-name { font-size: 1rem; } }
+
+.webcam-page-head { justify-content: flex-end; margin-bottom: 8px; }
+@media (max-width: 600px) { .brand { gap: 6px; } .brand-name { font-size: 14px; } .brand svg { width: 26px; height: 26px; } .top-actions .segmented button { font-size: 11px; padding: 5px 7px; } .settings-link { min-width: 30px; min-height: 32px; } }
+@media (max-width: 760px) { .history-main { min-width: 0; } .history-layout { min-width: 0; } .files-table { width: 100%; } .detail-actions { grid-template-columns: 1fr; } .history-filters { display: grid; grid-template-columns: 1fr; } .history-filters .date-range { grid-column: 1; } }

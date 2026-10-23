@@ -9,9 +9,11 @@ export interface HistoryFilterValues {
   result: '' | InspectionResultValue
   product_id: string
   demo: '' | 'true' | 'false'
+  q: string
+  sort_order: 'asc' | 'desc'
 }
 
-export const EMPTY_HISTORY_FILTERS: HistoryFilterValues = { date_from: '', date_to: '', source_mode: '', result: '', product_id: '', demo: '' }
+export const EMPTY_HISTORY_FILTERS: HistoryFilterValues = { date_from: '', date_to: '', source_mode: '', result: '', product_id: '', demo: '', q: '', sort_order: 'desc' }
 
 interface Props {
   value: HistoryFilterValues
@@ -73,9 +75,9 @@ export function HistoryFilters({ value, onChange, products, csvUrl, csvDisabledR
       </label>
       <label className="field search">
         <span className="visually-hidden">Search inspections</span>
-        <span className="search-box" title="ค้นหาจะใช้ได้เมื่อ Backend รองรับ (รอ API จากงาน 04)">
+        <span className="search-box">
           <Search size={16} aria-hidden="true" />
-          <input type="search" placeholder="Search inspections…" disabled aria-describedby="search-note" />
+          <input type="search" aria-label="Search inspections" placeholder="Search inspections…" value={value.q} onChange={e=>onChange('q',e.target.value)} />
         </span>
       </label>
       {csvUrl ? (
@@ -88,7 +90,7 @@ export function HistoryFilters({ value, onChange, products, csvUrl, csvDisabledR
         </button>
       )}
       <p id="search-note" className="hint filters-note">
-        ค้นหาจะเปิดใช้เมื่อ Backend มี API ค้นหา (งาน 04) ตอนนี้ใช้ตัวกรองด้านบนได้
+        <label>ลำดับเวลา <select aria-label="ลำดับเวลา" value={value.sort_order} onChange={e=>onChange('sort_order',e.target.value as 'asc'|'desc')}><option value="desc">ใหม่ → เก่า</option><option value="asc">เก่า → ใหม่</option></select></label>
       </p>
       {dateInvalid && (
         <p className="hint filters-note" role="alert">

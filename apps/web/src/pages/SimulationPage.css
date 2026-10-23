@@ -6,9 +6,9 @@
 /* ช่องฉาก 3D ของ 02 (ฉากวาดเต็มกล่อง) */
 .sim-stage {
   position: relative;
-  aspect-ratio: 2 / 1;
+  aspect-ratio: 1.85 / 1;
   min-height: 320px;
-  max-height: 640px;
+  max-height: 700px;
   border: 1px solid var(--line-strong);
   border-radius: var(--r-control);
   overflow: hidden;
@@ -145,3 +145,23 @@
   .sim-pipeline li:not(:last-child)::after { display: none; }
   .sim-step-grid, .sim-captured { grid-template-columns: 1fr; }
 }
+
+/* Keep the controls and evidence within the reference dashboard proportions. */
+.sim-control-panel { padding: 14px; }
+.sim-control-panel .stack { gap: 10px; }
+.sim-control-panel .thumbs { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; }
+.sim-control-panel .thumb img { height: 100px; object-fit: contain; }
+.sim-control-panel .thumb .meta { padding: 4px; }
+.sim-control-panel .thumb select { padding: 3px; font-size: 11px; }
+.sim-control-panel .sim-drop-compact { min-height: 42px; padding: 6px; flex-direction: row; gap: 8px; }
+.sim-control-panel .sim-drop-compact .hint { display: none; }
+.sim-control-panel .sim-drop-compact svg { width: 18px; height: 18px; }
+.sim-control-panel .sim-products { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.sim-control-panel .sim-product-photo { height: 72px; width: 60px; }
+.sim-control-panel .sim-product { padding: 8px 4px; }
+.sim-control-panel .sim-product span { max-height: 34px; overflow: hidden; }
+.sim-captured .viewport { max-height: 170px; }
+.sim-bottom { gap: 14px; }
+.sim-bottom .panel { padding: 14px; }
+.sim-bottom .sim-pipeline li { padding: 10px 5px; }
+@media (min-width: 1440px) { .sim-stats { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; } .sim-bottom { grid-template-columns: 1.4fr 1fr; } }

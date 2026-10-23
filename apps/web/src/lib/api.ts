@@ -141,6 +141,13 @@ function query(filters: Partial<InspectionFilters>): string {
 }
 
 export const api = {
+  referenceProfile: (signal?: AbortSignal) => request<ReferenceProfile>('/api/reference-profile', { signal }),
+  saveReference: (body: FormData) => request<ReferenceProfile>('/api/reference-profile', { method: 'POST', body }),
+  bottleShape(image: Blob, signal?: AbortSignal) {
+    const form = new FormData()
+    form.append('image', image, 'bottle.jpg')
+    return request<import('../features/simulation/shape/bottleShape').BottleShapeInput>('/api/bottle-shape', { method: 'POST', body: form, signal })
+  },
   health: (signal?: AbortSignal) => request<HealthStatus>('/api/health', { signal }),
 
   products: (signal?: AbortSignal) => request<ProductCatalog>('/api/products', { signal }),
@@ -184,6 +191,14 @@ export const api = {
     if (!API_BASE_URL) return null
     return `${API_BASE_URL}/api/exports/inspections.csv${query(filters)}`
   },
+}
+
+export interface ReferenceProfile {
+  ready: boolean
+  validated: boolean
+  version: string | null
+  notice: string
+  products: Array<{ product_id: string; name: string; image_url: string; crop: number[] }>
 }
 
 // -----------------------------------------------------------------------------

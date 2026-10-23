@@ -14,23 +14,23 @@ interface Props {
   page: number
   onPage(page: number): void
   onClearFilters(): void
+  sortOrder?: 'asc' | 'desc'
 }
 
 /** ตารางประวัติตามภาพต้นแบบ: Time / Mode / Product / Result / Reason / Match score / Saved */
-export function HistoryTable({ data, loading, selectedId, onSelect, products, page, onPage, onClearFilters }: Props) {
+export function HistoryTable({ data, loading, selectedId, onSelect, products, page, onPage, onClearFilters, sortOrder='desc' }: Props) {
   const pages = data ? Math.max(1, Math.ceil(data.total / data.page_size)) : 1
 
   return (
     <div className="history-table">
       <div className="table-wrap" aria-busy={loading}>
         <table>
-          <caption className="visually-hidden">รายการตรวจ เรียงจากใหม่ไปเก่า เลือกแถวเพื่อดูรายละเอียดด้านขวา</caption>
+          <caption className="visually-hidden">รายการตรวจ {sortOrder === 'desc' ? 'เรียงจากใหม่ไปเก่า' : 'เรียงจากเก่าไปใหม่'} เลือกแถวเพื่อดูรายละเอียดด้านขวา</caption>
           <thead>
             <tr>
-              {/* Backend เรียง created_at ใหม่ → เก่าเสมอ; การเปลี่ยนลำดับรอ API sort จากงาน 04 */}
-              <th scope="col" aria-sort="descending" title="เรียงจากใหม่ไปเก่า">
+              <th scope="col" aria-sort={sortOrder==='desc'?'descending':'ascending'} title="เปลี่ยนได้จากตัวเลือกลำดับเวลา">
                 <span className="th-sort">
-                  Time <ArrowDown size={14} aria-hidden="true" />
+                  Time <ArrowDown size={14} style={sortOrder === 'asc' ? { transform: 'rotate(180deg)' } : undefined} aria-hidden="true" />
                 </span>
               </th>
               <th scope="col">Mode</th>

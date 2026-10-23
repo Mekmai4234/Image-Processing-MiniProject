@@ -1,10 +1,10 @@
 import { CheckCircle2, Clock3, Download, FileJson, FileImage, HelpCircle, Image as ImageIcon, Loader2, XCircle } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { describeApiError } from '../../lib/api'
 import { useAppData } from '../../lib/AppData'
 import { formatSimilarity, formatThaiDateTime, MODE_LABEL, productShortName, REASON_LABEL, REASON_SHORT, shortId } from '../../lib/format'
 import { localFiles, resultFileName, type FileState } from '../../lib/historyFiles'
-import type { InspectionResult } from '../../types/inspection'
+import type { InspectionFilesResponse, InspectionResult } from '../../types/inspection'
 import { InspectionOverlay } from '../InspectionOverlay'
 import { StorageLine } from '../ResultCard'
 import { DemoTag, ResultBadge } from '../ResultBadge'
@@ -14,7 +14,9 @@ type Tab = 'original' | 'annotated'
 
 /** เปิด/บันทึกไฟล์ผ่าน blob URL ใช้ได้ทั้ง URL ของ backend (CORS) และภาพ DEMO (data:) */
 async function openAsBlob(url: string, saveAs?: string) {
-  const blob = await (await fetch(url)).blob()
+  const response = await fetch(url)
+  if (!response.ok) throw new Error(`Image unavailable (${response.status})`)
+  const blob = await response.blob()
   const href = URL.createObjectURL(blob)
   if (saveAs) {
     const a = document.createElement('a')
@@ -40,6 +42,18 @@ export function InspectionDetail({ r, onUpdate }: { r: InspectionResult; onUpdat
   const [tab, setTab] = useState<Tab>('annotated')
   const [busy, setBusy] = useState<'view' | 'download' | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [files, setFiles] = useState<InspectionFilesResponse | null>(null)
+  const [filesError, setFilesError] = useState<string | null>(null)
+  const [filesTick, setFilesTick] = useState(0)
+  useEffect(() => {
+    const ctrl = new AbortController()
+    setFiles(null); setFilesError(null)
+    ds.getInspectionFiles(r.inspection_id, ctrl.signal).then(value => {
+      if (!ctrl.signal.aborted && value.inspection_id === r.inspection_id) setFiles(value)
+    }).catch(e => { if (!ctrl.signal.aborted) setFilesError(describeApiError(e)) })
+    return () => ctrl.abort()
+  }, [ds, r.inspection_id, r.storage_status, filesTick])
+  const zipUrl = files?.all_available && files.download_zip_url ? ds.downloadZipUrl(r.inspection_id) : null
 
   const original = ds.imageUrl(r, 'original')
   const annotated = ds.imageUrl(r, 'annotated')
@@ -133,6 +147,7 @@ export function InspectionDetail({ r, onUpdate }: { r: InspectionResult; onUpdat
         <button className="btn btn-primary" onClick={downloadResult} disabled={busy !== null}>
           {busy === 'download' ? <Loader2 size={16} className="spin" aria-hidden="true" /> : <Download size={16} aria-hidden="true" />} Download result
         </button>
+        {zipUrl && <a className="btn" href={zipUrl} download><Download size={16} /> Download images + log</a>}
       </div>
       {actionError && (
         <p className="hint" role="alert">
@@ -153,7 +168,7 @@ export function InspectionDetail({ r, onUpdate }: { r: InspectionResult; onUpdat
             </tr>
           </thead>
           <tbody>
-            {localFiles(r).map((f) => {
+            {localFiles(r, files).map((f) => {
               const S = FILE_STATE[f.state]
               const Kind = f.kind === 'JSON' ? FileJson : FileImage
               return (
@@ -171,6 +186,9 @@ export function InspectionDetail({ r, onUpdate }: { r: InspectionResult; onUpdat
             })}
           </tbody>
         </table>
+        {filesError && <p className="hint" role="alert">ตรวจไฟล์ไม่สำเร็จ: {filesError}</p>}
+        {!files && !filesError && <p className="hint" role="status">กำลังตรวจไฟล์จริง…</p>}
+        <button className="btn btn-sm" onClick={()=>setFilesTick(v=>v+1)}>ตรวจสถานะไฟล์ใหม่</button>
         <StorageLine result={r} onResultUpdate={onUpdate} />
       </section>
 

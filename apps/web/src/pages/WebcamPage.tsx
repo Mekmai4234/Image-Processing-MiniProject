@@ -118,8 +118,8 @@ export function WebcamPage() {
 
   return (
     <>
-      <div className="page-head">
-        <div>
+      <div className="page-head webcam-page-head">
+        <div className="visually-hidden">
           <h1>ตรวจด้วยกล้อง (Webcam)</h1>
           <p>หมุนขวดหน้ากล้องจนเห็นฉลาก ถือนิ่ง แล้วถ่ายให้ Backend ตรวจ</p>
         </div>
@@ -142,7 +142,7 @@ export function WebcamPage() {
       </div>
 
       {inputMode === 'live' ? (
-        <div className="stack" style={{ marginTop: '1rem' }}>
+        <div className="stack webcam-live-page">
           <CameraPanel
             dataSource={ds}
             sourceKind={source}
@@ -151,16 +151,16 @@ export function WebcamPage() {
             onProductChange={(p) => setProduct(p)}
             onInspectionComplete={handleLiveInspectionComplete}
             autoLocate={true}
-          />
+          >
 
           {captures.length > 0 && (
-            <section className="panel" aria-labelledby="recent-title" style={{ marginTop: '1.5rem' }}>
+            <section className="panel" aria-labelledby="recent-title">
               <div className="panel-head">
                 <h2 id="recent-title">ภาพที่ตรวจล่าสุด</h2>
                 <span className="hint">เฉพาะในเซสชันนี้</span>
               </div>
               <div className="captures">
-                {captures.map((c) => (
+                {captures.slice(0,2).map((c) => (
                   <div key={c.inspection_id} className="capture" data-tone={c.result}>
                     <InspectionOverlay
                       src={ds.imageUrl(c, 'original')}
@@ -183,6 +183,8 @@ export function WebcamPage() {
               </div>
             </section>
           )}
+          {captures.length===0 && <section className="panel"><h2>Recent captures</h2><p className="hint">ภาพที่ถ่ายและผลตรวจจะปรากฏที่นี่</p></section>}
+          </CameraPanel>
         </div>
       ) : (
         <div className="split">

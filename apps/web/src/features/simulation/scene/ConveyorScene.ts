@@ -58,6 +58,7 @@ const VIEW_DIRECTION = new THREE.Vector3(-0.5, 0.45, 0.74).normalize()
  * may be cropped, but every station, destination and the finished bottle's verdict tag stay visible.
  */
 const FIT_POINTS = [
+  new THREE.Vector3(LAYOUT.dispenser_x + 1.2, 2.7, -0.85),
   new THREE.Vector3(LAYOUT.turntable_x - LAYOUT.turntable_radius, 0.7, 0),
   new THREE.Vector3(LAYOUT.turntable_x, 0.7, LAYOUT.turntable_radius),
   new THREE.Vector3(LAYOUT.turntable_x, 2.6, -1.2),
@@ -146,9 +147,9 @@ export class ConveyorScene {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5))
     this.renderer.outputColorSpace = THREE.SRGBColorSpace
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping
-    this.renderer.toneMappingExposure = 0.95
+    this.renderer.toneMappingExposure = 0.78
     this.renderer.shadowMap.enabled = true
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
+    this.renderer.shadowMap.type = THREE.PCFShadowMap
     const canvasEl = this.renderer.domElement
     canvasEl.setAttribute('aria-hidden', 'true')
     canvasEl.style.display = 'block'

@@ -22,6 +22,9 @@ function clean(f: Filters) {
     result: f.result || undefined,
     product_id: f.product_id || undefined,
     demo: f.demo === 'true' ? true : f.demo === 'false' ? false : undefined,
+    q: f.q.trim() || undefined,
+    sort_by: 'created_at' as const,
+    sort_order: f.sort_order,
   }
 }
 
@@ -48,6 +51,7 @@ export function HistoryPage() {
     setError(null)
     ds.listInspections({ ...clean(filters), page, page_size: PAGE_SIZE }, ctrl.signal)
       .then((d) => {
+        if (ctrl.signal.aborted) return
         setData(d)
         setSelectedId((cur) => (cur && d.items.some((i) => i.inspection_id === cur) ? cur : (d.items[0]?.inspection_id ?? null)))
       })
@@ -71,7 +75,7 @@ export function HistoryPage() {
     const keys: Array<'total' | InspectionResultValue> = ['total', 'PASS', 'FAIL', 'REVIEW']
     setCounts({ total: null, PASS: null, FAIL: null, REVIEW: null })
     Promise.all(keys.map((k) => ds.listInspections(k === 'total' ? base : { ...base, result: k }, ctrl.signal)))
-      .then((pages) => setCounts({ total: pages[0].total, PASS: pages[1].total, FAIL: pages[2].total, REVIEW: pages[3].total }))
+      .then((pages) => { if (!ctrl.signal.aborted) setCounts({ total: pages[0].total, PASS: pages[1].total, FAIL: pages[2].total, REVIEW: pages[3].total }) })
       .catch(() => {
         /* แสดง — เมื่อดึงไม่ได้ ข้อผิดพลาดหลักแสดงที่ตาราง */
       })
@@ -141,6 +145,7 @@ export function HistoryPage() {
             onSelect={setSelectedId}
             products={products}
             page={page}
+            sortOrder={filters.sort_order}
             onPage={setPage}
             onClearFilters={() => setFilters(EMPTY_FILTERS)}
           />

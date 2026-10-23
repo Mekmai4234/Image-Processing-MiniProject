@@ -48,12 +48,14 @@ import {
   type SimulationSnapshot,
 } from '../features/simulation'
 import { useAppData } from '../lib/AppData'
+import { resolveApiUrl } from '../lib/api'
 import { formatMs, formatSimilarity, REASON_LABEL } from '../lib/format'
 import { newRequestId } from '../lib/ids'
 import { addCompleted, EMPTY_STATS, percentOf, pipelineStage, PIPELINE_STAGES, simErrorText } from '../lib/simSession'
 import { dataUrlToBlob, useObjectUrls } from '../lib/useObjectUrls'
 import { appendViews, removeView as dropView, setViewAngle, type ViewItem } from '../lib/views'
 import type { InspectionResult } from '../types/inspection'
+import type { BottleShapeInput } from '../features/simulation/shape/bottleShape'
 import './SimulationPage.css'
 
 const MAX_VIEWS = 12 // MAX_INSPECTION_VIEWS (backend ตรวจซ้ำเสมอ)
@@ -104,6 +106,18 @@ export function SimulationPage() {
   const [product, setProduct] = useState('')
   useDefaultProduct(product, setProduct)
   const [views, setViews] = useState<View[]>([])
+  const [bottleShape, setBottleShape] = useState<BottleShapeInput | null>(null)
+  const [shapeBusy, setShapeBusy] = useState(false)
+  useEffect(() => {
+    setBottleShape(null)
+    if (!views[0] || !ds.bottleShape) { setShapeBusy(false); return }
+    const ctrl = new AbortController()
+    setShapeBusy(true)
+    ds.bottleShape(views[0].blob, ctrl.signal).then(result=>{if(!ctrl.signal.aborted)setBottleShape(result)})
+      .catch(()=>{if(!ctrl.signal.aborted)setBottleShape(null)})
+      .finally(()=>{if(!ctrl.signal.aborted)setShapeBusy(false)})
+    return ()=>ctrl.abort()
+  }, [ds, views[0]?.blob])
   const [sameBottle, setSameBottle] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
 
@@ -248,6 +262,7 @@ export function SimulationPage() {
                 onSnapshot={setSnap}
                 onCompleted={onCompleted}
                 showOverlay={false}
+                bottleShape={bottleShape}
               />
             </div>
 
@@ -273,7 +288,7 @@ export function SimulationPage() {
               </p>
             )}
             <p className="hint">
-              {SHAPE_FALLBACK_NOTICE} (ภาพแทน) · {MODEL_NOTICE}
+              {shapeBusy ? 'กำลังวิเคราะห์รูปทรงขวด…' : bottleShape?.status === 'ready' ? 'รูปทรงประมาณจากภาพขวดที่อัปโหลด' : SHAPE_FALLBACK_NOTICE} · {MODEL_NOTICE}
             </p>
           </Panel>
 
@@ -309,6 +324,7 @@ export function SimulationPage() {
 
         <div className="stack">
           <Panel
+            className="sim-control-panel"
             title="Simulation controls"
             subtitle="อัปโหลดภาพขวดหลายมุม เลือกสินค้า แล้วเริ่มจำลอง"
             icon={<Settings2 size={22} />}
@@ -370,7 +386,7 @@ export function SimulationPage() {
                   </div>
                 )}
 
-                <label className="drop">
+                <label className={`drop ${views.length ? 'sim-drop-compact' : ''}`}>
                   <ImagePlus size={24} aria-hidden="true" />
                   <span>เลือกภาพขวด (หลายภาพได้)</span>
                   <span className="hint">
@@ -419,7 +435,7 @@ export function SimulationPage() {
                             onChange={() => setProduct(p.product_id)}
                             disabled={running}
                           />
-                          <Milk size={26} aria-hidden="true" />
+                          {p.reference_paths?.[0] ? <img className="sim-product-photo" src={resolveApiUrl(p.reference_paths[0]) ?? ''} alt={p.display_name}/> : <Milk size={26} aria-hidden="true" />}
                           <span>{p.display_name}</span>
                         </label>
                       ))}

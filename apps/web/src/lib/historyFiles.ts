@@ -1,4 +1,4 @@
-import type { InspectionResult } from '../types/inspection'
+import type { InspectionFilesResponse, InspectionResult } from '../types/inspection'
 import { shortId } from './format'
 
 /** saved = มีในเครื่อง backend, pending = กำลังเขียน, missing = ยังไม่บันทึก, unknown = API ยังไม่บอก */
@@ -11,24 +11,15 @@ export interface LocalFileRow {
   state: FileState
 }
 
-/**
- * รายการไฟล์ในเครื่องที่รันได้จากข้อมูล API เท่านั้น ไม่เดาเกินที่ backend บอก
- * - storage_status=saved แปลว่าไฟล์หลักฐานที่จำเป็นครบ (รวม result.json) ตาม storage guide
- * - ยังไม่ saved: ภาพดูจาก URL ที่มี/null ตาม index เดิม ส่วน result.json ไม่ทราบสถานะ
- */
-export function localFiles(r: InspectionResult): LocalFileRow[] {
-  const allSaved = r.storage_status === 'saved'
-  const notYet: FileState = r.storage_status === 'pending' ? 'pending' : 'missing'
-  const image = (url: string | null | undefined): FileState => (allSaved || url ? 'saved' : notYet)
-
-  return [
-    { name: 'original.jpg', kind: 'Image', state: image(r.images.original) },
-    { name: 'annotated.jpg', kind: 'Image', state: image(r.images.annotated) },
-    { name: 'result.json', kind: 'JSON', state: allSaved ? 'saved' : 'unknown' },
-    ...r.evidence.supporting_images.map(
-      (url, i): LocalFileRow => ({ name: `supporting/${i}.jpg`, kind: 'Image', state: image(url) }),
-    ),
-  ]
+/** Only current per-file metadata proves availability; a URL or historical saved row does not. */
+export function localFiles(r: InspectionResult, metadata?: InspectionFilesResponse | null): LocalFileRow[] {
+  if (metadata?.inspection_id === r.inspection_id) return metadata.files.map(f => ({
+    name: f.name, kind: f.kind === 'result_json' ? 'JSON' : 'Image',
+    state: f.available && f.size_bytes !== 0 ? 'saved' : 'missing',
+  }))
+  const state: FileState = r.storage_status === 'pending' ? 'pending' : 'unknown'
+  return ['original.jpg','annotated.jpg','result.json',...r.evidence.supporting_images.map((_,i)=>`supporting/${i}.jpg`)]
+    .map(name=>({name, kind:name.endsWith('.json')?'JSON':'Image',state}))
 }
 
 /** ชื่อไฟล์สำหรับปุ่ม Download result (ผลล่าสุดจาก API ไม่ใช่การอ่าน result.json) */

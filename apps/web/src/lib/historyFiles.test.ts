@@ -1,59 +1,27 @@
 import { describe, expect, it } from 'vitest'
 import { DEMO_EXAMPLES } from '../demo/demoDataSource'
-import type { InspectionResult } from '../types/inspection'
+import type { InspectionFilesResponse } from '../types/inspection'
 import { localFiles, resultFileName } from './historyFiles'
-
-const clone = (r: InspectionResult): InspectionResult => JSON.parse(JSON.stringify(r)) as InspectionResult
-const pass = DEMO_EXAMPLES[0]
-const multi = DEMO_EXAMPLES[3] // orientation_failed มีภาพหลักฐาน 3 มุม
-
-describe('localFiles: แสดงเฉพาะที่ backend บอก', () => {
-  it('saved = ไฟล์หลักฐานครบรวม result.json', () => {
-    expect(localFiles(pass)).toEqual([
-      { name: 'original.jpg', kind: 'Image', state: 'saved' },
-      { name: 'annotated.jpg', kind: 'Image', state: 'saved' },
-      { name: 'result.json', kind: 'JSON', state: 'saved' },
-    ])
+const record = DEMO_EXAMPLES[0]
+const metadata: InspectionFilesResponse = {
+  inspection_id: record.inspection_id, storage_status:'saved', all_available:false,
+  files:[{name:'original.jpg',kind:'original',available:true,size_bytes:120},
+         {name:'annotated.jpg',kind:'annotated',available:false,size_bytes:null},
+         {name:'result.json',kind:'result_json',available:true,size_bytes:80}],
+}
+describe('file evidence from disk metadata',()=>{
+  it('does not claim URLs or a saved DB row prove files still exist',()=>{
+    expect(localFiles(record).every(f=>f.state==='unknown')).toBe(true)
+    expect(localFiles(record,metadata).map(f=>f.state)).toEqual(['saved','missing','saved'])
   })
-
-  it('ภาพหลักฐานหลายมุมเรียงตาม index เดิม', () => {
-    expect(localFiles(multi).map((f) => f.name)).toEqual([
-      'original.jpg',
-      'annotated.jpg',
-      'result.json',
-      'supporting/0.jpg',
-      'supporting/1.jpg',
-      'supporting/2.jpg',
-    ])
+  it('rejects metadata from a previously selected row',()=>{
+    expect(localFiles(record,{...metadata,inspection_id:'other'}).every(f=>f.state==='unknown')).toBe(true)
   })
-
-  it('บันทึกไม่สำเร็จบางส่วน: ภาพที่ URL เป็น null = ยังไม่บันทึก และไม่อ้างว่า result.json อยู่', () => {
-    const r = clone(multi)
-    r.storage_status = 'failed'
-    r.storage_error = { code: 'disk', message: 'x', retryable: true }
-    r.images = { original: r.images.original, annotated: null }
-    r.evidence.supporting_images = [r.evidence.supporting_images[0], null, r.evidence.supporting_images[2]]
-    const states = Object.fromEntries(localFiles(r).map((f) => [f.name, f.state]))
-    expect(states).toEqual({
-      'original.jpg': 'saved',
-      'annotated.jpg': 'missing',
-      'result.json': 'unknown',
-      'supporting/0.jpg': 'saved',
-      'supporting/1.jpg': 'missing',
-      'supporting/2.jpg': 'saved',
-    })
+  it('does not call an empty file saved',()=>{
+    expect(localFiles(record,{...metadata,files:[{name:'original.jpg',kind:'original',available:true,size_bytes:0}]} )[0].state).toBe('missing')
   })
-
-  it('กำลังบันทึก = pending', () => {
-    const r = clone(pass)
-    r.storage_status = 'pending'
-    r.images = { original: null, annotated: null }
-    expect(localFiles(r).slice(0, 2).map((f) => f.state)).toEqual(['pending', 'pending'])
+  it('distinguishes in-progress storage from confirmed disk evidence',()=>{
+    expect(localFiles({...record,storage_status:'pending'}).every(f=>f.state==='pending')).toBe(true)
   })
-})
-
-describe('resultFileName', () => {
-  it('ใช้ id ย่อของรอบตรวจ', () => {
-    expect(resultFileName(pass)).toBe('inspection-00000000.json')
-  })
+  it('names results for the same inspection',()=>expect(resultFileName(record)).toBe('inspection-00000000.json'))
 })

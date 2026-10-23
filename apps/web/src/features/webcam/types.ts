@@ -34,6 +34,7 @@ export interface CaptureFrameResult {
 }
 
 export interface CameraPanelProps {
+  children?: import('react').ReactNode
   dataSource?: DataSource
   sourceKind?: SourceKind
   products?: Product[]

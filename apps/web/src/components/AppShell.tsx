@@ -1,4 +1,4 @@
-import { Box, Camera, HardDrive, History, RefreshCw, ScanSearch, WifiOff } from 'lucide-react'
+import { Box, Camera, HardDrive, History, RefreshCw, ScanSearch, Settings2, WifiOff } from 'lucide-react'
 import { Brand, Logo } from './Logo'
 import { NavLink, Outlet } from 'react-router-dom'
 import { DEMO_SCENARIOS, type DemoScenario } from '../demo/demoDataSource'
@@ -23,7 +23,7 @@ function ConnectionPill() {
       if (detector === 'ready') {
         return (
           <span className="pill online" title={`${API_BASE_URL}${version}`}>
-            <span className="dot" />API พร้อม · ตัวตรวจพร้อม
+            <span className="dot" />API พร้อม · {connection.configVersion?.startsWith('reference-') ? 'เทียบภาพอ้างอิง' : 'ตัวตรวจพร้อม'}
           </span>
         )
       }
@@ -70,6 +70,7 @@ export function AppShell() {
         </nav>
 
         <div className="top-actions">
+          <NavLink className="settings-link" to="/settings" aria-label="ตั้งค่าภาพอ้างอิง"><Settings2 size={20} /></NavLink>
           <ConnectionPill />
           <div className="segmented" role="group" aria-label="แหล่งข้อมูล">
             <button aria-pressed={source === 'live'} onClick={() => setSource('live')}>
@@ -106,6 +107,7 @@ export function AppShell() {
           <button className="btn btn-sm" onClick={recheck}>
             <RefreshCw size={14} aria-hidden="true" /> ลองเชื่อมใหม่
           </button>
+          <NavLink className="btn btn-sm" to="/settings">ตั้งค่าภาพอ้างอิง</NavLink>
           <button className="btn btn-sm btn-ghost" onClick={() => setSource('demo')}>
             ดูหน้าจอด้วยข้อมูล DEMO
           </button>
@@ -122,6 +124,7 @@ export function AppShell() {
           <button className="btn btn-sm" onClick={recheck}>
             <RefreshCw size={14} aria-hidden="true" /> ตรวจสถานะใหม่
           </button>
+          <NavLink className="btn btn-sm" to="/settings">ตั้งค่าภาพอ้างอิง</NavLink>
           <button className="btn btn-sm btn-ghost" onClick={() => setSource('demo')}>
             ลองหน้าจอด้วยข้อมูล DEMO
           </button>
@@ -138,6 +141,7 @@ export function AppShell() {
       )}
 
       <main className="main" id="main" tabIndex={-1}>
+        {source==='live' && connection.state==='online' && connection.configVersion?.startsWith('reference-') && <div className="reference-mode-note">REFERENCE MODE · เกณฑ์ทดลองจากภาพที่เลือกเอง ยังไม่ใช่การรับรองความแม่นยำ <NavLink to="/settings">จัดการภาพอ้างอิง</NavLink></div>}
         <Outlet />
       </main>
 
